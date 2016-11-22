@@ -21,7 +21,7 @@ class Output:
         self.f.close()        
         if not self.args.dryrun:
             self.save()
-        
+         
     def emit(self,s):
         self.f.write(s+"\n")        
     def save(self):
