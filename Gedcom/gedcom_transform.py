@@ -82,7 +82,8 @@ def process_gedcom(args,transformer):
         for line,path,tag,value in read_gedcom(args):
             transformer.phase1(args,line,path,tag,value)
 
-    transformer.phase2(args)
+    if hasattr(transformer,"phase2"):
+        transformer.phase2(args)
 
     with Output(args) as f:
         for line,path,tag,value in read_gedcom(args):
