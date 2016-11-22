@@ -72,7 +72,7 @@ def phase1(args,line,path,tag,value):
         fam = parts[0]
         #husbands[fam] = value
         fams[fam].husb = value
-    if path.endswith(".WIFE"):  # @fam@.HUSB @husb@
+    if path.endswith(".WIFE"):  # @fam@.WIFE @wife@
         parts = path.split(".")
         fam = parts[0]
         #wives[fam] = value
