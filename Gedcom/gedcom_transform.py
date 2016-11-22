@@ -22,7 +22,7 @@ class Output:
         if not self.args.dryrun:
             self.save()
          
-    def emit(self,s):
+    def emit(self,s): 
         self.f.write(s+"\n")        
     def save(self):
         input_gedcom = self.args.input_gedcom
