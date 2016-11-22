@@ -5,7 +5,7 @@ import os
 import argparse
 from collections import defaultdict 
 import re
-import tempfile
+import tempfile 
 
 def numeric(s):
     return s.replace(".","").isdigit()
