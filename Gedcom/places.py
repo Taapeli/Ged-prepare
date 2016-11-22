@@ -31,8 +31,6 @@ las
 
 """
 
-do_phase1 = False
-
 def add_args(parser):
     parser.add_argument('--reverse', action='store_true',
                         help='Reverse the order of places')

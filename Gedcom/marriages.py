@@ -43,8 +43,6 @@ import argparse
 from collections import defaultdict 
 import re
 
-do_phase1 = True
-
 class FamInfo:
     husb = None
     wife = None

@@ -2,8 +2,6 @@
 
 ids = set()
 
-do_phase1 = True
-
 def add_args(parser):
     parser.add_argument("--testiparametri")
 

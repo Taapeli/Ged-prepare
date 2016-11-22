@@ -78,7 +78,7 @@ def process_gedcom(args,transformer):
 
     transformer.initialize(args)
     
-    if transformer.do_phase1:
+    if hasattr(transformer,"phase1"):
         for line,path,tag,value in read_gedcom(args):
             transformer.phase1(args,line,path,tag,value)
 
