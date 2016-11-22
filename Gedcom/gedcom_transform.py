@@ -32,7 +32,7 @@ class Output:
         print("Input file renamed to '{}'".format(newname))
         print("New version saved as '{}'".format(input_gedcom))
     def generate_name(self,name):
-        i = 0
+        i = 0 
         while True:
             newname = "{}.{}".format(name,i)
             if not os.path.exists(newname): return newname
