@@ -5,6 +5,7 @@ import os
 import argparse
 from collections import defaultdict 
 import re
+import tempfile
 
 def numeric(s):
     return s.replace(".","").isdigit()
@@ -13,18 +14,30 @@ class Output:
     def __init__(self,args):
         self.args = args
     def __enter__(self):
-        if self.args.output_gedcom:
-            self.f = open(self.args.output_gedcom,"w",encoding=self.args.encoding)
-        else:
-            self.f = None
+        self.tempname = tempfile.mktemp()
+        self.f = open(self.tempname,"w",encoding=self.args.encoding)
         return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.f.close()        
+        if not self.args.dryrun:
+            self.save()
         
     def emit(self,s):
-        if self.f:
-            self.f.write(s+"\n")        
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.f:
-            self.f.close()        
+        self.f.write(s+"\n")        
+    def save(self):
+        input_gedcom = self.args.input_gedcom
+        newname = self.generate_name(input_gedcom)
+        os.rename(input_gedcom,newname)
+        os.rename(self.tempname,input_gedcom)
+        print("Input file renamed to '{}'".format(newname))
+        print("New version saved as '{}'".format(input_gedcom))
+    def generate_name(self,name):
+        i = 0
+        while True:
+            newname = "{}.{}".format(name,i)
+            if not os.path.exists(newname): return newname
+            i += 1
+
          
 def read_gedcom(args):
     curpath = [None]
@@ -64,14 +77,17 @@ def process_gedcom(args,transformer):
         for line,path,tag,value in read_gedcom(args):
             transformer.phase3(args,line,path,tag,value,f)
 
+
                        
-def main():
+def main(): 
     parser = argparse.ArgumentParser(description='GEDCOM transformation')
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
-    parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" ) 
-    #parser.add_argument('--display-changes', action='store_true',
-    #                    help='Display changed places')
+    #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" ) 
+    parser.add_argument('--display-changes', action='store_true',
+                        help='Display changed rows')
+    parser.add_argument('--dryrun', action='store_true',
+                        help='Do not produce an output file')
     #parser.add_argument('--display-nonchanges', action='store_true',
     #                    help='Display unchanged places')
     parser.add_argument('--encoding', type=str, default="utf-8",
