@@ -74,8 +74,8 @@ def main(argv):
                         source = cgo.buildSource(sidno, otext, stag, repository)
                         print(source.to_struct(), file=j_out)
                     else:
-                        print("Something strange happened.")
-                print("Input file handled.")
+                        print("Unknown rectype: + rectype")
+            print("Input file handled.")
     except  IOError: 
         print(IOError.winerror)
         print("IOError in j_out handling")
