@@ -36,7 +36,7 @@ class Output:
         while True:
             newname = "{}.{}".format(name,i)
             if not os.path.exists(newname): return newname
-            i += 1
+            i += 1 
 
          
 def read_gedcom(args):
