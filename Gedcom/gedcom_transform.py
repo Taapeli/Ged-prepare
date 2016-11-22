@@ -93,6 +93,10 @@ def main():
     parser.add_argument('--encoding', type=str, default="utf-8",
                         help="UTF-8, ISO8859-1 tai jokin muu")
  
+    if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] != "-h":
+        print("First argument must be the name of the transform")
+        return
+     
     if len(sys.argv) > 1 and sys.argv[1][0] != '-': 
         modname = sys.argv[1]
         if modname.endswith(".py"): modname = modname[:-3]
