@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-import sys
-import os
-import argparse
 from collections import defaultdict 
 
 ignored_text = """
