@@ -1,2 +1,3 @@
 /.pydevproject
+/Gedcom/*.ged
 *.pyc
