@@ -2,6 +2,7 @@
 
 """
 Generic GEDCOM transformer.
+Kari Kujansuu, 2016.
 
 The transforms are specified by separate Python modules ("plugins"). 
 
@@ -66,8 +67,8 @@ are stored in the "args" object that is passed to the other functions.
 import sys
 import os
 import argparse
-from collections import defaultdict 
-import re
+# from collections import defaultdict 
+# import re
 import tempfile 
 
 def numeric(s):
@@ -173,5 +174,3 @@ def main():
     
 if __name__ == "__main__":
     main()
-
-
