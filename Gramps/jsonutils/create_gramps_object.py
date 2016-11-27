@@ -7,8 +7,13 @@ Created on 1.11.2016
 import time
 from gramps.gen.lib import RepositoryType, Repository, RepoRef, Source, Tag
 from gramps.gen.utils import id
+
 from gramps.gen.const import GRAMPS_LOCALE as glocale
-_ = glocale.translation.gettext
+try:
+    _trans = glocale.get_addon_translator(__file__)
+except ValueError:
+    _trans = glocale.translation
+_ = _trans.gettext
 
 class CreateGrampsObject:
  
@@ -21,18 +26,18 @@ class CreateGrampsObject:
 
     def buildTag(self, tname, thandle = None):
         if thandle == None:
-            thandle = id.create_id() 
+            thandle = id.create_id()   # 26-merkkinen tunniste
         tag = Tag()
         tag.set_name(tname)
         tag.set_change_time(self.chgtime)
 #        tag.set_color("#EF2929")
-        tag.set_handle(thandle)   # 26-merkkinen tunniste
+        tag.set_handle(thandle)   
 #        print ("Tag ") ; print(tag.to_struct())
         return ([tag, thandle])
     
-    def buildRepository(self, ridno, rname, tag, rtype, rhandle):
+    def buildRepository(self, ridno, rname, tag, rtype, rhandle = None):
         if rhandle == None:
-            rhandle = id.create_id()
+            rhandle = id.create_id()   # 26-merkkinen tunniste
         repositoryType = RepositoryType()
         repositoryType.set(rtype)       
     
@@ -49,7 +54,7 @@ class CreateGrampsObject:
     
     def buildSource(self, sidno, stitle, tag, repository, shandle = None):
         if shandle == None:
-            shandle = id.create_id()
+            shandle = id.create_id()   # 26-merkkinen tunniste
 #        repositoryType = RepositoryType()
         source = Source()
         source.set_handle(shandle)
