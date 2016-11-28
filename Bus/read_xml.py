@@ -123,7 +123,7 @@ class Note:
             
         Properties:
                 handle          
-                id              esim. "I0001"
+                id              esim. "N0001"
                 type            str huomautuksen tyyppi
                 text            str huomautuksen sisältö
      """
@@ -226,7 +226,7 @@ class Place:
             
         Properties:
                 handle          
-                id              esim. "I0001"
+                id              esim. "P0001"
                 type            str paikan tyyppi
                 pname           str paikan nimi
                 placeref_hlink  str paikan osoite
@@ -264,7 +264,7 @@ class Repository:
             
         Properties:
                 handle          
-                id              esim. "I0001"
+                id              esim. "R0001"
                 rname           str arkiston nimi
                 type            str arkiston tyyppi
 
@@ -295,7 +295,7 @@ class Source:
             
         Properties:
                 handle          
-                id              esim. "I0001"
+                id              esim. "S0001"
                 stitle          str lähteen otsikko
                 noteref_hlink   str huomautuksen osoite
                 reporef_hlink   str repositoryn osoite
