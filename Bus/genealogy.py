@@ -41,10 +41,10 @@ class Citation:
                 sourceid        str lähteen osoite
      """
 
-    def __init__(self, handle, id):
+    def __init__(self, handle, pid):
         """ Luo uuden citation-instanssin """
         self.handle = handle
-        self.id = id
+        self.id = pid
         self.noteref_hlink = ''
         self.sourceref_hlink = ''
 
@@ -55,8 +55,8 @@ class Citation:
                 
         query = """
             CREATE (c:Citation) 
-            SET c.id='{}', c.confidence='{}', c.noteref_hlink='{}', c.sourceref_hlink='{}'
-            """.format(self.id, self.confidence, self.noteref_hlink, self.sourceref_hlink)
+            SET c.handle='{}', c.id='{}', c.confidence='{}', c.noteref_hlink='{}', c.sourceref_hlink='{}'
+            """.format(self.handle, self.id, self.confidence, self.noteref_hlink, self.sourceref_hlink)
             
         return session.run(query)
 
@@ -84,16 +84,22 @@ class Event:
                 citationref_hlink  str lähteen paikan osoite
      """
 
-    def __init__(self, handle, id):
+    def __init__(self, handle, pid):
         """ Luo uuden event-instanssin """
         self.handle = handle
-        self.id = id
+        self.id = pid
 
     def save(self):
         """ Tallettaa sen kantaan """
-#        event = Node(self.label, handle=self.handle, id=self.id)
-#        graph.create(event)
-        return True
+
+        global session
+                
+        query = """
+            CREATE (e:Event) 
+            SET e.handle='{}', e.id='{}', e.type='{}', e.date='{}', e.place_hlink='{}', e.citationref_hlink='{}'
+            """.format(self.handle, self.id, self.type, self.date, self.place_hlink, self.citationref_hlink)
+            
+        return session.run(query)
 
     def print(self):
         """ Tulostaa tiedot """
@@ -111,7 +117,7 @@ class Family:
         Properties:
                 handle          
                 id              esim. "F0001"
-                rel             str suhde
+                rel_type        str suhteen tyyppi
                 father          str isän osoite
                 mother          str äidin osoite
                 eventref_hlink  str tapahtuman osoite
@@ -119,19 +125,42 @@ class Family:
                 childref_hlink  str lapsen osoite
      """
 
-    def __init__(self, handle, id):
+    def __init__(self, handle, pid):
         """ Luo uuden family-instanssin """
         self.handle = handle
-        self.id = id
+        self.id = pid
         self.eventref_hlink = []
         self.eventref_role = []
         self.childref_hlink = []
 
     def save(self):
         """ Tallettaa sen kantaan """
-#        family = Node(self.label, handle=self.handle, id=self.id)
-#        graph.create(family)
-        return True
+
+        global session
+
+        if len(self.eventref_hlink) == 0:
+            p_eventref_hlink = ''
+        else:
+            p_eventref_hlink = self.eventref_hlink[0]
+
+        if len(self.eventref_role) == 0:
+            p_eventref_role = ''
+        else:
+            p_eventref_role = self.eventref_role[0]
+
+        if len(self.childref_hlink) == 0:
+            p_childref_hlink = ''
+        else:
+            p_childref_hlink = self.childref_hlink[0]
+            
+        query = """
+            CREATE (f:Family) 
+            SET f.handle='{}', f.id='{}', f.rel_type='{}', f.father='{}', f.mother='{}', f.eventref_hlink='{}',
+            f.eventref_role='{}', f.childref_hlink='{}'
+            """.format(self.handle, self.id, self.rel_type, self.father, self.mother, p_eventref_hlink,\
+                        p_eventref_role, p_childref_hlink)
+            
+        return session.run(query)
 
     def print(self):
         """ Tulostaa tiedot """
@@ -162,17 +191,23 @@ class Note:
                 text            str huomautuksen sisältö
      """
 
-    def __init__(self, handle, id, type):
+    def __init__(self, handle, pid, ptype):
         """ Luo uuden note-instanssin """
         self.handle = handle
-        self.id = id
-        self.type = type
+        self.id = pid
+        self.type = ptype
 
     def save(self):
         """ Tallettaa sen kantaan """
-#        note = Node(self.label, handle=self.handle, id=self.id)
-#        graph.create(note)
-        return True
+
+        global session
+            
+        query = """
+            CREATE (n:Note) 
+            SET n.handle='{}', n.id='{}', n.type='{}', n.text='{}'
+            """.format(self.handle, self.id, self.type, self.text)
+            
+        return session.run(query)
 
     def print(self):
         """ Tulostaa tiedot """
@@ -200,10 +235,10 @@ class Person:
                 citationref     str lähteen paikan osoite
      """
 
-    def __init__(self, handle, id):
+    def __init__(self, handle, pid):
         """ Luo uuden person-instanssin """
         self.handle = handle
-        self.id = id
+        self.id = pid
         self.alt = []
         self.type = []
         self.first = []
@@ -216,9 +251,28 @@ class Person:
 
     def save(self):
         """ Tallettaa sen kantaan """
-#        person = Node(self.label, handle=self.handle, id=self.id)
-#        graph.create(person)
-        return True
+
+        global session
+        
+        if len(self.first) > 0:
+            p_first = self.first[0]
+        else:
+            p_first = ''
+        if len(self.surname) > 0:
+            p_surname = self.surname[0]
+        else:
+            p_surname = ''
+        if len(self.suffix) > 0:
+            p_suffix = self.suffix[0]
+        else:
+            p_suffix = ''
+            
+        query = """
+            CREATE (p:Person) 
+            SET p.handle='{}', p.id='{}', p.gender='{}', p.first='{}', p.surname='{}', p.suffix='{}'
+            """.format(self.handle, self.id, self.gender, p_first, p_surname, p_suffix)
+            
+        return session.run(query)
 
     def print(self):
         """ Tulostaa tiedot """
@@ -266,19 +320,30 @@ class Place:
                 placeref_hlink  str paikan osoite
      """
 
-    def __init__(self, handle, id, type):
+    def __init__(self, handle, pid, ptype):
         """ Luo uuden place-instanssin """
         self.handle = handle
-        self.id = id
-        self.type = type
+        self.id = pid
+        self.type = ptype
         self.pname = []
         self.placeref_hlink = ''
 
     def save(self):
         """ Tallettaa sen kantaan """
-#        place = Node(self.label, handle=self.handle, id=self.id)
-#        graph.create(place)
-        return True
+
+        global session
+        
+        if len(self.pname) > 0:
+            p_pname = self.pname[0]
+        else:
+            p_pname = ''
+            
+        query = """
+            CREATE (p:Place) 
+            SET p.handle='{}', p.id='{}', p.type='{}', p.pname='{}'
+            """.format(self.handle, self.id, self.type, p_pname)
+            
+        return session.run(query)
 
     def print(self):
         """ Tulostaa tiedot """
@@ -304,16 +369,23 @@ class Repository:
 
      """
 
-    def __init__(self, handle, id, type):
+    def __init__(self, handle, pid, ptype):
         """ Luo uuden repository-instanssin """
         self.handle = handle
-        self.id = id
+        self.id = pid
+        self.type = ptype
 
     def save(self):
         """ Tallettaa sen kantaan """
-#        place = Node(self.label, handle=self.handle, id=self.id)
-#        graph.create(repository)
-        return True
+
+        global session
+            
+        query = """
+            CREATE (r:Repository) 
+            SET r.handle='{}', r.id='{}', r.rname='{}', r.type='{}'
+            """.format(self.handle, self.id, self.rname, self.type)
+            
+        return session.run(query)
 
     def print(self):
         """ Tulostaa tiedot """
@@ -335,19 +407,25 @@ class Source:
                 reporef_hlink   str repositoryn osoite
      """
 
-    def __init__(self, handle, id):
+    def __init__(self, handle, pid):
         """ Luo uuden source-instanssin """
         self.handle = handle
-        self.id = id
+        self.id = pid
         self.stitle = ''
         self.noteref_hlink = ''
         self.reporef_hlink = ''
 
     def save(self):
         """ Tallettaa sen kantaan """
-#        source = Node(self.label, handle=self.handle, id=self.id)
-#        graph.create(person)
-        return True
+
+        global session
+            
+        query = """
+            CREATE (s:Source) 
+            SET s.handle='{}', s.id='{}'
+            """.format(self.handle, self.id)
+            
+        return session.run(query)
 
     def print(self):
         """ Tulostaa tiedot """
@@ -361,5 +439,3 @@ class Source:
         if self.reporef_hlink != '':
             print ("Reporef_hlink: " + self.reporef_hlink)
         return True
-
-

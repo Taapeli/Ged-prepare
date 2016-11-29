@@ -45,7 +45,7 @@ for event in events:
         if event_citationref.hasAttribute("hlink"):
             e.citationref_hlink = event_citationref.getAttribute("hlink")
             
-    e.print()
+    e.save()
 
 
 #------------------------------------------------------------------------
@@ -95,7 +95,7 @@ for family in families:
             if family_childref.hasAttribute("hlink"):
                 f.childref_hlink.append(family_childref.getAttribute("hlink"))
                 
-    f.print()
+    f.save()
 
 
 #------------------------------------------------------------------------
@@ -164,7 +164,7 @@ for person in people:
             if person_citationref.hasAttribute("hlink"):
                 p.citationref_hlink.append(person_citationref.getAttribute("hlink"))
                 
-    p.print()
+    p.save()
 
 #------------------------------------------------------------------------
 
@@ -207,7 +207,7 @@ for citation in citations:
         if citation_sourceref.hasAttribute("hlink"):
             c.sourceref_hlink = citation_sourceref.getAttribute("hlink")
             
-    c.save()
+#    c.save()
 
 
 #------------------------------------------------------------------------
@@ -219,32 +219,31 @@ print ("*****Sources*****")
 
 # Print detail of each source
 for source in sources:
-    if source.hasAttribute("handle"):
-        handle = source.getAttribute("handle")
-    if source.hasAttribute("change"):
-        change = source.getAttribute("change")
-    if source.hasAttribute("id"):
-        id = source.getAttribute("id")
+	if source.hasAttribute("handle"):
+		handle = source.getAttribute("handle")
+	if source.hasAttribute("change"):
+		change = source.getAttribute("change")
+	if source.hasAttribute("id"):
+		id = source.getAttribute("id")
     
-    s = Source(handle, id)
+	s = Source(handle, id)
 
-    if len(source.getElementsByTagName('stitle') ) == 1:
-        source_stitle = source.getElementsByTagName('stitle')[0]
-        s.stitle = source_stitle.childNodes[0].data
+	if len(source.getElementsByTagName('stitle') ) == 1:
+		source_stitle = source.getElementsByTagName('stitle')[0]
+		s.stitle = source_stitle.childNodes[0].data
 
-    if len(source.getElementsByTagName('noteref') ) == 1:
-        source_noteref = source.getElementsByTagName('noteref')[0]
-        if source_noteref.hasAttribute("hlink"):
-            s.noteref_hlink = source_noteref.getAttribute("hlink")
+	if len(source.getElementsByTagName('noteref') ) == 1:
+		source_noteref = source.getElementsByTagName('noteref')[0]
+		if source_noteref.hasAttribute("hlink"):
+			s.noteref_hlink = source_noteref.getAttribute("hlink")
 
-    if len(source.getElementsByTagName('reporef') ) == 1:
-        source_reporef = source.getElementsByTagName('reporef')[0]
-        if source_reporef.hasAttribute("hlink"):
-            s.reporef_hlink = source_reporef.getAttribute("hlink")
-    
-    s.print()
-
-
+	if len(source.getElementsByTagName('reporef') ) == 1:
+		source_reporef = source.getElementsByTagName('reporef')[0]
+		if source_reporef.hasAttribute("hlink"):
+			s.reporef_hlink = source_reporef.getAttribute("hlink")
+            
+#	s.save()
+	
 #------------------------------------------------------------------------
 
 # Get all the places in the collection
@@ -280,7 +279,7 @@ for placeobj in places:
         if placeobj_placeref.hasAttribute("hlink"):
             place.placeref_hlink = placeobj_placeref.getAttribute("hlink")
             
-    place.print()
+#    place.save()
 
 #------------------------------------------------------------------------
 
@@ -308,7 +307,7 @@ for repository in repositories:
         repository_type = repository.getElementsByTagName('type')[0]
         r.type =  repository_type.childNodes[0].data
 
-    r.print()
+    r.save()
 
 #------------------------------------------------------------------------
 
@@ -334,5 +333,5 @@ for note in notes:
         note_text = note.getElementsByTagName('text')[0]
         n.text = note_text.childNodes[0].data
         
-    n.print()
+    n.save()
 
