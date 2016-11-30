@@ -298,6 +298,9 @@ for placeobj in places:
             place.placeref_hlink = placeobj_placeref.getAttribute("hlink")
             
     place.save()
+    
+    # There can be so many individs to store that Cypher needs a pause
+    time.sleep(0.1)
 
 #------------------------------------------------------------------------
 
@@ -326,6 +329,9 @@ for repository in repositories:
         r.type =  repository_type.childNodes[0].data
 
     r.save()
+    
+    # There can be so many individs to store that Cypher needs a pause
+    time.sleep(0.1)
 
 #------------------------------------------------------------------------
 
@@ -352,4 +358,7 @@ for note in notes:
         n.text = note_text.childNodes[0].data
         
     n.save()
+    
+    # There can be so many individs to store that Cypher needs a pause
+    time.sleep(0.1)
 
