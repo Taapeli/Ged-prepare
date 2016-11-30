@@ -72,6 +72,16 @@ class Citation:
         if self.sourceref_hlink != '':
             print ("Sourceref_hlink: " + self.sourceref_hlink)
         return True
+        
+    def tell(self):
+        """ Tulostaa lähteiden paikkojen määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (c:Citation) RETURN COUNT(c)
+            """
+        return session.run(query)
 
 class Event:
     """ Tapahtuma
@@ -111,6 +121,17 @@ class Event:
         print ("Place_hlink: " + self.place_hlink)
         print ("Citationref_hlink: " + self.citationref_hlink)
         return True
+        
+    def tell(self):
+        """ Tulostaa eventtien määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (e:Event) RETURN COUNT(e)
+            """
+        return session.run(query)
+   
 
 class Family:
     """ Perhe
@@ -181,6 +202,16 @@ class Family:
             for i in range(len(self.childref_hlink)):
                 print ("Childref_hlink: " + self.childref_hlink[i])
         return True
+        
+    def tell(self):
+        """ Tulostaa perheiden määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (f:Family) RETURN COUNT(f)
+            """
+        return session.run(query)
 
 class Note:
     """ Huomautus
@@ -218,6 +249,16 @@ class Note:
         print ("Type: " + self.type)
         print ("Text: " + self.text)
         return True
+        
+    def tell(self):
+        """ Tulostaa huomautusten määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (n:Note) RETURN COUNT(n)
+            """
+        return session.run(query)
 
 class Person:
     """ Henkilö
@@ -344,6 +385,16 @@ class Person:
             for i in range(len(self.citationref_hlink)):
                 print ("Citationref_hlink: " + self.citationref_hlink[i])
         return True
+        
+    def tell(self):
+        """ Tulostaa henkilöiden määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (p:Person) RETURN COUNT(p)
+            """
+        return session.run(query)
 
 class Place:
     """ Paikka
@@ -393,6 +444,16 @@ class Place:
         if self.placeref_hlink != '':
             print ("Placeref_hlink: " + self.placeref_hlink)
         return True
+        
+    def tell(self):
+        """ Tulostaa paikkojen määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (p:Place) RETURN COUNT(p)
+            """
+        return session.run(query)
 
 class Repository:
     """ Arkisto
@@ -405,11 +466,10 @@ class Repository:
 
      """
 
-    def __init__(self, handle, pid, ptype):
+    def __init__(self, handle, pid):
         """ Luo uuden repository-instanssin """
         self.handle = handle
         self.id = pid
-        self.type = ptype
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -431,6 +491,16 @@ class Repository:
         print ("Rname: " + self.rname)
         print ("Type: " + self.type)
         return True
+        
+    def tell(self):
+        """ Tulostaa arkistojen määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (r:Repository) RETURN COUNT(r)
+            """
+        return session.run(query)
 
 class Source:
     """ Lähde
@@ -475,3 +545,13 @@ class Source:
         if self.reporef_hlink != '':
             print ("Reporef_hlink: " + self.reporef_hlink)
         return True
+        
+    def tell(self):
+        """ Tulostaa lähteiden määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (s:Source) RETURN COUNT(s)
+            """
+        return session.run(query)

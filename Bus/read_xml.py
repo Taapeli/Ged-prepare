@@ -51,6 +51,10 @@ for event in events:
     # There can be so many individs to store that Cypher needs a pause
     time.sleep(0.1)
 
+e = Event("handle", "id")
+results = e.tell()
+for result in results:
+    print("Number of events in db: " + str(result[0]))
 
 #------------------------------------------------------------------------
 
@@ -103,6 +107,11 @@ for family in families:
     
     # There can be so many individs to store that Cypher needs a pause
     time.sleep(0.1)
+
+f = Family("handle", "id")
+results = f.tell()
+for result in results:
+    print("Number of families in db: " + str(result[0]))
 
 
 #------------------------------------------------------------------------
@@ -176,6 +185,11 @@ for person in people:
     # There can be so many individs to store that Cypher needs a pause
     time.sleep(0.1)
 
+p = Person("handle", "id")
+results = p.tell()
+for result in results:
+    print("Number of people in db: " + str(result[0]))
+
 
 #------------------------------------------------------------------------
 
@@ -223,6 +237,11 @@ for citation in citations:
     # There can be so many individs to store that Cypher needs a pause
     time.sleep(0.1)
 
+c = Citation("handle", "id")
+results = c.tell()
+for result in results:
+    print("Number of citations in db: " + str(result[0]))
+
 
 #------------------------------------------------------------------------
 
@@ -260,6 +279,11 @@ for source in sources:
     
     # There can be so many individs to store that Cypher needs a pause
     time.sleep(0.1)
+
+s = Source("handle", "id")
+results = s.tell()
+for result in results:
+    print("Number of sources in db: " + str(result[0]))
 
 
 #------------------------------------------------------------------------
@@ -302,6 +326,12 @@ for placeobj in places:
     # There can be so many individs to store that Cypher needs a pause
     time.sleep(0.1)
 
+p = Place("handle", "id", "type")
+results = p.tell()
+for result in results:
+    print("Number of places in db: " + str(result[0]))
+
+
 #------------------------------------------------------------------------
 
 # Get all the repositories in the collection
@@ -318,7 +348,7 @@ for repository in repositories:
     if repository.hasAttribute("id"):
         id = repository.getAttribute("id")
     
-    r = Repository(handle, id, type)
+    r = Repository(handle, id)
 
     if len(repository.getElementsByTagName('rname') ) == 1:
         repository_rname = repository.getElementsByTagName('rname')[0]
@@ -332,6 +362,12 @@ for repository in repositories:
     
     # There can be so many individs to store that Cypher needs a pause
     time.sleep(0.1)
+
+r = Repository("handle", "id")
+results = r.tell()
+for result in results:
+    print("Number of repositories in db: " + str(result[0]))
+
 
 #------------------------------------------------------------------------
 
@@ -361,4 +397,9 @@ for note in notes:
     
     # There can be so many individs to store that Cypher needs a pause
     time.sleep(0.1)
+
+n = Note("handle", "id",  "type")
+results = n.tell()
+for result in results:
+    print("Number of notes in db: " + str(result[0]))
 
