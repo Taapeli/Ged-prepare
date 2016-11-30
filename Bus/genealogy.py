@@ -38,7 +38,8 @@ class Citation:
                 handle          
                 id              esim. "C0001"
                 confidence      str confidence
-                sourceid        str lähteen osoite
+                noteref_hlink   str huomautuksen osoite
+                sourceid_hlink  str lähteen osoite
      """
 
     def __init__(self, handle, pid):
@@ -223,16 +224,16 @@ class Person:
             
         Properties:
                 handle          
-                id              esim. "I0001"
-                gender          str sukupuoli
-                alt             str muun nimen nro
-                type            str nimen tyyppi
-                first           str etunimi
-                surname         str sukunimi
-                suffix          str patronyymi
-                eventref        str tapahtuman osoite
-                parentin        str vanhempien osoite
-                citationref     str lähteen paikan osoite
+                id                 esim. "I0001"
+                gender             str sukupuoli
+                alt                str muun nimen nro
+                type               str nimen tyyppi
+                first              str etunimi
+                surname            str sukunimi
+                suffix             str patronyymi
+                eventref_hlink     str tapahtuman osoite
+                parentin_hlink     str vanhempien osoite
+                citationref_hlink  str lähteen paikan osoite
      """
 
     def __init__(self, handle, pid):
@@ -254,23 +255,58 @@ class Person:
 
         global session
         
+        if len(self.alt) > 0:
+            p_alt = self.alt[0]
+        else:
+            p_alt = ''
+        
+        if len(self.type) > 0:
+            p_type = self.type[0]
+        else:
+            p_type = ''
+        
         if len(self.first) > 0:
             p_first = self.first[0]
         else:
             p_first = ''
+            
         if len(self.surname) > 0:
             p_surname = self.surname[0]
         else:
             p_surname = ''
+            
         if len(self.suffix) > 0:
             p_suffix = self.suffix[0]
         else:
             p_suffix = ''
             
+        if len(self.eventref_role) > 0:
+            p_eventref_role = self.eventref_role[0]
+        else:
+            p_eventref_role = ''
+            
+        if len(self.eventref_hlink) > 0:
+            p_eventref_hlink = self.eventref_hlink[0]
+        else:
+            p_eventref_hlink = ''
+            
+        if len(self.parentin_hlink) > 0:
+            p_parentin_hlink = self.parentin_hlink[0]
+        else:
+            p_parentin_hlink = ''
+            
+        if len(self.citationref_hlink) > 0:
+            p_citationref_hlink = self.citationref_hlink[0]
+        else:
+            p_citationref_hlink = ''
+
+            
         query = """
             CREATE (p:Person) 
-            SET p.handle='{}', p.id='{}', p.gender='{}', p.first='{}', p.surname='{}', p.suffix='{}'
-            """.format(self.handle, self.id, self.gender, p_first, p_surname, p_suffix)
+            SET p.handle='{}', p.id='{}', p.gender='{}', p.alt='{}', p.type='{}', p.first='{}', p.surname='{}',
+            p.suffix='{}', p.eventref_role='{}', p.eventref_hlink='{}', p.parentin_hlink='{}', p.citationref_hlink='{}'
+            """.format(self.handle, self.id, self.gender, p_alt, p_type, p_first, p_surname, p_suffix,\
+            p_eventref_role,  p_eventref_hlink,  p_parentin_hlink,  p_citationref_hlink)
             
         return session.run(query)
 
@@ -340,8 +376,8 @@ class Place:
             
         query = """
             CREATE (p:Place) 
-            SET p.handle='{}', p.id='{}', p.type='{}', p.pname='{}'
-            """.format(self.handle, self.id, self.type, p_pname)
+            SET p.handle='{}', p.id='{}', p.type='{}', p.pname='{}', p.placeref_hlink='{}'
+            """.format(self.handle, self.id, self.type, p_pname,  self.placeref_hlink)
             
         return session.run(query)
 
@@ -422,8 +458,8 @@ class Source:
             
         query = """
             CREATE (s:Source) 
-            SET s.handle='{}', s.id='{}'
-            """.format(self.handle, self.id)
+            SET s.handle='{}', s.id='{}', s.stitle='{}', s.noteref_hlink='{}', s.reporef_hlink='{}'
+            """.format(self.handle, self.id, self.stitle, self.noteref_hlink, self.reporef_hlink)
             
         return session.run(query)
 
