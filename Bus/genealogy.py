@@ -32,7 +32,7 @@ def connect_db():
     return driver.url
 
 class Citation:
-    """ Lähteen paikka
+    """ Viittaus
             
         Properties:
                 handle          
@@ -92,7 +92,7 @@ class Event:
                 type               esim. "Birth"
                 date               str aika
                 place_hlink        str paikan osoite
-                citationref_hlink  str lähteen paikan osoite
+                citationref_hlink  str viittauksen osoite
      """
 
     def __init__(self, handle, pid):
@@ -274,7 +274,7 @@ class Person:
                 suffix             str patronyymi
                 eventref_hlink     str tapahtuman osoite
                 parentin_hlink     str vanhempien osoite
-                citationref_hlink  str lähteen paikan osoite
+                citationref_hlink  str viittauksen osoite
      """
 
     def __init__(self, handle, pid):
@@ -510,7 +510,7 @@ class Source:
                 id              esim. "S0001"
                 stitle          str lähteen otsikko
                 noteref_hlink   str huomautuksen osoite
-                reporef_hlink   str repositoryn osoite
+                reporef_hlink   str arkiston osoite
      """
 
     def __init__(self, handle, pid):
