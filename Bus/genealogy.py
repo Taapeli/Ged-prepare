@@ -56,7 +56,7 @@ class Citation:
                 
         query = """
             CREATE (c:Citation) 
-            SET c.handle='{}', c.id='{}', c.confidence='{}', c.noteref_hlink='{}', c.sourceref_hlink='{}'
+            SET c.gramps_handle='{}', c.id='{}', c.confidence='{}', c.noteref_hlink='{}', c.sourceref_hlink='{}'
             """.format(self.handle, self.id, self.confidence, self.noteref_hlink, self.sourceref_hlink)
             
         return session.run(query)
@@ -107,7 +107,7 @@ class Event:
                 
         query = """
             CREATE (e:Event) 
-            SET e.handle='{}', e.id='{}', e.type='{}', e.date='{}', e.place_hlink='{}', e.citationref_hlink='{}'
+            SET e.gramps_handle='{}', e.id='{}', e.type='{}', e.date='{}', e.place_hlink='{}', e.citationref_hlink='{}'
             """.format(self.handle, self.id, self.type, self.date, self.place_hlink, self.citationref_hlink)
             
         return session.run(query)
@@ -177,7 +177,7 @@ class Family:
             
         query = """
             CREATE (f:Family) 
-            SET f.handle='{}', f.id='{}', f.rel_type='{}', f.father='{}', f.mother='{}', f.eventref_hlink='{}',
+            SET f.gramps_handle='{}', f.id='{}', f.rel_type='{}', f.father='{}', f.mother='{}', f.eventref_hlink='{}',
             f.eventref_role='{}', f.childref_hlink='{}'
             """.format(self.handle, self.id, self.rel_type, self.father, self.mother, p_eventref_hlink,\
                         p_eventref_role, p_childref_hlink)
@@ -236,7 +236,7 @@ class Note:
             
         query = """
             CREATE (n:Note) 
-            SET n.handle='{}', n.id='{}', n.type='{}', n.text='{}'
+            SET n.gramps_handle='{}', n.id='{}', n.type='{}', n.text='{}'
             """.format(self.handle, self.id, self.type, self.text)
             
         return session.run(query)
@@ -344,7 +344,7 @@ class Person:
             
         query = """
             CREATE (p:Person) 
-            SET p.handle='{}', p.id='{}', p.gender='{}', p.alt='{}', p.type='{}', p.first='{}', p.surname='{}',
+            SET p.gramps_handle='{}', p.id='{}', p.gender='{}', p.alt='{}', p.type='{}', p.first='{}', p.surname='{}',
             p.suffix='{}', p.eventref_role='{}', p.eventref_hlink='{}', p.parentin_hlink='{}', p.citationref_hlink='{}'
             """.format(self.handle, self.id, self.gender, p_alt, p_type, p_first, p_surname, p_suffix,\
             p_eventref_role,  p_eventref_hlink,  p_parentin_hlink,  p_citationref_hlink)
@@ -427,7 +427,7 @@ class Place:
             
         query = """
             CREATE (p:Place) 
-            SET p.handle='{}', p.id='{}', p.type='{}', p.pname='{}', p.placeref_hlink='{}'
+            SET p.gramps_handle='{}', p.id='{}', p.type='{}', p.pname='{}', p.placeref_hlink='{}'
             """.format(self.handle, self.id, self.type, p_pname,  self.placeref_hlink)
             
         return session.run(query)
@@ -478,7 +478,7 @@ class Repository:
             
         query = """
             CREATE (r:Repository) 
-            SET r.handle='{}', r.id='{}', r.rname='{}', r.type='{}'
+            SET r.gramps_handle='{}', r.id='{}', r.rname='{}', r.type='{}'
             """.format(self.handle, self.id, self.rname, self.type)
             
         return session.run(query)
@@ -528,7 +528,7 @@ class Source:
             
         query = """
             CREATE (s:Source) 
-            SET s.handle='{}', s.id='{}', s.stitle='{}', s.noteref_hlink='{}', s.reporef_hlink='{}'
+            SET s.gramps_handle='{}', s.id='{}', s.stitle='{}', s.noteref_hlink='{}', s.reporef_hlink='{}'
             """.format(self.handle, self.id, self.stitle, self.noteref_hlink, self.reporef_hlink)
             
         return session.run(query)
