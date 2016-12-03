@@ -36,10 +36,10 @@ class Citation:
             
         Properties:
                 handle          
-                id              esim. "C0001"
-                confidence      str confidence
-                noteref_hlink   str huomautuksen osoite
-                sourceid_hlink  str lähteen osoite
+                id               esim. "C0001"
+                confidence       str confidence
+                noteref_hlink    str huomautuksen osoite
+                sourceref_hlink  str lähteen osoite
      """
 
     def __init__(self, handle, pid):
@@ -53,13 +53,36 @@ class Citation:
         """ Tallettaa sen kantaan """
 
         global session
-                
+
+        # Create a new Citation node
+
         query = """
-            CREATE (c:Citation) 
-            SET c.gramps_handle='{}', c.id='{}', c.confidence='{}', c.noteref_hlink='{}', c.sourceref_hlink='{}'
-            """.format(self.handle, self.id, self.confidence, self.noteref_hlink, self.sourceref_hlink)
+            CREATE (n:Citation) 
+            SET n.gramps_handle='{}', n.id='{}', n.confidence='{}'
+            """.format(self.handle, self.id, self.confidence)
             
-        return session.run(query)
+        session.run(query)
+ 
+        # Make possible relations from the Citation node
+   
+        if self.noteref_hlink != '':
+            query = """
+                MATCH (n:Citation) WHERE n.gramps_handle='{}'
+                MATCH (m:Source) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:SOURCE]->(m)
+                 """.format(self.handle, self.noteref_hlink)
+                             
+            session.run(query)
+   
+        if self.sourceref_hlink != '':
+            query = """
+                MATCH (n:Citation) WHERE n.gramps_handle='{}'
+                MATCH (m:Source) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:SOURCE]->(m)
+                 """.format(self.handle, self.sourceref_hlink)
+                             
+            session.run(query)
+        return
 
     def print(self):
         """ Tulostaa tiedot """
@@ -107,10 +130,32 @@ class Event:
                 
         query = """
             CREATE (e:Event) 
-            SET e.gramps_handle='{}', e.id='{}', e.type='{}', e.date='{}', e.place_hlink='{}', e.citationref_hlink='{}'
-            """.format(self.handle, self.id, self.type, self.date, self.place_hlink, self.citationref_hlink)
+            SET e.gramps_handle='{}', e.id='{}', e.type='{}', e.date='{}'
+            """.format(self.handle, self.id, self.type, self.date)
             
-        return session.run(query)
+        session.run(query)
+
+        # Make possible relations from the Event node
+   
+        if self.place_hlink != '':
+            query = """
+                MATCH (n:Event) WHERE n.gramps_handle='{}'
+                MATCH (m:Place) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:PLACE]->(m)
+                 """.format(self.handle, self.place_hlink)
+                             
+            session.run(query)
+   
+        if self.citationref_hlink != '':
+            query = """
+                MATCH (n:Event) WHERE n.gramps_handle='{}'
+                MATCH (m:Citation) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:CITATION]->(m)
+                 """.format(self.handle, self.citationref_hlink)
+                             
+            session.run(query)
+            
+        return
 
     def print(self):
         """ Tulostaa tiedot """
@@ -159,30 +204,57 @@ class Family:
         """ Tallettaa sen kantaan """
 
         global session
-
-        if len(self.eventref_hlink) == 0:
-            p_eventref_hlink = ''
-        else:
-            p_eventref_hlink = self.eventref_hlink[0]
-
-        if len(self.eventref_role) == 0:
-            p_eventref_role = ''
-        else:
-            p_eventref_role = self.eventref_role[0]
-
-        if len(self.childref_hlink) == 0:
-            p_childref_hlink = ''
-        else:
-            p_childref_hlink = self.childref_hlink[0]
             
         query = """
             CREATE (f:Family) 
-            SET f.gramps_handle='{}', f.id='{}', f.rel_type='{}', f.father='{}', f.mother='{}', f.eventref_hlink='{}',
-            f.eventref_role='{}', f.childref_hlink='{}'
-            """.format(self.handle, self.id, self.rel_type, self.father, self.mother, p_eventref_hlink,\
-                        p_eventref_role, p_childref_hlink)
+            SET f.gramps_handle='{}', f.id='{}', f.rel_type='{}'
+            """.format(self.handle, self.id, self.rel_type)
             
-        return session.run(query)
+        session.run(query)
+
+        # Make possible relations from the Family node
+   
+        if self.father != '':
+            query = """
+                MATCH (n:Family) WHERE n.gramps_handle='{}'
+                MATCH (m:Person) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:FATHER]->(m)
+                 """.format(self.handle, self.father)
+                             
+            session.run(query)
+   
+        if self.mother != '':
+            query = """
+                MATCH (n:Family) WHERE n.gramps_handle='{}'
+                MATCH (m:Person) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:MOTHER]->(m)
+                 """.format(self.handle, self.mother)
+                             
+            session.run(query)
+   
+        if len(self.eventref_hlink) > 0:
+            query = """
+                MATCH (n:Family) WHERE n.gramps_handle='{}'
+                MATCH (m:Event) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:EVENT]->(m)
+                 """.format(self.handle, self.eventref_hlink[0])
+                             
+            session.run(query)
+            
+            
+        # Add eventref_role!!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+   
+   
+        if len(self.childref_hlink) > 0:
+            query = """
+                MATCH (n:Family) WHERE n.gramps_handle='{}'
+                MATCH (m:Person) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:CHILD]->(m)
+                 """.format(self.handle, self.childref_hlink[0])
+                             
+            session.run(query)
+            
+        return
 
     def print(self):
         """ Tulostaa tiedot """
@@ -321,35 +393,47 @@ class Person:
         else:
             p_suffix = ''
             
-        if len(self.eventref_role) > 0:
-            p_eventref_role = self.eventref_role[0]
-        else:
-            p_eventref_role = ''
-            
-        if len(self.eventref_hlink) > 0:
-            p_eventref_hlink = self.eventref_hlink[0]
-        else:
-            p_eventref_hlink = ''
-            
-        if len(self.parentin_hlink) > 0:
-            p_parentin_hlink = self.parentin_hlink[0]
-        else:
-            p_parentin_hlink = ''
-            
-        if len(self.citationref_hlink) > 0:
-            p_citationref_hlink = self.citationref_hlink[0]
-        else:
-            p_citationref_hlink = ''
-
-            
         query = """
             CREATE (p:Person) 
             SET p.gramps_handle='{}', p.id='{}', p.gender='{}', p.alt='{}', p.type='{}', p.first='{}', p.surname='{}',
-            p.suffix='{}', p.eventref_role='{}', p.eventref_hlink='{}', p.parentin_hlink='{}', p.citationref_hlink='{}'
-            """.format(self.handle, self.id, self.gender, p_alt, p_type, p_first, p_surname, p_suffix,\
-            p_eventref_role,  p_eventref_hlink,  p_parentin_hlink,  p_citationref_hlink)
+            p.suffix='{}'
+            """.format(self.handle, self.id, self.gender, p_alt, p_type, p_first, p_surname, p_suffix)
             
-        return session.run(query)
+        session.run(query)
+
+        # Make possible relations from the Person node
+   
+        if len(self.eventref_hlink) > 0:
+            query = """
+                MATCH (n:Person) WHERE n.gramps_handle='{}'
+                MATCH (m:Event) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:EVENT]->(m)
+                 """.format(self.handle, self.eventref_hlink[0])
+                             
+            session.run(query)
+            
+            
+        # Add eventref_role!!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+   
+   
+        if len(self.parentin_hlink) > 0:
+            query = """
+                MATCH (n:Person) WHERE n.gramps_handle='{}'
+                MATCH (m:Family) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:FAMILY]->(m)
+                 """.format(self.handle, self.parentin_hlink[0])
+                             
+            session.run(query)
+   
+        if len(self.citationref_hlink) > 0:
+            query = """
+                MATCH (n:Person) WHERE n.gramps_handle='{}'
+                MATCH (m:Citation) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:CITATION]->(m)
+                 """.format(self.handle, self.citationref_hlink[0])
+                             
+            session.run(query)
+        return
 
     def print(self):
         """ Tulostaa tiedot """
@@ -427,10 +511,22 @@ class Place:
             
         query = """
             CREATE (p:Place) 
-            SET p.gramps_handle='{}', p.id='{}', p.type='{}', p.pname='{}', p.placeref_hlink='{}'
-            """.format(self.handle, self.id, self.type, p_pname,  self.placeref_hlink)
+            SET p.gramps_handle='{}', p.id='{}', p.type='{}', p.pname='{}'
+            """.format(self.handle, self.id, self.type, p_pname)
             
-        return session.run(query)
+        session.run(query)
+
+        # Make possible relations from the Person node
+   
+        if len(self.placeref_hlink) > 0:
+            query = """
+                MATCH (n:Place) WHERE n.gramps_handle='{}'
+                MATCH (m:Place) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:HIERARCY]->(m)
+                 """.format(self.handle, self.placeref_hlink)
+                             
+            session.run(query)
+        return
 
     def print(self):
         """ Tulostaa tiedot """
@@ -528,10 +624,31 @@ class Source:
             
         query = """
             CREATE (s:Source) 
-            SET s.gramps_handle='{}', s.id='{}', s.stitle='{}', s.noteref_hlink='{}', s.reporef_hlink='{}'
-            """.format(self.handle, self.id, self.stitle, self.noteref_hlink, self.reporef_hlink)
+            SET s.gramps_handle='{}', s.id='{}', s.stitle='{}'
+            """.format(self.handle, self.id, self.stitle)
             
-        return session.run(query)
+        session.run(query)
+ 
+        # Make possible relations from the Source node
+   
+        if self.noteref_hlink != '':
+            query = """
+                MATCH (n:Source) WHERE n.gramps_handle='{}'
+                MATCH (m:Note) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:NOTE]->(m)
+                 """.format(self.handle, self.noteref_hlink)
+                             
+            session.run(query)
+   
+        if self.reporef_hlink != '':
+            query = """
+                MATCH (n:Source) WHERE n.gramps_handle='{}'
+                MATCH (m:Repository) WHERE m.gramps_handle='{}'
+                MERGE (n)-[r:REPOSITORY]->(m)
+                 """.format(self.handle, self.reporef_hlink)
+                             
+            session.run(query)
+        return
 
     def print(self):
         """ Tulostaa tiedot """
@@ -555,3 +672,4 @@ class Source:
             MATCH (s:Source) RETURN COUNT(s)
             """
         return session.run(query)
+    
