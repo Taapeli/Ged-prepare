@@ -122,12 +122,15 @@ class Event:
         """ Luo uuden event-instanssin """
         self.handle = handle
         self.id = pid
+        self.date = ''
+        self.place_hlink = ''
+        self.citationref_hlink = ''
 
     def save(self):
         """ Tallettaa sen kantaan """
 
         global session
-                
+              
         query = """
             CREATE (e:Event) 
             SET e.gramps_handle='{}', e.id='{}', e.type='{}', e.date='{}'
@@ -206,8 +209,8 @@ class Family:
         global session
             
         query = """
-            CREATE (f:Family) 
-            SET f.gramps_handle='{}', f.id='{}', f.rel_type='{}'
+            CREATE (n:Family) 
+            SET n.gramps_handle='{}', n.id='{}', n.rel_type='{}'
             """.format(self.handle, self.id, self.rel_type)
             
         session.run(query)
@@ -233,26 +236,32 @@ class Family:
             session.run(query)
    
         if len(self.eventref_hlink) > 0:
-            query = """
-                MATCH (n:Family) WHERE n.gramps_handle='{}'
-                MATCH (m:Event) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:EVENT]->(m)
-                 """.format(self.handle, self.eventref_hlink[0])
+            for i in range(len(self.eventref_hlink)):
+                query = """
+                    MATCH (n:Family) WHERE n.gramps_handle='{}'
+                    MATCH (m:Event) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:EVENT]->(m)
+                     """.format(self.handle, self.eventref_hlink[i])
                              
-            session.run(query)
-            
-            
-        # Add eventref_role!!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-   
+                session.run(query)
+                
+                query = """
+                    MATCH (n:Family)-[r:EVENT]->(m:Event)
+                    WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
+                    SET r.role ='{}'
+                     """.format(self.handle, self.eventref_hlink[i], self.eventref_role[i])
+                             
+                session.run(query)
    
         if len(self.childref_hlink) > 0:
-            query = """
-                MATCH (n:Family) WHERE n.gramps_handle='{}'
-                MATCH (m:Person) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:CHILD]->(m)
-                 """.format(self.handle, self.childref_hlink[0])
+            for i in range(len(self.childref_hlink)):
+                query = """
+                    MATCH (n:Family) WHERE n.gramps_handle='{}'
+                    MATCH (m:Person) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:CHILD]->(m)
+                     """.format(self.handle, self.childref_hlink[i])
                              
-            session.run(query)
+                session.run(query)
             
         return
 
@@ -404,17 +413,22 @@ class Person:
         # Make possible relations from the Person node
    
         if len(self.eventref_hlink) > 0:
-            query = """
-                MATCH (n:Person) WHERE n.gramps_handle='{}'
-                MATCH (m:Event) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:EVENT]->(m)
-                 """.format(self.handle, self.eventref_hlink[0])
+            for i in range(len(self.eventref_hlink)):
+                query = """
+                    MATCH (n:Person) WHERE n.gramps_handle='{}'
+                    MATCH (m:Event) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:EVENT]->(m)
+                     """.format(self.handle, self.eventref_hlink[0])
                              
-            session.run(query)
+                session.run(query)
             
-            
-        # Add eventref_role!!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-   
+                query = """
+                    MATCH (n:Person)-[r:EVENT]->(m:Event)
+                    WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
+                    SET r.role ='{}'
+                     """.format(self.handle, self.eventref_hlink[i], self.eventref_role[i])
+                             
+                session.run(query)
    
         if len(self.parentin_hlink) > 0:
             query = """
