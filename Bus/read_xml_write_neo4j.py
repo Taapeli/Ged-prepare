@@ -23,11 +23,11 @@ for note in notes:
     if note.hasAttribute("change"):
         change = note.getAttribute("change")
     if note.hasAttribute("id"):
-        id = note.getAttribute("id")
+        pid = note.getAttribute("id")
     if note.hasAttribute("type"):
-        type = note.getAttribute("type")
+        ptype = note.getAttribute("type")
     
-    n = Note(handle, id, type)
+    n = Note(handle, pid, ptype)
 
     if len(note.getElementsByTagName('text') ) == 1:
         note_text = note.getElementsByTagName('text')[0]
@@ -57,9 +57,9 @@ for repository in repositories:
     if repository.hasAttribute("change"):
         change = repository.getAttribute("change")
     if repository.hasAttribute("id"):
-        id = repository.getAttribute("id")
+        pid = repository.getAttribute("id")
     
-    r = Repository(handle, id)
+    r = Repository(handle, pid)
 
     if len(repository.getElementsByTagName('rname') ) == 1:
         repository_rname = repository.getElementsByTagName('rname')[0]
@@ -93,11 +93,11 @@ for placeobj in places:
     if placeobj.hasAttribute("change"):
         change = placeobj.getAttribute("change")
     if placeobj.hasAttribute("id"):
-        id = placeobj.getAttribute("id")
+        pid = placeobj.getAttribute("id")
     if placeobj.hasAttribute("type"):
-        type = placeobj.getAttribute("type")
+        ptype = placeobj.getAttribute("type")
     
-    place = Place(handle, id, type)
+    place = Place(handle, pid, ptype)
 
     if len(placeobj.getElementsByTagName('ptitle') ) == 1:
         placeobj_ptitle = placeobj.getElementsByTagName('ptitle')[0]
@@ -138,9 +138,9 @@ for source in sources:
     if source.hasAttribute("change"):
         change = source.getAttribute("change")
     if source.hasAttribute("id"):
-        id = source.getAttribute("id")
+        pid = source.getAttribute("id")
 
-    s = Source(handle, id)
+    s = Source(handle, pid)
 
     if len(source.getElementsByTagName('stitle') ) == 1:
         source_stitle = source.getElementsByTagName('stitle')[0]
@@ -180,9 +180,9 @@ for citation in citations:
     if citation.hasAttribute("change"):
         change = citation.getAttribute("change")
     if citation.hasAttribute("id"):
-        id = citation.getAttribute("id")
+        pid = citation.getAttribute("id")
     
-    c = Citation(handle, id)
+    c = Citation(handle, pid)
 
     if len(citation.getElementsByTagName('dateval') ) == 1:
         citation_dateval = citation.getElementsByTagName('dateval')[0]
@@ -232,9 +232,9 @@ for event in events:
     if event.hasAttribute("change"):
         change = event.getAttribute("change")
     if event.hasAttribute("id"):
-        id = event.getAttribute("id")
+        pid = event.getAttribute("id")
     
-    e = Event(handle, id)
+    e = Event(handle, pid)
 
     if len(event.getElementsByTagName('type') ) == 1:
         event_type = event.getElementsByTagName('type')[0]
@@ -279,9 +279,9 @@ for person in people:
     if person.hasAttribute("change"):
         change = person.getAttribute("change")
     if person.hasAttribute("id"):
-        id = person.getAttribute("id")
+        pid = person.getAttribute("id")
     
-    p = Person(handle, id)
+    p = Person(handle, pid)
 
     if len(person.getElementsByTagName('gender') ) == 1:
         person_gender = person.getElementsByTagName('gender')[0]
@@ -355,9 +355,9 @@ for family in families:
     if family.hasAttribute("change"):
         change = family.getAttribute("change")
     if family.hasAttribute("id"):
-        id = family.getAttribute("id")
+        pid = family.getAttribute("id")
     
-    f = Family(handle, id)
+    f = Family(handle, pid)
 
     if len(family.getElementsByTagName('rel') ) == 1:
         family_rel = family.getElementsByTagName('rel')[0]
