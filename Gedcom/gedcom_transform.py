@@ -113,7 +113,7 @@ def read_gedcom(args):
         level = int(tkns[0])
         tag = tkns[1]
         if level > len(curpath):
-            raise RuntimeError("Invalid level:"+line)
+            raise RuntimeError("Invalid level {}: {}".format(linenum,line))
         if level == len(curpath):
             curpath.append(tag)
         else:

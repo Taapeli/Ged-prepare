@@ -22,7 +22,7 @@ class PersonName(object):
     def add(self, path, tag, value):
         ''' Processes arguments of a gedcom line.
             Returns True, while the path is one of name definitions
-        Example:
+        Arguments example:
             path='@I0001@.NAME' 
             tag='NAME' 
             value='Antti /Puuhaara/'
@@ -60,6 +60,8 @@ class PersonName(object):
         elif tag == '_CALL':    # So called call name
             self.call = value
             return True
+        else:
+            return False
 
     def get_name(self): 
         return self.name
