@@ -6,19 +6,20 @@ Kari Kujansuu, 2016.
 
 The transforms are specified by separate Python modules ("plugins"). 
 
-The name of the plugin is passed as the first parameter. This can be the name of the Python file ("module.py") 
-or just the name of the module ("module"). In both case the .py file must be in the current directory
-or on the PYTHONPATH.
+Parameters of main():
+ 1. The name of the plugin. This can be the name of the Python file ("module.py") 
+    or just the name of the module ("module"). 
+    In both case the .py file must be in the current directory or on the PYTHONPATH.
 
-The second parameter is the name of the input GEDCOM file. This is also the name of the output file.
+ 2. The name of the input GEDCOM file. This is also the name of the output file.
 
-An optional --encoding parameter can be passed to specify the character encoding used to 
-read and write the GEDCOM files. The default is UTF-8.
-
-The optional parameter --display_changes can be specified to allow the plugins to
-show the modification. The plugin must implement the logic to do that.
- 
-The optional parameter --dryrun means that the changes are not saved and the input file is not modified.
+ 3. "--encoding" [optional] specifies the character encoding used to read and write
+    the GEDCOM files. The default is UTF-8.
+    
+ 4. "--display_changes" [optional] can be specified to allow the plugins to
+    show the modification. The plugin must implement the logic to do that.
+     
+ 5. "--dryrun" [optional] means that no changes are saved and the input file is not modified.
 
 If the --dryrun parameter is not specified then the original input file is
 renamed by adding a sequence number to the file name and the new version of
@@ -28,26 +29,31 @@ end of the program.
 A plugin may contain the following functions:
 
 - add_args(parser)            
-- initialize(args)
-- phase1(args,line,path,tag,value)
-- phase2(args)
-- phase3(args,line,path,tag,value,output_file)
-            
-Function phase1 and phase2 are optional - or they can be defined with an empty body (pass).
+- initialize(args)                      # Called once in the beginning of the transformation
+- phase1(args,line,path,tag,value)      # [optional] called once per GEDCOM line
+- phase2(args)                          # [optional] called between phase1 and phase2 
+- phase3(args,line,path,tag,value,output_file) 
+                                        # [optional] called once per GEDCOM line
 
-Function initialize is called once in the beginning of the transformation.
+The function "add_args" is called in the beginning of the program and it allows
+the plugin to add its own arguments for the program. The values of the arguments
+are stored in the "args" object that is passed to the other functions. 
 
-Function phase1 is called once for each line in the input GEDCOM file. It can be used to collect
-and store information about the GEDCOM to be used in the subsequent phases.
+Function "initialize" is called in the beginning of the transformation.
 
-Function phase2 is called once after phase1 but before phase2. 
+If function "phase1" is defined, it is called once for each line in the input GEDCOM file. 
+It can be used to collect information to be used in the subsequent phases.
 
-Function phase3 is called once for each line in the input GEDCOM file. It is called after phase2.
-This function should produce the output GEDCOM by calling output_file.emit
-for each line in the output file. If an input line is not modified then emit should
-be called with the original line as the parameter.
+Function "phase2" may be defined for processing all the information got from phase1
+before phase3.
 
-The parameters:
+Function "phase3" is called once for each line in the input GEDCOM file. 
+This function should produce the output GEDCOM by calling output_file.emit()
+for each line in the output file. 
+If an input line is not modified then emit should be called with the original line 
+as it's parameter.
+
+The parameters of each phases:
 - "args" is the object returned by ArgumentParser.parse_args.
 - "line" is the original line in the input GEDCOM (unicode string)
 - "path" is the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE representing the DATE tag
@@ -57,18 +63,11 @@ The parameters:
 - "output_file" is a file-like object containing the method emit(string) that is used to produce the output
 - "parser" is the ArgumentParser object of the argparse module
 
-The function add_args is called in the beginning of the program and it allows
-the plugin to add its own arguments for the program. The values of the arguments
-are stored in the "args" object that is passed to the other functions. 
-
 """
-
 
 import sys
 import os
 import argparse
-# from collections import defaultdict 
-# import re
 import tempfile 
 
 def numeric(s):
@@ -130,13 +129,16 @@ def process_gedcom(args,transformer):
 
     transformer.initialize(args)
     
+    # 1st traverse
     if hasattr(transformer,"phase1"):
         for line,path,tag,value in read_gedcom(args):
             transformer.phase1(args,line,path,tag,value)
 
+    # Intermediate processing of collected data
     if hasattr(transformer,"phase2"):
         transformer.phase2(args)
 
+    # 2nd traverse "phase3"
     with Output(args) as f:
         for line,path,tag,value in read_gedcom(args):
             transformer.phase3(args,line,path,tag,value,f)

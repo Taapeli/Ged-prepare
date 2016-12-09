@@ -37,11 +37,9 @@ Näillä ideoilla pyhäinpäivän keskellä
 
 
 """
-import sys
-import os
-import argparse
 from collections import defaultdict 
 import re
+from PIL.SpiderImagePlugin import outfile
 
 class FamInfo:
     husb = None
@@ -67,6 +65,9 @@ def initialize(args):
     pass
 
 def phase1(args,line,path,tag,value):
+    '''
+		1st traverse: finding all families
+    '''
     if path.endswith(".HUSB"):  # @fam@.HUSB @husb@
         parts = path.split(".")
         fam = parts[0]
@@ -89,6 +90,9 @@ def phase1(args,line,path,tag,value):
         fams[fam].place = value
 
 def phase2(args):
+    '''
+        Parse multiple places mentioned as marriage location: "loc1, (loc2, loc3)"
+    '''
     for fam,faminfo in fams.items():
         m = re.match(r"([^,]+), \(([^/]+)/([^/]+)\)",faminfo.place)
         if m:
@@ -98,12 +102,15 @@ def phase2(args):
             resi[faminfo.wife].append((wife_place,faminfo.date))
             fixedfams[fam] = m.group(1)
 
-def phase3(args,line,path,tag,value,f):
+def phase3(args,line,path,tag,value,m_outfile,f):
+    '''
+        2nd traverse: creating the new GEDCOM file
+    '''
     if value == "INDI":
-        id = line.split()[1]
-        if id in resi:
+        key = line.split()[1]
+        if key in resi:
             f.emit(line)
-            for place,date in resi[id]:
+            for place,date in resi[key]:
                 f.emit("1 RESI")
                 f.emit("2 TYPE marriage")
                 if date: f.emit("2 DATE " + date)
