@@ -14,17 +14,25 @@ class PersonName(object):
     - _CALL
     '''
     NONAME = 'N'   # Marker for missing name part
-
+    rows = []
 
     def __init__(self):
         pass
-            
-    def add(self, path, tag, value):
+
+    def __str__(self):
+        return "PersonName({})".format(self.get_name())
+
+    def appendRow(self, level, tag, value):
+        # Store a new row
+        self.rows.append("{} {} {}".format(level, tag, value))
+
+
+    def add(self, path, level, tag, value):
         ''' Processes arguments of a gedcom line.
             Returns True, while the path is one of name definitions
         Arguments example:
-            path='@I0001@.NAME' 
-            tag='NAME' 
+            path='@I0001@.NAME'
+            tag='NAME'
             value='Antti /Puuhaara/'
         '''
         if tag == 'NAME':
@@ -46,39 +54,51 @@ class PersonName(object):
                 else:
                     self.givn = self.NONAME
                 self.name = "{}/{}/{}".format(self.givn, self.surn, self.spfx)
+                self.appendRow(level, tag, self.name)
             return True
-        elif tag == 'GIVN': 
+        elif tag == 'GIVN':
             # TODO: Should compare the name parts from NAME tag to this given here!
             self.givn = value
+            self.appendRow(level, tag, self.name)
             return True
         elif tag == 'SURN':
             self.surn = value
+            self.appendRow(level, tag, self.name)
             return True
         elif tag == 'SPFX':
             self.spfx = value
+            self.appendRow(level, tag, self.name)
             return True
         elif tag == '_CALL':    # So called call name
             self.call = value
+            self.appendRow(level, tag, self.name)
             return True
         else:
+            self.appendRow(level, tag, self.name)
             return False
 
-    def get_name(self): 
-        return self.name
-    
-    def get_givn(self): 
+    def get_name(self):
+        try:
+            return self.name
+        except AttributeError:
+            return "<unknown>"
+
+    def get_givn(self):
         return self.givn
-    
-    def get_surn(self): 
+
+    def get_surn(self):
         return self.surn
-    
-    def get_spfx(self): 
+
+    def get_spfx(self):
         return self.spfx
-    
-    def get_call(self): 
+
+    def get_call(self):
         return self.call
-    
-    
+
+    def get_rows(self):
+        # Return all stored rows associated to this person name
+        return self.rows
+
 if __name__ == "__main__":
     myname = PersonName()
     myname.add('@I0001@.NAME', 'NAME', "Antti /Puuhaara/")
