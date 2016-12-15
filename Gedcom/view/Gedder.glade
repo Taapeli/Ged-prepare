@@ -190,6 +190,7 @@
                       <item id="places" translatable="yes">Paikat</item>
                       <item id="marriages" translatable="yes">Avioliitot</item>
                       <item id="kasteet" translatable="yes">Kasteet</item>
+                      <item id="orher_op" translatable="yes">Jotain muuta</item>
                     </items>
                     <signal name="changed" handler="opSelection_changed" swapped="no"/>
                   </object>
