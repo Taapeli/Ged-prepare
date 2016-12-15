@@ -36,7 +36,7 @@
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_menuFileOpen_activate" swapped="no"/>
+                        <signal name="activate" handler="on_file_open_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -53,6 +53,7 @@
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <property name="always_show_image">True</property>
+                        <signal name="activate" handler="onDeleteWindow" swapped="no"/>
                       </object>
                     </child>
                   </object>

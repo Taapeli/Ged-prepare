@@ -39,8 +39,22 @@ class Handler:
         rev = builder.get_object("revertButton")
         rev.set_sensitive(False)
     
-    def on_menuFileOpen_activate(self, button):
-        self.appedShow("Piti valita avattava tiedosto")
+    def on_file_open_activate(self, menuitem, data=None):
+        self.dialog = Gtk.FileChooserDialog("Open...",
+            None,
+            Gtk.FileChooserAction.OPEN, #Gtk.FILE_CHOOSER_ACTION_OPEN,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
+             #Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,  Gtk.STOCK_OPEN, Gtk.RESPONSE_OK))
+            )
+        self.response = self.dialog.run()
+        if self.response == Gtk.ResponseType.OK:
+            self.appedShow("Avataan: " + self.dialog.get_filename())
+            self.dialog.destroy()
+        else:
+            self.appedShow("Outo palaute {}".format(self.response))
+
+
 
 
 builder = Gtk.Builder()
