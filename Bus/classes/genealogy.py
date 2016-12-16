@@ -3,7 +3,7 @@
 from neo4j.v1 import GraphDatabase, basic_auth
 #from flask import flash
 #import logging
-#import sys
+from sys import stderr
 import config as dbconf      # Tietokannan tiedot
 
 def connect_db():
@@ -54,35 +54,44 @@ class Citation:
 
         global session
 
-        # Create a new Citation node
+        try:
+            # Create a new Citation node
+            query = """
+                CREATE (n:Citation) 
+                SET n.gramps_handle='{}', n.id='{}', n.confidence='{}'
+                """.format(self.handle, self.id, self.confidence)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
 
-        query = """
-            CREATE (n:Citation) 
-            SET n.gramps_handle='{}', n.id='{}', n.confidence='{}'
-            """.format(self.handle, self.id, self.confidence)
+        try:
+            # Make possible relations from the Citation node
+            if self.noteref_hlink != '':
+                query = """
+                    MATCH (n:Citation) WHERE n.gramps_handle='{}'
+                    MATCH (m:Source) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:SOURCE]->(m)
+                     """.format(self.handle, self.noteref_hlink)
+                                 
+                session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+
+        try:   
+            if self.sourceref_hlink != '':
+                query = """
+                    MATCH (n:Citation) WHERE n.gramps_handle='{}'
+                    MATCH (m:Source) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:SOURCE]->(m)
+                     """.format(self.handle, self.sourceref_hlink)
+                                 
+                session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
             
-        session.run(query)
- 
-        # Make possible relations from the Citation node
-   
-        if self.noteref_hlink != '':
-            query = """
-                MATCH (n:Citation) WHERE n.gramps_handle='{}'
-                MATCH (m:Source) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:SOURCE]->(m)
-                 """.format(self.handle, self.noteref_hlink)
-                             
-            session.run(query)
-   
-        if self.sourceref_hlink != '':
-            query = """
-                MATCH (n:Citation) WHERE n.gramps_handle='{}'
-                MATCH (m:Source) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:SOURCE]->(m)
-                 """.format(self.handle, self.sourceref_hlink)
-                             
-            session.run(query)
         return
+
 
     def print(self):
         """ Tulostaa tiedot """
@@ -105,6 +114,7 @@ class Citation:
             MATCH (c:Citation) RETURN COUNT(c)
             """
         return session.run(query)
+
 
 class Event:
     """ Tapahtuma
@@ -130,35 +140,44 @@ class Event:
         """ Tallettaa sen kantaan """
 
         global session
-              
-        query = """
-            CREATE (e:Event) 
-            SET e.gramps_handle='{}', e.id='{}', e.type='{}', e.date='{}'
-            """.format(self.handle, self.id, self.type, self.date)
-            
-        session.run(query)
 
-        # Make possible relations from the Event node
-   
-        if self.place_hlink != '':
+        try:
             query = """
-                MATCH (n:Event) WHERE n.gramps_handle='{}'
-                MATCH (m:Place) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:PLACE]->(m)
-                 """.format(self.handle, self.place_hlink)
-                             
+                CREATE (e:Event) 
+                SET e.gramps_handle='{}', e.id='{}', e.type='{}', e.date='{}'
+                """.format(self.handle, self.id, self.type, self.date)
+                
             session.run(query)
-   
-        if self.citationref_hlink != '':
-            query = """
-                MATCH (n:Event) WHERE n.gramps_handle='{}'
-                MATCH (m:Citation) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:CITATION]->(m)
-                 """.format(self.handle, self.citationref_hlink)
-                             
-            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+
+        try:
+            # Make possible relations from the Event node
+            if self.place_hlink != '':
+                query = """
+                    MATCH (n:Event) WHERE n.gramps_handle='{}'
+                    MATCH (m:Place) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:PLACE]->(m)
+                     """.format(self.handle, self.place_hlink)
+                                 
+                session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+
+        try:
+            if self.citationref_hlink != '':
+                query = """
+                    MATCH (n:Event) WHERE n.gramps_handle='{}'
+                    MATCH (m:Citation) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:CITATION]->(m)
+                     """.format(self.handle, self.citationref_hlink)
+                                 
+                session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
             
         return
+
 
     def print(self):
         """ Tulostaa tiedot """
@@ -169,6 +188,7 @@ class Event:
         print ("Place_hlink: " + self.place_hlink)
         print ("Citationref_hlink: " + self.citationref_hlink)
         return True
+        
         
     def tell(self):
         """ Tulostaa eventtien määrän tietokannassa """
@@ -207,61 +227,78 @@ class Family:
         """ Tallettaa sen kantaan """
 
         global session
-            
-        query = """
-            CREATE (n:Family) 
-            SET n.gramps_handle='{}', n.id='{}', n.rel_type='{}'
-            """.format(self.handle, self.id, self.rel_type)
-            
-        session.run(query)
 
-        # Make possible relations from the Family node
-   
-        if self.father != '':
+        try:
             query = """
-                MATCH (n:Family) WHERE n.gramps_handle='{}'
-                MATCH (m:Person) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:FATHER]->(m)
-                 """.format(self.handle, self.father)
-                             
-            session.run(query)
-   
-        if self.mother != '':
-            query = """
-                MATCH (n:Family) WHERE n.gramps_handle='{}'
-                MATCH (m:Person) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:MOTHER]->(m)
-                 """.format(self.handle, self.mother)
-                             
-            session.run(query)
-   
-        if len(self.eventref_hlink) > 0:
-            for i in range(len(self.eventref_hlink)):
-                query = """
-                    MATCH (n:Family) WHERE n.gramps_handle='{}'
-                    MATCH (m:Event) WHERE m.gramps_handle='{}'
-                    MERGE (n)-[r:EVENT]->(m)
-                     """.format(self.handle, self.eventref_hlink[i])
-                             
-                session.run(query)
+                CREATE (n:Family) 
+                SET n.gramps_handle='{}', n.id='{}', n.rel_type='{}'
+                """.format(self.handle, self.id, self.rel_type)
                 
-                query = """
-                    MATCH (n:Family)-[r:EVENT]->(m:Event)
-                    WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
-                    SET r.role ='{}'
-                     """.format(self.handle, self.eventref_hlink[i], self.eventref_role[i])
-                             
-                session.run(query)
-   
-        if len(self.childref_hlink) > 0:
-            for i in range(len(self.childref_hlink)):
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+
+        try:
+            # Make possible relations from the Family node
+            if self.father != '':
                 query = """
                     MATCH (n:Family) WHERE n.gramps_handle='{}'
                     MATCH (m:Person) WHERE m.gramps_handle='{}'
-                    MERGE (n)-[r:CHILD]->(m)
-                     """.format(self.handle, self.childref_hlink[i])
-                             
+                    MERGE (n)-[r:FATHER]->(m)
+                     """.format(self.handle, self.father)
+                                 
                 session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+
+        try:
+            if self.mother != '':
+                query = """
+                    MATCH (n:Family) WHERE n.gramps_handle='{}'
+                    MATCH (m:Person) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:MOTHER]->(m)
+                     """.format(self.handle, self.mother)
+                                 
+                session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+
+        if len(self.eventref_hlink) > 0:
+            for i in range(len(self.eventref_hlink)):
+                try:
+                    query = """
+                        MATCH (n:Family) WHERE n.gramps_handle='{}'
+                        MATCH (m:Event) WHERE m.gramps_handle='{}'
+                        MERGE (n)-[r:EVENT]->(m)
+                         """.format(self.handle, self.eventref_hlink[i])
+                                 
+                    session.run(query)
+                except Exception as err:
+                    print("Virhe: {0}".format(err), file=stderr)
+                
+                try:
+                    query = """
+                        MATCH (n:Family)-[r:EVENT]->(m:Event)
+                        WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
+                        SET r.role ='{}'
+                         """.format(self.handle, self.eventref_hlink[i], self.eventref_role[i])
+                                 
+                    session.run(query)
+                except Exception as err:
+                    print("Virhe: {0}".format(err), file=stderr)
+  
+        if len(self.childref_hlink) > 0:
+            for i in range(len(self.childref_hlink)):
+                try:
+                    query = """
+                        MATCH (n:Family) WHERE n.gramps_handle='{}'
+                        MATCH (m:Person) WHERE m.gramps_handle='{}'
+                        MERGE (n)-[r:CHILD]->(m)
+                         """.format(self.handle, self.childref_hlink[i])
+                                 
+                    session.run(query)
+                except Exception as err:
+                    print("Virhe: {0}".format(err), file=stderr)
             
         return
 
@@ -333,13 +370,16 @@ class Note:
         """ Tallettaa sen kantaan """
 
         global session
-            
-        query = """
-            CREATE (n:Note) 
-            SET n.gramps_handle='{}', n.id='{}', n.type='{}', n.text='{}'
-            """.format(self.handle, self.id, self.type, self.text)
-            
-        return session.run(query)
+
+        try:
+            query = """
+                CREATE (n:Note) 
+                SET n.gramps_handle='{}', n.id='{}', n.type='{}', n.text='{}'
+                """.format(self.handle, self.id, self.type, self.text)
+                
+            return session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
 
     def print(self):
         """ Tulostaa tiedot """
@@ -393,69 +433,85 @@ class Person:
         global session
         
         if len(self.name) > 0:
-            query = """
-                CREATE (p:Person) 
-                SET p.gramps_handle='{}', p.id='{}', p.gender='{}'
-                """.format(self.handle, self.id, self.gender)
-            
-            session.run(query)
-            
-            names = self.name
-            for name in names:
-                p_alt = name.alt
-                p_type = name.type
-                p_first = name.first
-                p_surname = name.surname
-                p_suffix = name.suffix
-                
+            try:
                 query = """
-                    CREATE (m:Name) 
-                    SET m.alt='{}', m.type='{}', m.first='{}', m.surname='{}', m.suffix='{}'
-                    WITH m
-                    MATCH (n:Person) WHERE n.gramps_handle='{}'
-                    MERGE (n)-[r:NAME]->(m)
-                """.format(p_alt, p_type, p_first, p_surname, p_suffix, self.handle)
-            
+                    CREATE (p:Person) 
+                    SET p.gramps_handle='{}', p.id='{}', p.gender='{}'
+                    """.format(self.handle, self.id, self.gender)
+                    
                 session.run(query)
-            
+            except Exception as err:
+                print("Virhe: {0}".format(err), file=stderr)
+
+            try:
+                names = self.name
+                for name in names:
+                    p_alt = name.alt
+                    p_type = name.type
+                    p_first = name.first
+                    p_surname = name.surname
+                    p_suffix = name.suffix
+                    
+                    query = """
+                        CREATE (m:Name) 
+                        SET m.alt='{}', m.type='{}', m.first='{}', m.surname='{}', m.suffix='{}'
+                        WITH m
+                        MATCH (n:Person) WHERE n.gramps_handle='{}'
+                        MERGE (n)-[r:NAME]->(m)
+                    """.format(p_alt, p_type, p_first, p_surname, p_suffix, self.handle)
+                
+                    session.run(query)
+            except Exception as err:
+                print("Virhe: {0}".format(err), file=stderr)
 
         # Make possible relations from the Person node
-   
         if len(self.eventref_hlink) > 0:
             for i in range(len(self.eventref_hlink)):
-                query = """
-                    MATCH (n:Person) WHERE n.gramps_handle='{}'
-                    MATCH (m:Event) WHERE m.gramps_handle='{}'
-                    MERGE (n)-[r:EVENT]->(m)
-                     """.format(self.handle, self.eventref_hlink[0])
-                             
-                session.run(query)
-            
-                query = """
-                    MATCH (n:Person)-[r:EVENT]->(m:Event)
-                    WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
-                    SET r.role ='{}'
-                     """.format(self.handle, self.eventref_hlink[i], self.eventref_role[i])
-                             
-                session.run(query)
+                try:
+                    query = """
+                        MATCH (n:Person) WHERE n.gramps_handle='{}'
+                        MATCH (m:Event) WHERE m.gramps_handle='{}'
+                        MERGE (n)-[r:EVENT]->(m)
+                         """.format(self.handle, self.eventref_hlink[0])
+                                 
+                    session.run(query)
+                except Exception as err:
+                    print("Virhe: {0}".format(err), file=stderr)
+
+                try:
+                    query = """
+                        MATCH (n:Person)-[r:EVENT]->(m:Event)
+                        WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
+                        SET r.role ='{}'
+                         """.format(self.handle, self.eventref_hlink[i], self.eventref_role[i])
+                                 
+                    session.run(query)
+                except Exception as err:
+                    print("Virhe: {0}".format(err), file=stderr)
    
         if len(self.parentin_hlink) > 0:
-            query = """
-                MATCH (n:Person) WHERE n.gramps_handle='{}'
-                MATCH (m:Family) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:FAMILY]->(m)
-                 """.format(self.handle, self.parentin_hlink[0])
-                             
-            session.run(query)
+            try:
+                query = """
+                    MATCH (n:Person) WHERE n.gramps_handle='{}'
+                    MATCH (m:Family) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:FAMILY]->(m)
+                     """.format(self.handle, self.parentin_hlink[0])
+                                 
+                session.run(query)
+            except Exception as err:
+                print("Virhe: {0}".format(err), file=stderr)
    
         if len(self.citationref_hlink) > 0:
-            query = """
-                MATCH (n:Person) WHERE n.gramps_handle='{}'
-                MATCH (m:Citation) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:CITATION]->(m)
-                 """.format(self.handle, self.citationref_hlink[0])
-                             
-            session.run(query)
+            try:
+                query = """
+                    MATCH (n:Person) WHERE n.gramps_handle='{}'
+                    MATCH (m:Citation) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:CITATION]->(m)
+                     """.format(self.handle, self.citationref_hlink[0])
+                                 
+                session.run(query)
+            except Exception as err:
+                print("Virhe: {0}".format(err), file=stderr)
         return
 
     def print(self):
@@ -524,24 +580,30 @@ class Place:
             p_pname = self.pname[0]
         else:
             p_pname = ''
-            
-        query = """
-            CREATE (p:Place) 
-            SET p.gramps_handle='{}', p.id='{}', p.type='{}', p.pname='{}'
-            """.format(self.handle, self.id, self.type, p_pname)
-            
-        session.run(query)
+
+        try:
+            query = """
+                CREATE (p:Place) 
+                SET p.gramps_handle='{}', p.id='{}', p.type='{}', p.pname='{}'
+                """.format(self.handle, self.id, self.type, p_pname)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
 
         # Make possible relations from the Person node
-   
         if len(self.placeref_hlink) > 0:
-            query = """
-                MATCH (n:Place) WHERE n.gramps_handle='{}'
-                MATCH (m:Place) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:HIERARCY]->(m)
-                 """.format(self.handle, self.placeref_hlink)
-                             
-            session.run(query)
+            try:
+                query = """
+                    MATCH (n:Place) WHERE n.gramps_handle='{}'
+                    MATCH (m:Place) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:HIERARCY]->(m)
+                     """.format(self.handle, self.placeref_hlink)
+                                 
+                session.run(query)
+            except Exception as err:
+                print("Virhe: {0}".format(err), file=stderr)
+            
         return
 
     def print(self):
@@ -587,13 +649,18 @@ class Repository:
         """ Tallettaa sen kantaan """
 
         global session
+
+        try:
+            query = """
+                CREATE (r:Repository) 
+                SET r.gramps_handle='{}', r.id='{}', r.rname='{}', r.type='{}'
+                """.format(self.handle, self.id, self.rname, self.type)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
             
-        query = """
-            CREATE (r:Repository) 
-            SET r.gramps_handle='{}', r.id='{}', r.rname='{}', r.type='{}'
-            """.format(self.handle, self.id, self.rname, self.type)
-            
-        return session.run(query)
+        return
 
     def print(self):
         """ Tulostaa tiedot """
@@ -637,33 +704,42 @@ class Source:
         """ Tallettaa sen kantaan """
 
         global session
-            
-        query = """
-            CREATE (s:Source) 
-            SET s.gramps_handle='{}', s.id='{}', s.stitle='{}'
-            """.format(self.handle, self.id, self.stitle)
-            
-        session.run(query)
+
+        try:
+            query = """
+                CREATE (s:Source) 
+                SET s.gramps_handle='{}', s.id='{}', s.stitle='{}'
+                """.format(self.handle, self.id, self.stitle)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
  
         # Make possible relations from the Source node
-   
         if self.noteref_hlink != '':
-            query = """
-                MATCH (n:Source) WHERE n.gramps_handle='{}'
-                MATCH (m:Note) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:NOTE]->(m)
-                 """.format(self.handle, self.noteref_hlink)
-                             
-            session.run(query)
+            try:
+                query = """
+                    MATCH (n:Source) WHERE n.gramps_handle='{}'
+                    MATCH (m:Note) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:NOTE]->(m)
+                     """.format(self.handle, self.noteref_hlink)
+                                 
+                session.run(query)
+            except Exception as err:
+                print("Virhe: {0}".format(err), file=stderr)
    
         if self.reporef_hlink != '':
-            query = """
-                MATCH (n:Source) WHERE n.gramps_handle='{}'
-                MATCH (m:Repository) WHERE m.gramps_handle='{}'
-                MERGE (n)-[r:REPOSITORY]->(m)
-                 """.format(self.handle, self.reporef_hlink)
-                             
-            session.run(query)
+            try:
+                query = """
+                    MATCH (n:Source) WHERE n.gramps_handle='{}'
+                    MATCH (m:Repository) WHERE m.gramps_handle='{}'
+                    MERGE (n)-[r:REPOSITORY]->(m)
+                     """.format(self.handle, self.reporef_hlink)
+                                 
+                session.run(query)
+            except Exception as err:
+                print("Virhe: {0}".format(err), file=stderr)
+                
         return
 
     def print(self):
