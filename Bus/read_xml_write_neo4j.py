@@ -290,26 +290,24 @@ for person in people:
     if len(person.getElementsByTagName('name') ) >= 1:
         for i in range(len(person.getElementsByTagName('name') )):
             person_name = person.getElementsByTagName('name')[i]
+            pname = Name()
             if person_name.hasAttribute("alt"):
-                p.alt.append(person_name.getAttribute("alt"))
+                pname.alt = person_name.getAttribute("alt")
             if person_name.hasAttribute("type"):
-                p.type.append(person_name.getAttribute("type"))
+                pname.type = person_name.getAttribute("type")
 
-            if len(person_name.getElementsByTagName('first') ) >= 1:
-                for j in range(len(person_name.getElementsByTagName('first') )):
-                    person_first = person_name.getElementsByTagName('first')[j]
-                    p.first.append(person_first.childNodes[i].data)
+            if len(person_name.getElementsByTagName('first') ) == 1:
+                person_first = person_name.getElementsByTagName('first')[0]
+                pname.first = person_first.childNodes[0].data
 
-            if len(person_name.getElementsByTagName('surname') ) >= 1:
-                for j in range(len(person_name.getElementsByTagName('surname') )):
-                    person_surname = person_name.getElementsByTagName('surname')[j]
-                    if len(person_surname.childNodes) >= 1:
-                        p.surname.append(person_surname.childNodes[0].data)
+            if len(person_name.getElementsByTagName('surname') ) == 1:
+                person_surname = person_name.getElementsByTagName('surname')[0]
+                pname.surname = person_surname.childNodes[0].data
 
-            if len(person_name.getElementsByTagName('suffix') ) >= 1:
-                for j in range(len(person_name.getElementsByTagName('suffix') )):
-                    person_suffix = person_name.getElementsByTagName('suffix')[j]
-                    p.suffix.append(person_suffix.childNodes[0].data)
+            if len(person_name.getElementsByTagName('suffix') ) == 1:
+                person_suffix = person_name.getElementsByTagName('suffix')[0]
+                pname.suffix = person_suffix.childNodes[0].data
+            p.name.append(pname)
 
     if len(person.getElementsByTagName('eventref') ) >= 1:
         for i in range(len(person.getElementsByTagName('eventref') )):

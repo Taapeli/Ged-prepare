@@ -294,6 +294,25 @@ class Family:
             """
         return session.run(query)
 
+class Name:
+    """ Nimi
+    
+        Properties:
+                type            str nimen tyyppi
+                alt             str muun nimen numero
+                first           str etunimi
+                surname         str sukunimi
+                suffix          str patronyymi
+    """
+    
+    def __init__(self):
+        """ Luo uuden name-instanssin """
+        self.type = ''
+        self.alt = ''
+        self.first = ''
+        self.surname = ''
+        self.suffix = ''
+    
 class Note:
     """ Huomautus
             
@@ -362,11 +381,7 @@ class Person:
         """ Luo uuden person-instanssin """
         self.handle = handle
         self.id = pid
-        self.alt = []
-        self.type = []
-        self.first = []
-        self.surname = []
-        self.suffix = []
+        self.name = []
         self.eventref_role = []
         self.eventref_hlink = []
         self.parentin_hlink = []
@@ -377,38 +392,32 @@ class Person:
 
         global session
         
-        if len(self.alt) > 0:
-            p_alt = self.alt[0]
-        else:
-            p_alt = ''
-        
-        if len(self.type) > 0:
-            p_type = self.type[0]
-        else:
-            p_type = ''
-        
-        if len(self.first) > 0:
-            p_first = self.first[0]
-        else:
-            p_first = ''
+        if len(self.name) > 0:
+            query = """
+                CREATE (p:Person) 
+                SET p.gramps_handle='{}', p.id='{}', p.gender='{}'
+                """.format(self.handle, self.id, self.gender)
             
-        if len(self.surname) > 0:
-            p_surname = self.surname[0]
-        else:
-            p_surname = ''
+            session.run(query)
             
-        if len(self.suffix) > 0:
-            p_suffix = self.suffix[0]
-        else:
-            p_suffix = ''
+            names = self.name
+            for name in names:
+                p_alt = name.alt
+                p_type = name.type
+                p_first = name.first
+                p_surname = name.surname
+                p_suffix = name.suffix
+                
+                query = """
+                    CREATE (m:Name) 
+                    SET m.alt='{}', m.type='{}', m.first='{}', m.surname='{}', m.suffix='{}'
+                    WITH m
+                    MATCH (n:Person) WHERE n.gramps_handle='{}'
+                    MERGE (n)-[r:NAME]->(m)
+                """.format(p_alt, p_type, p_first, p_surname, p_suffix, self.handle)
             
-        query = """
-            CREATE (p:Person) 
-            SET p.gramps_handle='{}', p.id='{}', p.gender='{}', p.alt='{}', p.type='{}', p.first='{}', p.surname='{}',
-            p.suffix='{}'
-            """.format(self.handle, self.id, self.gender, p_alt, p_type, p_first, p_surname, p_suffix)
+                session.run(query)
             
-        session.run(query)
 
         # Make possible relations from the Person node
    
@@ -455,21 +464,14 @@ class Person:
         print ("Handle: " + self.handle)
         print ("Id: " + self.id)
         print ("Gender: " + self.gender)
-        if len(self.alt) > 0:
-            for i in range(len(self.alt)):
-                print ("Alt: " + self.alt[i])
-        if len(self.type) > 0:
-            for i in range(len(self.type)):
-                print ("Type: " + self.type[i])
-        if len(self.first) > 0:
-            for i in range(len(self.first)):
-                print ("First: " + self.first[i])
-        if len(self.surname) > 0:
-            for i in range(len(self.surname)):
-                print ("Surname: " + self.surname[i])
-        if len(self.suffix) > 0:
-            for i in range(len(self.suffix)):
-                print ("Suffix: " + self.suffix[i])
+        if len(self.name) > 0:
+            names = self.name
+            for pname in names:
+                print ("Alt: " + pname.alt)
+                print ("Type: " + pname.type)
+                print ("First: " + pname.first)
+                print ("Surname: " + pname.surname)
+                print ("Suffix: " + pname.suffix)
         if len(self.eventref_hlink) > 0:
             for i in range(len(self.eventref_hlink)):
                 print ("Eventref_hlink: " + self.eventref_hlink[i])
