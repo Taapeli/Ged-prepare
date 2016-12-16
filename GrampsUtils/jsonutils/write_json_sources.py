@@ -10,9 +10,7 @@ import csv
 import logging
 from sys import argv
 import sys
-
-from jsonutils.create_gramps_object import CreateGrampsObject 
-
+from jsonutils.create_gramps_object import CreateGrampsObject
 
 tag     = None
 thandle = None
@@ -103,11 +101,11 @@ def main(argv):
                             if handle != '':
                                 thandle = handle
                             tagr = cgo.buildTag(otext, thandle)
+                            print(tagr[0].to_struct(), file=j_out)
                             if   recobj == 'R': 
                                 rtag = tagr[0]     # The tag for repositories
                             elif recobj == 'S': 
                                 stag = tagr[0]     # The tag for sources
-                            print(tagr[0].to_struct(), file=j_out) 
                             try: 
                                 r_writer.writerow([rectype, recobj, '', tagr[1], otext, '', '', '', ''])
                             except:    
@@ -155,10 +153,10 @@ def main(argv):
                 logging.info('    Repositories   ' + str(r_count))
                 logging.info('    Sources        ' + str(s_count))
                 logging.info('    Comments       ' + str(c_count))
+                logging.info('    Unknown types  ' + str(u_count))
                 logging.info('  Total            ' + str(t_count + r_count + s_count + c_count + u_count))
     except  IOError: 
-        logging.error(IOError.winerror)
-        logging.error('IOError in j_out handling')
+        logging.error('IOError in file handling: ' + IOError.filename)
         return 8    
     
 if __name__ == '__main__':

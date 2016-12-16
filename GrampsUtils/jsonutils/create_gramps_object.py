@@ -1,14 +1,20 @@
 '''
 Created on 1.11.2016
 
-@author: Timo Nallikarihttp://download.eclipse.org/egit/updates
+@author: Timo Nallikari
 '''
 
 import time
-from gramps.gen.lib import RepositoryType, Repository, RepoRef, Source, Tag
-from gramps.gen.utils import id
 
 from gramps.gen.const import GRAMPS_LOCALE as glocale
+from gramps.gen.lib import RepoRef
+from gramps.gen.lib import Repository
+from gramps.gen.lib import RepositoryType
+from gramps.gen.lib import Source
+from gramps.gen.lib import Tag
+from gramps.gen.utils import id
+
+
 try:
     _trans = glocale.get_addon_translator(__file__)
 except ValueError:
@@ -52,7 +58,7 @@ class CreateGrampsObject:
 #        print ("Repository ") ; print(repository.to_struct())
         return ([repository, rhandle])
     
-    def buildSource(self, sidno, stitle, tag, repository, shandle = None):
+    def buildSource(self, sidno, stitle, tag, repository, shandle, attribs):
         if shandle == None:
             shandle = id.create_id()   # 26-merkkinen tunniste
 #        repositoryType = RepositoryType()
@@ -60,6 +66,9 @@ class CreateGrampsObject:
         source.set_handle(shandle)
         source.set_gramps_id(sidno)
         source.set_title(stitle)
+        source.set_author(attribs[0])
+        source.set_publication_info(attribs[1])
+        source.set_abbreviation(attribs[2])
         source.add_tag(tag.get_handle())
         repoRef = RepoRef()
         repoRef.set_reference_handle(repository.get_handle()) 
