@@ -576,8 +576,10 @@ class Place:
 
         global session
         
-        if len(self.pname) > 0:
+        if len(self.pname) >= 1:
             p_pname = self.pname[0]
+            if len(self.pname) > 1:
+                print("Warning: More than one pname in a place, handle: " + self.handle)
         else:
             p_pname = ''
 
