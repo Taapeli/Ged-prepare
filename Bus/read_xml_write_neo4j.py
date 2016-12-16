@@ -3,12 +3,13 @@
 import time
 import xml.dom.minidom
 
-from genealogy import *
+from classes.genealogy import *
 
 connect_db()
 
 # Open XML document using minidom parser
-DOMTree = xml.dom.minidom.parse("pohjanmaa_referenssi.xml")
+# DOMTree = xml.dom.minidom.parse("pohjanmaa_referenssi_person.xml")
+DOMTree = xml.dom.minidom.parse("vihtori.xml")
 collection = DOMTree.documentElement
 
 # Get all the repositories in the collection
@@ -298,11 +299,13 @@ for person in people:
 
             if len(person_name.getElementsByTagName('first') ) == 1:
                 person_first = person_name.getElementsByTagName('first')[0]
-                pname.first = person_first.childNodes[0].data
+                if len(person_first.childNodes ) == 1:
+                    pname.first = person_first.childNodes[0].data
 
             if len(person_name.getElementsByTagName('surname') ) == 1:
                 person_surname = person_name.getElementsByTagName('surname')[0]
-                pname.surname = person_surname.childNodes[0].data
+                if len(person_surname.childNodes ) == 1:
+                    pname.surname = person_surname.childNodes[0].data
 
             if len(person_name.getElementsByTagName('suffix') ) == 1:
                 person_suffix = person_name.getElementsByTagName('suffix')[0]
