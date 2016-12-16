@@ -445,7 +445,7 @@ def handle_sources(collection):
             source_reporef = source.getElementsByTagName('reporef')[0]
             if source_reporef.hasAttribute("hlink"):
                 s.reporef_hlink = source_reporef.getAttribute("hlink")
-        elif len(source.getElementsByTagName('noteref') ) > 1:
+        elif len(source.getElementsByTagName('reporef') ) > 1:
             print("Error: More than one reporef in a source")
     
         s.save()
