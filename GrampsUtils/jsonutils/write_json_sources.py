@@ -10,7 +10,9 @@ import csv
 import logging
 from sys import argv
 import sys
+
 from jsonutils.create_gramps_object import CreateGrampsObject
+
 
 tag     = None
 thandle = None

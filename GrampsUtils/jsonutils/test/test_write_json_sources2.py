@@ -10,4 +10,4 @@ from jsonutils import write_json_sources
 
 
 if __name__ == '__main__':
-    write_json_sources.main(["write_json_sources", "C:/Temp/", "Result.csv", "Result2.json", "Result2.csv", 1000, 10]) 
+    write_json_sources.main(["write_json_sources", "C:/Temp/", "Result.csv", "Result2.json", "Result2.csv", '1000', '10']) 
