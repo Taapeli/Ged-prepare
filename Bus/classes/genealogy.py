@@ -106,7 +106,7 @@ class Citation:
         return True
         
     def tell(self):
-        """ Tulostaa lähteiden paikkojen määrän tietokannassa """
+        """ Tulostaa lähteiden määrän tietokannassa """
         
         global session
                 
@@ -191,7 +191,7 @@ class Event:
         
         
     def tell(self):
-        """ Tulostaa eventtien määrän tietokannassa """
+        """ Tulostaa tapahtumien määrän tietokannassa """
         
         global session
                 
@@ -407,11 +407,12 @@ class Person:
                 handle          
                 id                 esim. "I0001"
                 gender             str sukupuoli
-                alt                str muun nimen nro
-                type               str nimen tyyppi
-                first              str etunimi
-                surname            str sukunimi
-                suffix             str patronyymi
+                name:
+                   alt             str muun nimen nro
+                   type            str nimen tyyppi
+                   first           str etunimi
+                   surname         str sukunimi
+                   suffix          str patronyymi
                 eventref_hlink     str tapahtuman osoite
                 parentin_hlink     str vanhempien osoite
                 citationref_hlink  str viittauksen osoite
