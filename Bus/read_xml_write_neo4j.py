@@ -14,7 +14,7 @@ import time
 import xml.dom.minidom
 import argparse
 from sys import stderr
-from classes.genealogy import *
+from classes.genealogy import connect_db, Citation, Event, Family, Name, Note, Person, Place, Repository, Source
 
 connect_db()
 
@@ -24,6 +24,7 @@ def handle_citations(collection):
     citations = collection.getElementsByTagName("citation")
     
     print ("*****Citations*****")
+    counter = 0
     
     # Print detail of each citation
     for citation in citations:
@@ -70,14 +71,12 @@ def handle_citations(collection):
             print("Error: More than one sourceref tag in a citation")
                 
         c.save()
+        counter += 1
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
-    
-    c = Citation("handle", "id")
-    results = c.tell()
-    for result in results:
-        print("Number of citations in db: " + str(result[0]))
+        
+    print("Number of citations stored: " + str(counter))
 
 
 def handle_events(collection):
@@ -86,6 +85,7 @@ def handle_events(collection):
     events = collection.getElementsByTagName("event")
     
     print ("*****Events*****")
+    counter = 0
     
     # Print detail of each event
     for event in events:
@@ -129,11 +129,9 @@ def handle_events(collection):
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
-    
-    e = Event("handle", "id")
-    results = e.tell()
-    for result in results:
-        print("Number of events in db: " + str(result[0]))
+        counter += 1
+        
+    print("Number of events stored: " + str(counter))
 
 
 def handle_families(collection):
@@ -141,6 +139,7 @@ def handle_families(collection):
     families = collection.getElementsByTagName("family")
     
     print ("*****Families*****")
+    counter = 0
     
     # Print detail of each family
     for family in families:
@@ -189,14 +188,12 @@ def handle_families(collection):
                     f.childref_hlink.append(family_childref.getAttribute("hlink"))
                     
         f.save()
+        counter += 1
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
-    
-    f = Family("handle", "id")
-    results = f.tell()
-    for result in results:
-        print("Number of families in db: " + str(result[0]))
+        
+    print("Number of families stored: " + str(counter))
 
 
 def handle_notes(collection):
@@ -204,6 +201,7 @@ def handle_notes(collection):
     notes = collection.getElementsByTagName("note")
 
     print ("*****Notes*****")
+    counter = 0
 
     # Print detail of each note
     for note in notes:
@@ -223,21 +221,20 @@ def handle_notes(collection):
             n.text = note_text.childNodes[0].data
             
         n.save()
+        counter += 1
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
+        
+    print("Number of notes stored: " + str(counter))
     
-    n = Note("handle", "id",  "type")
-    results = n.tell()
-    for result in results:
-        print("Number of notes in db: " + str(result[0]))
-
 
 def handle_people(collection):
     # Get all the people in the collection
     people = collection.getElementsByTagName("person")
     
     print ("*****People*****")
+    counter = 0
     
     # Print detail of each person
     for person in people:
@@ -312,14 +309,12 @@ def handle_people(collection):
                     p.citationref_hlink.append(person_citationref.getAttribute("hlink"))
                     
         p.save()
+        counter += 1
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
-    
-    p = Person("handle", "id")
-    results = p.tell()
-    for result in results:
-        print("Number of people in db: " + str(result[0]))
+        
+    print("Number of people stored: " + str(counter))
 
 
 def handle_places(collection):
@@ -327,6 +322,7 @@ def handle_places(collection):
     places = collection.getElementsByTagName("placeobj")
     
     print ("*****Places*****")
+    counter = 0
     
     # Print detail of each placeobj
     for placeobj in places:
@@ -361,14 +357,12 @@ def handle_places(collection):
             print("Error: More than one placeref in a place")
                 
         place.save()
+        counter += 1
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
     
-    p = Place("handle", "id", "type")
-    results = p.tell()
-    for result in results:
-        print("Number of places in db: " + str(result[0]))
+    print("Number of places stored: " + str(counter))
 
 
 def handle_repositories(collection):
@@ -376,6 +370,7 @@ def handle_repositories(collection):
     repositories = collection.getElementsByTagName("repository")
     
     print ("*****Repositories*****")
+    counter = 0
     
     # Print detail of each repository
     for repository in repositories:
@@ -401,14 +396,12 @@ def handle_repositories(collection):
             print("Error: More than one type in a repository")
     
         r.save()
+        counter += 1
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
-    
-    r = Repository("handle", "id")
-    results = r.tell()
-    for result in results:
-        print("Number of repositories in db: " + str(result[0]))
+        
+    print("Number of repositories stored: " + str(counter))
 
 
 def handle_sources(collection):
@@ -416,6 +409,7 @@ def handle_sources(collection):
     sources = collection.getElementsByTagName("source")
     
     print ("*****Sources*****")
+    counter = 0
     
     # Print detail of each source
     for source in sources:
@@ -449,14 +443,44 @@ def handle_sources(collection):
             print("Error: More than one reporef in a source")
     
         s.save()
+        counter += 1
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
-    
-    s = Source("handle", "id")
-    results = s.tell()
-    for result in results:
-        print("Number of sources in db: " + str(result[0]))
+        
+    print("Number of sources stored: " + str(counter))
+
+        
+def number_of_citations():
+    print("Number of citations in db: " + Citation.get_total())
+        
+        
+def number_of_events():
+    print("Number of events in db: " + Event.get_total())
+        
+        
+def number_of_families():
+    print("Number of families in db: " + Family.get_total())
+        
+        
+def number_of_notes():
+    print("Number of notes in db: " + Note.get_total())
+        
+        
+def number_of_people():
+    print("Number of people in db: " + Person.get_total())
+        
+        
+def number_of_places():
+    print("Number of places in db: " + Place.get_total())
+        
+        
+def number_of_repositories():
+    print("Number of repositories in db: " + Repository.get_total())
+        
+        
+def number_of_sources():
+    print("Number of sources in db: " + Source.get_total())
 
 
 def process_xml(args):
@@ -467,13 +491,21 @@ def process_xml(args):
         collection = DOMTree.documentElement
     
         handle_notes(collection)
+        number_of_notes()
         handle_repositories(collection)
+        number_of_repositories()
         handle_places(collection)
+        number_of_places()
         handle_sources(collection)
+        number_of_sources()
         handle_citations(collection)
+        number_of_citations()
         handle_events(collection)
+        number_of_events()
         handle_people(collection)
+        number_of_people()
         handle_families(collection)
+        number_of_families()
     except FileNotFoundError:
         print("Tiedostoa '{}' ei ole!".format(args.input_xml), file=stderr)
     except Exception as err:

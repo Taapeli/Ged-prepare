@@ -31,6 +31,7 @@ def connect_db():
     # Palautetaan tietokannan sijainnin hostname
     return driver.url
 
+
 class Citation:
     """ Viittaus
             
@@ -48,6 +49,7 @@ class Citation:
         self.id = pid
         self.noteref_hlink = ''
         self.sourceref_hlink = ''
+
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -93,7 +95,7 @@ class Citation:
         return
 
 
-    def print(self):
+    def print_all(self):
         """ Tulostaa tiedot """
         print ("*****Citation*****")
         print ("Handle: " + self.handle)
@@ -104,8 +106,10 @@ class Citation:
         if self.sourceref_hlink != '':
             print ("Sourceref_hlink: " + self.sourceref_hlink)
         return True
-        
-    def tell(self):
+
+    
+    @staticmethod       
+    def get_total():
         """ Tulostaa lähteiden määrän tietokannassa """
         
         global session
@@ -113,7 +117,10 @@ class Citation:
         query = """
             MATCH (c:Citation) RETURN COUNT(c)
             """
-        return session.run(query)
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
 
 
 class Event:
@@ -135,6 +142,7 @@ class Event:
         self.date = ''
         self.place_hlink = ''
         self.citationref_hlink = ''
+
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -179,7 +187,7 @@ class Event:
         return
 
 
-    def print(self):
+    def print_all(self):
         """ Tulostaa tiedot """
         print ("Handle: " + self.handle)
         print ("Id: " + self.id)
@@ -189,8 +197,9 @@ class Event:
         print ("Citationref_hlink: " + self.citationref_hlink)
         return True
         
-        
-    def tell(self):
+    
+    @staticmethod        
+    def get_total():
         """ Tulostaa tapahtumien määrän tietokannassa """
         
         global session
@@ -198,7 +207,10 @@ class Event:
         query = """
             MATCH (e:Event) RETURN COUNT(e)
             """
-        return session.run(query)
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
    
 
 class Family:
@@ -222,6 +234,7 @@ class Family:
         self.eventref_hlink = []
         self.eventref_role = []
         self.childref_hlink = []
+
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -302,7 +315,8 @@ class Family:
             
         return
 
-    def print(self):
+
+    def print_all(self):
         """ Tulostaa tiedot """
         print ("*****Family*****")
         print ("Handle: " + self.handle)
@@ -321,7 +335,9 @@ class Family:
                 print ("Childref_hlink: " + self.childref_hlink[i])
         return True
         
-    def tell(self):
+    
+    @staticmethod       
+    def get_total():
         """ Tulostaa perheiden määrän tietokannassa """
         
         global session
@@ -329,7 +345,11 @@ class Family:
         query = """
             MATCH (f:Family) RETURN COUNT(f)
             """
-        return session.run(query)
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
 
 class Name:
     """ Nimi
@@ -350,6 +370,7 @@ class Name:
         self.surname = ''
         self.suffix = ''
     
+    
 class Note:
     """ Huomautus
             
@@ -366,6 +387,7 @@ class Note:
         self.id = pid
         self.type = ptype
 
+
     def save(self):
         """ Tallettaa sen kantaan """
 
@@ -381,7 +403,8 @@ class Note:
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
 
-    def print(self):
+
+    def print_all(self):
         """ Tulostaa tiedot """
         print ("*****Note*****")
         print ("Handle: " + self.handle)
@@ -390,7 +413,9 @@ class Note:
         print ("Text: " + self.text)
         return True
         
-    def tell(self):
+        
+    @staticmethod
+    def get_total():
         """ Tulostaa huomautusten määrän tietokannassa """
         
         global session
@@ -398,7 +423,12 @@ class Note:
         query = """
             MATCH (n:Note) RETURN COUNT(n)
             """
-        return session.run(query)
+            
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
 
 class Person:
     """ Henkilö
@@ -427,6 +457,7 @@ class Person:
         self.eventref_hlink = []
         self.parentin_hlink = []
         self.citationref_hlink = []
+
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -473,7 +504,7 @@ class Person:
                         MATCH (n:Person) WHERE n.gramps_handle='{}'
                         MATCH (m:Event) WHERE m.gramps_handle='{}'
                         MERGE (n)-[r:EVENT]->(m)
-                         """.format(self.handle, self.eventref_hlink[0])
+                         """.format(self.handle, self.eventref_hlink[i])
                                  
                     session.run(query)
                 except Exception as err:
@@ -515,7 +546,8 @@ class Person:
                 print("Virhe: {0}".format(err), file=stderr)
         return
 
-    def print(self):
+
+    def print_all(self):
         """ Tulostaa tiedot """
         print ("*****Person*****")
         print ("Handle: " + self.handle)
@@ -543,7 +575,9 @@ class Person:
                 print ("Citationref_hlink: " + self.citationref_hlink[i])
         return True
         
-    def tell(self):
+    
+    @staticmethod       
+    def get_total():
         """ Tulostaa henkilöiden määrän tietokannassa """
         
         global session
@@ -551,7 +585,11 @@ class Person:
         query = """
             MATCH (p:Person) RETURN COUNT(p)
             """
-        return session.run(query)
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
 
 class Place:
     """ Paikka
@@ -571,6 +609,7 @@ class Place:
         self.type = ptype
         self.pname = []
         self.placeref_hlink = ''
+
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -609,7 +648,8 @@ class Place:
             
         return
 
-    def print(self):
+
+    def print_all(self):
         """ Tulostaa tiedot """
         print ("*****Placeobj*****")
         print ("Handle: " + self.handle)
@@ -622,7 +662,9 @@ class Place:
             print ("Placeref_hlink: " + self.placeref_hlink)
         return True
         
-    def tell(self):
+    
+    @staticmethod       
+    def get_total():
         """ Tulostaa paikkojen määrän tietokannassa """
         
         global session
@@ -630,7 +672,11 @@ class Place:
         query = """
             MATCH (p:Place) RETURN COUNT(p)
             """
-        return session.run(query)
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
 
 class Repository:
     """ Arkisto
@@ -647,6 +693,7 @@ class Repository:
         """ Luo uuden repository-instanssin """
         self.handle = handle
         self.id = pid
+
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -665,7 +712,8 @@ class Repository:
             
         return
 
-    def print(self):
+
+    def print_all(self):
         """ Tulostaa tiedot """
         print ("*****Repository*****")
         print ("Handle: " + self.handle)
@@ -674,7 +722,9 @@ class Repository:
         print ("Type: " + self.type)
         return True
         
-    def tell(self):
+    
+    @staticmethod       
+    def get_total():
         """ Tulostaa arkistojen määrän tietokannassa """
         
         global session
@@ -682,7 +732,11 @@ class Repository:
         query = """
             MATCH (r:Repository) RETURN COUNT(r)
             """
-        return session.run(query)
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
 
 class Source:
     """ Lähde
@@ -702,6 +756,7 @@ class Source:
         self.stitle = ''
         self.noteref_hlink = ''
         self.reporef_hlink = ''
+
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -745,7 +800,8 @@ class Source:
                 
         return
 
-    def print(self):
+
+    def print_all(self):
         """ Tulostaa tiedot """
         print ("*****Source*****")
         print ("Handle: " + self.handle)
@@ -758,7 +814,9 @@ class Source:
             print ("Reporef_hlink: " + self.reporef_hlink)
         return True
         
-    def tell(self):
+    
+    @staticmethod       
+    def get_total():
         """ Tulostaa lähteiden määrän tietokannassa """
         
         global session
@@ -766,5 +824,8 @@ class Source:
         query = """
             MATCH (s:Source) RETURN COUNT(s)
             """
-        return session.run(query)
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
     
