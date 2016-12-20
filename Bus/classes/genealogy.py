@@ -5,6 +5,7 @@ from neo4j.v1 import GraphDatabase, basic_auth
 #import logging
 from sys import stderr
 import config as dbconf      # Tietokannan tiedot
+from flask.globals import session
 
 def connect_db():
     """ 
@@ -369,6 +370,18 @@ class Name:
         self.first = ''
         self.surname = ''
         self.suffix = ''
+        
+    
+    @staticmethod
+    def get_surnames():
+        """ Listaa kaikki sukunimet tietokannassa """
+        
+        global session
+        
+        query = """
+            MATCH (n:Name) RETURN distinct n.surname ORDER BY n.surname
+            """
+        return session.run(query)
     
     
 class Note:
@@ -574,9 +587,9 @@ class Person:
             for i in range(len(self.citationref_hlink)):
                 print ("Citationref_hlink: " + self.citationref_hlink[i])
         return True
-        
-    
-    @staticmethod       
+
+
+    @staticmethod
     def get_total():
         """ Tulostaa henkilöiden määrän tietokannassa """
         
