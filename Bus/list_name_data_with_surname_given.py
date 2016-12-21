@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-List the birth data of a given surname from the Neo4j database.
+List some data of the people with given surname from the Neo4j database.
 Jorma Haapasalo, 2016.
  
 """
@@ -14,9 +14,9 @@ from classes.genealogy import connect_db, Name, Person
 connect_db()
     
 
-def get_birth_data(handle, pid):
+def get_name_data(handle, pid):
 
-    # Get Person data
+    # Get Person and Name data
     
     try:
         p = Person(handle, pid)
@@ -39,20 +39,20 @@ def get_birth_data(handle, pid):
 
 def process_neo4j(args):
 
-    # List all persons with the given surname
+    # List some data of the people with given surname
     try:
     
         results = Name.get_people_with_surname(args.surname)
         for result in results:
-            get_birth_data(result[0], result[1])
+            get_name_data(result[0], result[1])
 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Surnames from Neo4j')
-    parser.add_argument('surname', help="Surname of a person whose data be listed")
+    parser = argparse.ArgumentParser(description='Some data of the people with given surname from Neo4j')
+    parser.add_argument('surname', help="Surname of the people whose data be fetched")
 
     if len(sys.argv) == 1:
         print("First argument must be the surname, which is the key of this search")
