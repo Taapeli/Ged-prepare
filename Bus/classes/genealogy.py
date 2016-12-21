@@ -96,7 +96,7 @@ class Citation:
         return
 
 
-    def print_all(self):
+    def print_data(self):
         """ Tulostaa tiedot """
         print ("*****Citation*****")
         print ("Handle: " + self.handle)
@@ -188,7 +188,7 @@ class Event:
         return
 
 
-    def print_all(self):
+    def print_data(self):
         """ Tulostaa tiedot """
         print ("Handle: " + self.handle)
         print ("Id: " + self.id)
@@ -317,7 +317,7 @@ class Family:
         return
 
 
-    def print_all(self):
+    def print_data(self):
         """ Tulostaa tiedot """
         print ("*****Family*****")
         print ("Handle: " + self.handle)
@@ -371,6 +371,18 @@ class Name:
         self.surname = ''
         self.suffix = ''
         
+        
+    @staticmethod
+    def get_people_with_surname(surname):
+        """ Etsi kaikki henkilöt, joiden syntymä nimi on annettu"""
+        
+        global session
+        
+        query = """
+            MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.surname='{}' RETURN p.gramps_handle, p.id
+            """.format(surname)
+        return session.run(query)
+        
     
     @staticmethod
     def get_surnames():
@@ -417,7 +429,7 @@ class Note:
             print("Virhe: {0}".format(err), file=stderr)
 
 
-    def print_all(self):
+    def print_data(self):
         """ Tulostaa tiedot """
         print ("*****Note*****")
         print ("Handle: " + self.handle)
@@ -558,9 +570,20 @@ class Person:
             except Exception as err:
                 print("Virhe: {0}".format(err), file=stderr)
         return
+    
+    
+    def get_name_data(self):
+        """ Luetaan kaikki henkilön tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (p:Person)-[r:NAME]-(n:Name) WHERE p.gramps_handle='{}' RETURN p, n ORDER BY n.alt
+            """.format(self.handle)
+        return  session.run(query)
 
 
-    def print_all(self):
+    def print_data(self):
         """ Tulostaa tiedot """
         print ("*****Person*****")
         print ("Handle: " + self.handle)
@@ -662,7 +685,7 @@ class Place:
         return
 
 
-    def print_all(self):
+    def print_data(self):
         """ Tulostaa tiedot """
         print ("*****Placeobj*****")
         print ("Handle: " + self.handle)
@@ -726,7 +749,7 @@ class Repository:
         return
 
 
-    def print_all(self):
+    def print_data(self):
         """ Tulostaa tiedot """
         print ("*****Repository*****")
         print ("Handle: " + self.handle)
@@ -814,7 +837,7 @@ class Source:
         return
 
 
-    def print_all(self):
+    def print_data(self):
         """ Tulostaa tiedot """
         print ("*****Source*****")
         print ("Handle: " + self.handle)
