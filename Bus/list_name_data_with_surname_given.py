@@ -14,12 +14,13 @@ from classes.genealogy import connect_db, Name, Person
 connect_db()
     
 
-def get_name_data(handle, pid):
+def get_name_data(handle):
 
     # Get Person and Name data
     
     try:
-        p = Person(handle, pid)
+        p = Person()
+        p.handle = handle
         results = p.get_name_data()
         for result in results:
             p.gender = result[0]['gender']
@@ -44,7 +45,7 @@ def process_neo4j(args):
     
         results = Name.get_people_with_surname(args.surname)
         for result in results:
-            get_name_data(result[0], result[1])
+            get_name_data(result[0])
 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)

@@ -6,9 +6,6 @@ Jorma Haapasalo, 2016.
  
 """
 
-import sys
-import time
-import xml.dom.minidom
 import argparse
 from sys import stderr
 from classes.genealogy import connect_db, Name
@@ -35,11 +32,6 @@ def process_neo4j(args):
 
 def main():
     parser = argparse.ArgumentParser(description='Surnames from Neo4j')
-#    parser.add_argument('input_xml', help="Name of the input XML file")
-
-#    if len(sys.argv) == 1:
-#        print("First argument must be the name of the XML file")
-#        return
 
     args = parser.parse_args()
 

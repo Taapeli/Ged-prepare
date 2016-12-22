@@ -44,10 +44,10 @@ class Citation:
                 sourceref_hlink  str lähteen osoite
      """
 
-    def __init__(self, handle, pid):
+    def __init__(self):
         """ Luo uuden citation-instanssin """
-        self.handle = handle
-        self.id = pid
+        self.handle = ''
+        self.id = ''
         self.noteref_hlink = ''
         self.sourceref_hlink = ''
 
@@ -136,10 +136,10 @@ class Event:
                 citationref_hlink  str viittauksen osoite
      """
 
-    def __init__(self, handle, pid):
+    def __init__(self):
         """ Luo uuden event-instanssin """
-        self.handle = handle
-        self.id = pid
+        self.handle = ''
+        self.id = ''
         self.date = ''
         self.place_hlink = ''
         self.citationref_hlink = ''
@@ -228,10 +228,10 @@ class Family:
                 childref_hlink  str lapsen osoite
      """
 
-    def __init__(self, handle, pid):
+    def __init__(self):
         """ Luo uuden family-instanssin """
-        self.handle = handle
-        self.id = pid
+        self.handle = ''
+        self.id = ''
         self.eventref_hlink = []
         self.eventref_role = []
         self.childref_hlink = []
@@ -379,7 +379,7 @@ class Name:
         global session
         
         query = """
-            MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.surname='{}' RETURN p.gramps_handle, p.id
+            MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.surname='{}' RETURN p.gramps_handle
             """.format(surname)
         return session.run(query)
         
@@ -406,11 +406,11 @@ class Note:
                 text            str huomautuksen sisältö
      """
 
-    def __init__(self, handle, pid, ptype):
+    def __init__(self):
         """ Luo uuden note-instanssin """
-        self.handle = handle
-        self.id = pid
-        self.type = ptype
+        self.handle = ''
+        self.id = ''
+        self.type = ''
 
 
     def save(self):
@@ -473,10 +473,10 @@ class Person:
                 citationref_hlink  str viittauksen osoite
      """
 
-    def __init__(self, handle, pid):
+    def __init__(self):
         """ Luo uuden person-instanssin """
-        self.handle = handle
-        self.id = pid
+        self.handle = ''
+        self.id = ''
         self.name = []
         self.eventref_role = []
         self.eventref_hlink = []
@@ -638,11 +638,11 @@ class Place:
                 placeref_hlink  str paikan osoite
      """
 
-    def __init__(self, handle, pid, ptype):
+    def __init__(self):
         """ Luo uuden place-instanssin """
-        self.handle = handle
-        self.id = pid
-        self.type = ptype
+        self.handle = ''
+        self.id = ''
+        self.type = ''
         self.pname = []
         self.placeref_hlink = ''
 
@@ -725,10 +725,10 @@ class Repository:
 
      """
 
-    def __init__(self, handle, pid):
+    def __init__(self):
         """ Luo uuden repository-instanssin """
-        self.handle = handle
-        self.id = pid
+        self.handle = ''
+        self.id = ''
 
 
     def save(self):
@@ -785,10 +785,10 @@ class Source:
                 reporef_hlink   str arkiston osoite
      """
 
-    def __init__(self, handle, pid):
+    def __init__(self):
         """ Luo uuden source-instanssin """
-        self.handle = handle
-        self.id = pid
+        self.handle = ''
+        self.id = ''
         self.stitle = ''
         self.noteref_hlink = ''
         self.reporef_hlink = ''

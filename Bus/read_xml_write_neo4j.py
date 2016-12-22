@@ -28,14 +28,15 @@ def handle_citations(collection):
     
     # Print detail of each citation
     for citation in citations:
+        
+        c = Citation()
+        
         if citation.hasAttribute("handle"):
-            handle = citation.getAttribute("handle")
+            c.handle = citation.getAttribute("handle")
         if citation.hasAttribute("change"):
             change = citation.getAttribute("change")
         if citation.hasAttribute("id"):
-            pid = citation.getAttribute("id")
-        
-        c = Citation(handle, pid)
+            c.id = citation.getAttribute("id")
     
         if len(citation.getElementsByTagName('dateval') ) == 1:
             citation_dateval = citation.getElementsByTagName('dateval')[0]
@@ -89,15 +90,16 @@ def handle_events(collection):
     
     # Print detail of each event
     for event in events:
+
+        e = Event()
+        
         if event.hasAttribute("handle"):
-            handle = event.getAttribute("handle")
+            e.handle = event.getAttribute("handle")
         if event.hasAttribute("change"):
             change = event.getAttribute("change")
         if event.hasAttribute("id"):
-            pid = event.getAttribute("id")
-        
-        e = Event(handle, pid)
-    
+            e.id = event.getAttribute("id")
+            
         if len(event.getElementsByTagName('type') ) == 1:
             event_type = event.getElementsByTagName('type')[0]
             e.type = event_type.childNodes[0].data
@@ -143,14 +145,15 @@ def handle_families(collection):
     
     # Print detail of each family
     for family in families:
+        
+        f = Family()
+        
         if family.hasAttribute("handle"):
-            handle = family.getAttribute("handle")
+            f.handle = family.getAttribute("handle")
         if family.hasAttribute("change"):
             change = family.getAttribute("change")
         if family.hasAttribute("id"):
-            pid = family.getAttribute("id")
-        
-        f = Family(handle, pid)
+            f.id = family.getAttribute("id")
     
         if len(family.getElementsByTagName('rel') ) == 1:
             family_rel = family.getElementsByTagName('rel')[0]
@@ -205,16 +208,17 @@ def handle_notes(collection):
 
     # Print detail of each note
     for note in notes:
-        if note.hasAttribute("handle"):
-            handle = note.getAttribute("handle")
-            if note.hasAttribute("change"):
-                change = note.getAttribute("change")
-        if note.hasAttribute("id"):
-            pid = note.getAttribute("id")
-        if note.hasAttribute("type"):
-            ptype = note.getAttribute("type")
         
-        n = Note(handle, pid, ptype)
+        n = Note()
+
+        if note.hasAttribute("handle"):
+            n.handle = note.getAttribute("handle")
+        if note.hasAttribute("change"):
+            change = note.getAttribute("change")
+        if note.hasAttribute("id"):
+            n.id = note.getAttribute("id")
+        if note.hasAttribute("type"):
+            n.type = note.getAttribute("type")
     
         if len(note.getElementsByTagName('text') ) == 1:
             note_text = note.getElementsByTagName('text')[0]
@@ -238,14 +242,15 @@ def handle_people(collection):
     
     # Print detail of each person
     for person in people:
+        
+        p = Person()
+
         if person.hasAttribute("handle"):
-            handle = person.getAttribute("handle")
+            p.handle = person.getAttribute("handle")
         if person.hasAttribute("change"):
             change = person.getAttribute("change")
         if person.hasAttribute("id"):
-            pid = person.getAttribute("id")
-        
-        p = Person(handle, pid)
+            p.id = person.getAttribute("id")
     
         if len(person.getElementsByTagName('gender') ) == 1:
             person_gender = person.getElementsByTagName('gender')[0]
@@ -326,16 +331,17 @@ def handle_places(collection):
     
     # Print detail of each placeobj
     for placeobj in places:
+        
+        place = Place()
+
         if placeobj.hasAttribute("handle"):
-            handle = placeobj.getAttribute("handle")
+            place.handle = placeobj.getAttribute("handle")
         if placeobj.hasAttribute("change"):
             change = placeobj.getAttribute("change")
         if placeobj.hasAttribute("id"):
-            pid = placeobj.getAttribute("id")
+            place.id = placeobj.getAttribute("id")
         if placeobj.hasAttribute("type"):
-            ptype = placeobj.getAttribute("type")
-        
-        place = Place(handle, pid, ptype)
+            place.type = placeobj.getAttribute("type")
     
         if len(placeobj.getElementsByTagName('ptitle') ) == 1:
             placeobj_ptitle = placeobj.getElementsByTagName('ptitle')[0]
@@ -374,14 +380,15 @@ def handle_repositories(collection):
     
     # Print detail of each repository
     for repository in repositories:
+        
+        r = Repository()
+
         if repository.hasAttribute("handle"):
-            handle = repository.getAttribute("handle")
+            r.handle = repository.getAttribute("handle")
         if repository.hasAttribute("change"):
             change = repository.getAttribute("change")
         if repository.hasAttribute("id"):
-            pid = repository.getAttribute("id")
-        
-        r = Repository(handle, pid)
+            r.id = repository.getAttribute("id")
     
         if len(repository.getElementsByTagName('rname') ) == 1:
             repository_rname = repository.getElementsByTagName('rname')[0]
@@ -413,14 +420,15 @@ def handle_sources(collection):
     
     # Print detail of each source
     for source in sources:
+    
+        s = Source()
+
         if source.hasAttribute("handle"):
-            handle = source.getAttribute("handle")
+            s.handle = source.getAttribute("handle")
         if source.hasAttribute("change"):
             change = source.getAttribute("change")
         if source.hasAttribute("id"):
-            pid = source.getAttribute("id")
-    
-        s = Source(handle, pid)
+            s.id = source.getAttribute("id")
     
         if len(source.getElementsByTagName('stitle') ) == 1:
             source_stitle = source.getElementsByTagName('stitle')[0]
