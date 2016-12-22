@@ -14,10 +14,10 @@ connect_db()
     
 
 def list_surnames():
-    surnames = Name.get_surnames()
+    result = Name.get_surnames()
 
-    for surname in surnames:
-        print(surname[0])
+    for record in result:
+        print(record["surname"])
 
 
 def process_neo4j(args):

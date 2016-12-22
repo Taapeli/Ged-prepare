@@ -379,7 +379,7 @@ class Name:
         global session
         
         query = """
-            MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.surname='{}' RETURN p.gramps_handle
+            MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.surname='{}' RETURN p.gramps_handle AS handle
             """.format(surname)
         return session.run(query)
         
@@ -391,7 +391,7 @@ class Name:
         global session
         
         query = """
-            MATCH (n:Name) RETURN distinct n.surname ORDER BY n.surname
+            MATCH (n:Name) RETURN distinct n.surname AS surname ORDER BY n.surname
             """
         return session.run(query)
     
@@ -578,7 +578,7 @@ class Person:
         global session
                 
         query = """
-            MATCH (p:Person)-[r:NAME]-(n:Name) WHERE p.gramps_handle='{}' RETURN p, n ORDER BY n.alt
+            MATCH (person:Person)-[r:NAME]-(name:Name) WHERE person.gramps_handle='{}' RETURN person, name ORDER BY name.alt
             """.format(self.handle)
         return  session.run(query)
 

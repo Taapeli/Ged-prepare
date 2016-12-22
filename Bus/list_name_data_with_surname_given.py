@@ -21,17 +21,17 @@ def get_name_data(handle):
     try:
         p = Person()
         p.handle = handle
-        results = p.get_name_data()
-        for result in results:
-            p.gender = result[0]['gender']
+        result = p.get_name_data()
+        for record in result:
+            p.gender = record["person"]['gender']
             p.name = []
-            if len(result[1]) > 0:
+            if len(record["name"]) > 0:
                 pname = Name()
-                pname.alt = result[1]['alt']
-                pname.type = result[1]['type']
-                pname.first = result[1]['first']
-                pname.surname = result[1]['surname']
-                pname.suffix = result[1]['suffix']
+                pname.alt = record["name"]['alt']
+                pname.type = record["name"]['type']
+                pname.first = record["name"]['first']
+                pname.surname = record["name"]['surname']
+                pname.suffix = record["name"]['suffix']
                 p.name.append(pname)
             p.print_data()
     except Exception as err:
@@ -43,9 +43,9 @@ def process_neo4j(args):
     # List some data of the people with given surname
     try:
     
-        results = Name.get_people_with_surname(args.surname)
-        for result in results:
-            get_name_data(result[0])
+        result = Name.get_people_with_surname(args.surname)
+        for record in result:
+            get_name_data(record["handle"])
 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
