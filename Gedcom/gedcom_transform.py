@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Generic GEDCOM transformer.
+Generic GEDCOM transformer v0.1
 Kari Kujansuu, 2016.
 
 The transforms are specified by separate Python modules ("plugins") in the subdirectory "transforms".
@@ -174,7 +174,8 @@ def find_transform(prefix):
     return False
 
 def main():
-    parser = argparse.ArgumentParser(description='GEDCOM transformations')
+    print("\nTaapeli GEDCOM transform program A (version 0.1)\n")
+    parser = argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
     #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
