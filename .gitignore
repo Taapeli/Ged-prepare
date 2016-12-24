@@ -1,1 +1,4 @@
 /.pydevproject
+/Gedcom/*.ged
+.DS_Store
+*.pyc
