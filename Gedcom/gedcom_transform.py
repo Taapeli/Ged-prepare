@@ -79,7 +79,9 @@ class Output:
     def __init__(self,args):
         self.args = args
     def __enter__(self):
+        tempfile.tempdir = "."
         self.tempname = tempfile.mktemp()
+        print(">>>>>>>>>>>>",self.tempname)
         self.f = open(self.tempname,"w",encoding=self.args.encoding)
         return self
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -126,9 +128,10 @@ def read_gedcom(args):
             else:
                 value = ""
             yield (line,".".join(curpath),tag,value)
-    except FileNotFoundError:
-        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
+#    except FileNotFoundError:
+#        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
     except Exception as err:
+        print(type(err))
         print("Virhe: {0}".format(err), file=stderr)
 
 def process_gedcom(args,transformer):

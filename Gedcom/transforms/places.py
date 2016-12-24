@@ -62,9 +62,13 @@ def add_args(parser):
                         help='Display unchanged places')
     parser.add_argument('--display-ignored', action='store_true',
                         help='Display ignored places')
+    parser.add_argument('--mark-changes', action='store_true',
+                        help='Replace changed PLAC tags with PLAC-X')
                         
 def initialize(args):
-    pass
+    read_parishes(args.parishfile)
+    read_villages(args.villagefile)
+
 
 def phase2(args):
     pass
@@ -78,6 +82,7 @@ def phase3(args,line,path,tag,value,f):
         if newplace != place: 
             if args.display_changes: print("'{}' -> '{}'".format(place,newplace))
             tkns[2] = newplace  
+            if args.mark_changes: tkns[1] = "PLAC-X"
             line = " ".join(tkns)
         else:
             if args.display_nonchanges: print("Not changed: '{}'".format(place))
