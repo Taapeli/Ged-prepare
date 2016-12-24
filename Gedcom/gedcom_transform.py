@@ -70,10 +70,7 @@ import os
 import argparse
 import tempfile
 from sys import stderr
-<<<<<<< HEAD
 import importlib
-=======
->>>>>>> ccf73bc790de6e136213f403216e5bb9ba96adb2
 
 def numeric(s):
     return s.replace(".","").isdigit()
@@ -153,7 +150,6 @@ def process_gedcom(args,transformer):
             transformer.phase3(args,line,path,tag,value,f)
 
 
-<<<<<<< HEAD
 def find_transform(prefix):
     choices = []
     for name in os.listdir("transforms"):
@@ -164,8 +160,6 @@ def find_transform(prefix):
             choices.append(name)
     if len(choices) == 1: return choices[0]
     return False
-=======
->>>>>>> ccf73bc790de6e136213f403216e5bb9ba96adb2
 
 def main():
     parser = argparse.ArgumentParser(description='GEDCOM transformations')
@@ -180,7 +174,6 @@ def main():
     #                    help='Display unchanged places')
     parser.add_argument('--encoding', type=str, default="utf-8",
                         help="UTF-8, ISO8859-1 tai jokin muu")
-<<<<<<< HEAD
     parser.add_argument('-l', '--list', action='store_true', help="List transforms")
 
     if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
@@ -188,15 +181,12 @@ def main():
         for name in os.listdir("transforms"):
             if name.endswith(".py"): print("  %s" % name[0:-3])
         return
-=======
->>>>>>> ccf73bc790de6e136213f403216e5bb9ba96adb2
 
     if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] not in ("-h","--help"):
         print("First argument must be the name of the transform")
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] != '-':
-<<<<<<< HEAD
         modname = find_transform(sys.argv[1])
         if not modname: 
             print("Transform not found")
@@ -206,16 +196,6 @@ def main():
         transformer.add_args(parser)
 
     args = parser.parse_args()
-    print(args.list)
-=======
-        modname = sys.argv[1]
-        if modname.endswith(".py"): modname = modname[:-3]
-        transformer = __import__(modname)
-        transformer.add_args(parser)
-
-    args = parser.parse_args()
-
->>>>>>> ccf73bc790de6e136213f403216e5bb9ba96adb2
     process_gedcom(args,transformer)
 
 
