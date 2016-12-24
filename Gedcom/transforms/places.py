@@ -50,8 +50,8 @@ def add_args(parser):
                         help='Try to discover correct order...')
     parser.add_argument('--auto-combine', action='store_true',
                         help='Try to combine certain names...')
-    parser.add_argument('--match', type=str,
-                        help='Only process places containing this string')
+    parser.add_argument('--match', type=str, action='append',
+                        help='Only process places containing any match string')
     parser.add_argument('--parishfile', type=str,
                         help='File with a list of parishes', default="seurakunnat.txt")
     parser.add_argument('--villagefile', type=str,
@@ -156,8 +156,13 @@ def revert_auto_combine(place):
         place = place.replace(s.replace(" ","-"),s)
     return place
 
+def stringmatch(place,matches):
+    for match in matches:
+        if place.find(match) >= 0: return True
+    return False
+    
 def process_place(args,place):
-    if args.match and place.find(args.match) < 0: return place
+    if args.match and not stringmatch(place,args.match): return place
     if args.add_commas and "," not in place:
         if args.auto_combine:
             place = auto_combine(place)
