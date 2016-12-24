@@ -2,22 +2,24 @@
 
 """
 Generic GEDCOM transformer.
+Kari Kujansuu, 2016.
 
-The transforms are specified by separate Python modules ("plugins"). 
+The transforms are specified by separate Python modules ("plugins").
 
-The name of the plugin is passed as the first parameter. This can be the name of the Python file ("module.py") 
-or just the name of the module ("module"). In both case the .py file must be in the current directory
-or on the PYTHONPATH.
+Parameters of main():
+ 1. The name of the plugin. This can be the name of the Python file ("module.py")
+    or just the name of the module ("module").
+    In both case the .py file must be in the current directory or on the PYTHONPATH.
 
-The second parameter is the name of the input GEDCOM file. This is also the name of the output file.
+ 2. The name of the input GEDCOM file. This is also the name of the output file.
 
-An optional --encoding parameter can be passed to specify the character encoding used to 
-read and write the GEDCOM files. The default is UTF-8.
+ 3. "--encoding" [optional] specifies the character encoding used to read and write
+    the GEDCOM files. The default is UTF-8.
 
-The optional parameter --display_changes can be specified to allow the plugins to
-show the modification. The plugin must implement the logic to do that.
- 
-The optional parameter --dryrun means that the changes are not saved and the input file is not modified.
+ 4. "--display_changes" [optional] can be specified to allow the plugins to
+    show the modification. The plugin must implement the logic to do that.
+
+ 5. "--dryrun" [optional] means that no changes are saved and the input file is not modified.
 
 If the --dryrun parameter is not specified then the original input file is
 renamed by adding a sequence number to the file name and the new version of
@@ -26,27 +28,32 @@ end of the program.
 
 A plugin may contain the following functions:
 
-- add_args(parser)            
-- initialize(args)
-- phase1(args,line,path,tag,value)
-- phase2(args)
+- add_args(parser)
+- initialize(args)                      # Called once in the beginning of the transformation
+- phase1(args,line,path,tag,value)      # [optional] called once per GEDCOM line
+- phase2(args)                          # [optional] called between phase1 and phase2
 - phase3(args,line,path,tag,value,output_file)
-            
-Function phase1 and phase2 are optional - or they can be defined with an empty body (pass).
+                                        # [optional] called once per GEDCOM line
 
-Function initialize is called once in the beginning of the transformation.
+The function "add_args" is called in the beginning of the program and it allows
+the plugin to add its own arguments for the program. The values of the arguments
+are stored in the "args" object that is passed to the other functions.
 
-Function phase1 is called once for each line in the input GEDCOM file. It can be used to collect
-and store information about the GEDCOM to be used in the subsequent phases.
+Function "initialize" is called in the beginning of the transformation.
 
-Function phase2 is called once after phase1 but before phase2. 
+If function "phase1" is defined, it is called once for each line in the input GEDCOM file.
+It can be used to collect information to be used in the subsequent phases.
 
-Function phase3 is called once for each line in the input GEDCOM file. It is called after phase2.
-This function should produce the output GEDCOM by calling output_file.emit
-for each line in the output file. If an input line is not modified then emit should
-be called with the original line as the parameter.
+Function "phase2" may be defined for processing all the information got from phase1
+before phase3.
 
-The parameters:
+Function "phase3" is called once for each line in the input GEDCOM file.
+This function should produce the output GEDCOM by calling output_file.emit()
+for each line in the output file.
+If an input line is not modified then emit should be called with the original line
+as it's parameter.
+
+The parameters of each phases:
 - "args" is the object returned by ArgumentParser.parse_args.
 - "line" is the original line in the input GEDCOM (unicode string)
 - "path" is the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE representing the DATE tag
@@ -56,19 +63,14 @@ The parameters:
 - "output_file" is a file-like object containing the method emit(string) that is used to produce the output
 - "parser" is the ArgumentParser object of the argparse module
 
-The function add_args is called in the beginning of the program and it allows
-the plugin to add its own arguments for the program. The values of the arguments
-are stored in the "args" object that is passed to the other functions. 
-
 """
-
 
 import sys
 import os
 import argparse
-from collections import defaultdict 
-import re
-import tempfile 
+import tempfile
+from sys import stderr
+import importlib
 
 def numeric(s):
     return s.replace(".","").isdigit()
@@ -81,12 +83,12 @@ class Output:
         self.f = open(self.tempname,"w",encoding=self.args.encoding)
         return self
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.f.close()        
+        self.f.close()
         if not self.args.dryrun:
-            self.save() 
-         
-    def emit(self,s):  
-        self.f.write(s+"\n")        
+            self.save()
+
+    def emit(self,s):
+        self.f.write(s+"\n")
     def save(self):
         input_gedcom = self.args.input_gedcom
         newname = self.generate_name(input_gedcom)
@@ -95,58 +97,75 @@ class Output:
         print("Input file renamed to '{}'".format(newname))
         print("New version saved as '{}'".format(input_gedcom))
     def generate_name(self,name):
-        i = 0 
+        i = 0
         while True:
             newname = "{}.{}".format(name,i)
             if not os.path.exists(newname): return newname
-            i += 1  
+            i += 1
 
-         
+
 def read_gedcom(args):
     curpath = [None]
-    for linenum,line in enumerate(open(args.input_gedcom,encoding=args.encoding)):
-        
-        line = line[:-1]
-        if line[0] == "\ufeff": line = line[1:]
-        tkns = line.split(None,2)
-        level = int(tkns[0])
-        tag = tkns[1]
-        if level > len(curpath):
-            raise RuntimeError("Invalid level:"+line)
-        if level == len(curpath):
-            curpath.append(tag)
-        else:
-            curpath[level] = tag
-            curpath = curpath[:level+1] 
-        if len(tkns) > 2: 
-            value = tkns[2]
-        else:
-            value = ""
-        yield (line,".".join(curpath),tag,value)
+    try:
+        for linenum,line in enumerate(open(args.input_gedcom,encoding=args.encoding)):
 
-            
+            line = line[:-1]
+            if line[0] == "\ufeff": line = line[1:]
+            tkns = line.split(None,2)
+            level = int(tkns[0])
+            tag = tkns[1]
+            if level > len(curpath):
+                raise RuntimeError("Invalid level {}: {}".format(linenum,line))
+            if level == len(curpath):
+                curpath.append(tag)
+            else:
+                curpath[level] = tag
+                curpath = curpath[:level+1]
+            if len(tkns) > 2:
+                value = tkns[2]
+            else:
+                value = ""
+            yield (line,".".join(curpath),tag,value)
+    except FileNotFoundError:
+        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
+    except Exception as err:
+        print("Virhe: {0}".format(err), file=stderr)
+
 def process_gedcom(args,transformer):
 
     transformer.initialize(args)
-    
+
+    # 1st traverse
     if hasattr(transformer,"phase1"):
         for line,path,tag,value in read_gedcom(args):
             transformer.phase1(args,line,path,tag,value)
 
+    # Intermediate processing of collected data
     if hasattr(transformer,"phase2"):
         transformer.phase2(args)
 
+    # 2nd traverse "phase3"
     with Output(args) as f:
         for line,path,tag,value in read_gedcom(args):
             transformer.phase3(args,line,path,tag,value,f)
 
 
-                       
-def main(): 
+def find_transform(prefix):
+    choices = []
+    for name in os.listdir("transforms"):
+        if not name.endswith(".py"): continue
+        name = name[0:-3]
+        if name == prefix: return name
+        if name.startswith(prefix):
+            choices.append(name)
+    if len(choices) == 1: return choices[0]
+    return False
+
+def main():
     parser = argparse.ArgumentParser(description='GEDCOM transformations')
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
-    #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" ) 
+    #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
     parser.add_argument('--display-changes', action='store_true',
                         help='Display changed rows')
     parser.add_argument('--dryrun', action='store_true',
@@ -155,23 +174,31 @@ def main():
     #                    help='Display unchanged places')
     parser.add_argument('--encoding', type=str, default="utf-8",
                         help="UTF-8, ISO8859-1 tai jokin muu")
- 
+    parser.add_argument('-l', '--list', action='store_true', help="List transforms")
+
+    if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
+        print("List of transforms:")
+        for name in os.listdir("transforms"):
+            if name.endswith(".py"): print("  %s" % name[0:-3])
+        return
+
     if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] not in ("-h","--help"):
         print("First argument must be the name of the transform")
         return
-     
-    if len(sys.argv) > 1 and sys.argv[1][0] != '-': 
-        modname = sys.argv[1]
+
+    if len(sys.argv) > 1 and sys.argv[1][0] != '-':
+        modname = find_transform(sys.argv[1])
+        if not modname: 
+            print("Transform not found")
+            return
         if modname.endswith(".py"): modname = modname[:-3]
-        transformer = __import__(modname)
+        transformer = importlib.import_module("transforms."+modname)
         transformer.add_args(parser)
-    
+
     args = parser.parse_args()
-    
+    print(args.list)
     process_gedcom(args,transformer)
 
-    
+
 if __name__ == "__main__":
     main()
-
-
