@@ -149,17 +149,28 @@ def process_gedcom(args,transformer):
         for line,path,tag,value in read_gedcom(args):
             transformer.phase3(args,line,path,tag,value,f)
 
+def get_transforms():
+    for name in os.listdir("transforms"):
+        if name.endswith(".py") and name != "__init__.py": 
+            modname = name[0:-3]
+            transformer = importlib.import_module("transforms."+modname)
+            doc = transformer.__doc__
+            if doc:
+                docline = doc.strip().splitlines()[0]
+            else:
+                docline = ""
+            yield (modname,transformer,docline)
 
 def find_transform(prefix):
     choices = []
-    for name in os.listdir("transforms"):
-        if not name.endswith(".py"): continue
-        if name == "__init__.py": continue
-        name = name[0:-3]
-        if name == prefix: return name
-        if name.startswith(prefix):
-            choices.append(name)
-    if len(choices) == 1: return choices[0]
+    for modname,transformer,docline in get_transforms():
+        if modname == prefix: return transformer
+        if modname.startswith(prefix):
+            choices.append((modname,transformer))
+    if len(choices) == 1: return choices[0][1]
+    if len(choices) > 1: 
+        print("Ambiguous transform name: {}".format(prefix))
+        print("Matching names: {}".format(",".join(name for name,t in choices)))
     return False
 
 def main():
@@ -179,17 +190,8 @@ def main():
 
     if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
         print("List of transforms:")
-        for name in os.listdir("transforms"):
-            if name.endswith(".py") and name != "__init__.py": 
-                modname = name[0:-3]
-                transformer = importlib.import_module("transforms."+modname)
-                
-                doc = transformer.__doc__
-                if doc:
-                    docline = doc.strip().splitlines()[0]
-                else:
-                    docline = ""
-                print("  {:20.20} {}".format(modname,docline))
+        for modname,transformer,docline in get_transforms():
+            print("  {:20.20} {}".format(modname,docline))
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] not in ("-h","--help"):
@@ -197,12 +199,10 @@ def main():
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] != '-':
-        modname = find_transform(sys.argv[1])
-        if not modname: 
+        transformer = find_transform(sys.argv[1])
+        if not transformer: 
             print("Transform not found; use -l to list the available transforms")
             return
-        if modname.endswith(".py"): modname = modname[:-3]
-        transformer = importlib.import_module("transforms."+modname)
         transformer.add_args(parser)
 
     args = parser.parse_args()
