@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+Tries to recognize place names and order them correctly
+"""
+
 from collections import defaultdict 
 
 ignored_text = """

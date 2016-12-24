@@ -4,7 +4,7 @@
 Generic GEDCOM transformer.
 Kari Kujansuu, 2016.
 
-The transforms are specified by separate Python modules ("plugins").
+The transforms are specified by separate Python modules ("plugins") in the subdirectory "transforms".
 
 Parameters of main():
  1. The name of the plugin. This can be the name of the Python file ("module.py")
@@ -154,6 +154,7 @@ def find_transform(prefix):
     choices = []
     for name in os.listdir("transforms"):
         if not name.endswith(".py"): continue
+        if name == "__init__.py": continue
         name = name[0:-3]
         if name == prefix: return name
         if name.startswith(prefix):
@@ -173,13 +174,22 @@ def main():
     #parser.add_argument('--display-nonchanges', action='store_true',
     #                    help='Display unchanged places')
     parser.add_argument('--encoding', type=str, default="utf-8",
-                        help="UTF-8, ISO8859-1 tai jokin muu")
+                        help="e.g, UTF-8, ISO8859-1")
     parser.add_argument('-l', '--list', action='store_true', help="List transforms")
 
     if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
         print("List of transforms:")
         for name in os.listdir("transforms"):
-            if name.endswith(".py"): print("  %s" % name[0:-3])
+            if name.endswith(".py") and name != "__init__.py": 
+                modname = name[0:-3]
+                transformer = importlib.import_module("transforms."+modname)
+                
+                doc = transformer.__doc__
+                if doc:
+                    docline = doc.strip().splitlines()[0]
+                else:
+                    docline = ""
+                print("  {:20.20} {}".format(modname,docline))
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] not in ("-h","--help"):
@@ -189,7 +199,7 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1][0] != '-':
         modname = find_transform(sys.argv[1])
         if not modname: 
-            print("Transform not found")
+            print("Transform not found; use -l to list the available transforms")
             return
         if modname.endswith(".py"): modname = modname[:-3]
         transformer = importlib.import_module("transforms."+modname)

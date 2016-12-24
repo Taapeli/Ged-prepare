@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+"BIRT.PLAC (kastettu) place" -> "CHR.PLAC place"
+
 Lähettäjä: <pekka.valta@kolumbus.fi>
 Päiväys: 12. marraskuuta 2016 klo 17.26
 Aihe: Kastettu paikan korjaus
