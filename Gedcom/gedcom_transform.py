@@ -150,6 +150,7 @@ def process_gedcom(args,transformer):
             transformer.phase3(args,line,path,tag,value,f)
 
 def get_transforms():
+    # all transform modules should be in the package "transforms"
     for name in os.listdir("transforms"):
         if name.endswith(".py") and name != "__init__.py": 
             modname = name[0:-3]
@@ -159,11 +160,12 @@ def get_transforms():
                 docline = doc.strip().splitlines()[0]
             else:
                 docline = ""
-            yield (modname,transformer,docline)
+            version = getattr(transformer,"version","")
+            yield (modname,transformer,docline,version)
 
 def find_transform(prefix):
     choices = []
-    for modname,transformer,docline in get_transforms():
+    for modname,transformer,docline,version in get_transforms():
         if modname == prefix: return transformer
         if modname.startswith(prefix):
             choices.append((modname,transformer))
@@ -191,8 +193,8 @@ def main():
 
     if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
         print("List of transforms:")
-        for modname,transformer,docline in get_transforms():
-            print("  {:20.20} {}".format(modname,docline))
+        for modname,transformer,docline,version in get_transforms():
+            print("  {:20.20} {:10.10} {}".format(modname,version,docline))
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] not in ("-h","--help"):

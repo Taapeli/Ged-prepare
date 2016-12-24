@@ -3,6 +3,8 @@
 Tries to recognize place names and order them correctly
 """
 
+version = "1.0"
+
 from collections import defaultdict 
 
 ignored_text = """
@@ -31,6 +33,7 @@ de
 las
 
 """
+
 
 def add_args(parser):
     parser.add_argument('--reverse', action='store_true',

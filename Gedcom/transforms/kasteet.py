@@ -27,6 +27,8 @@ Pekka
 
 """
 
+version = "1.0"
+
 ids = set()
 
 def add_args(parser):

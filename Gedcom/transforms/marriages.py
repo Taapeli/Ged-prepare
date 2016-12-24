@@ -37,6 +37,10 @@ Näillä ideoilla pyhäinpäivän keskellä
 
 
 """
+
+version = "1.0"
+
+
 from collections import defaultdict 
 import re
 #from PIL.SpiderImagePlugin import outfile
