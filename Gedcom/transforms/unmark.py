@@ -5,8 +5,6 @@ Restores marked tags: <tag>-X -> <tag>
 
 version = "1.0"
 
-ids = set()
-
 def add_args(parser):
     pass
 
