@@ -124,7 +124,7 @@ def phase3(args,line,level,path,tag,value,f):
         parts = path.split(".")
         fam = parts[0]
         if fam in fixedfams:
-            line = level + " PLAC " + fixedfams[fam]
+            line = "{} {} {}".format(level,"PLAC", fixedfams[fam])
         f.emit(line)
         return
     f.emit(line)
