@@ -106,7 +106,7 @@ def phase2(args):
             resi[faminfo.wife].append((wife_place,faminfo.date))
             fixedfams[fam] = m.group(1)
 
-def phase3(args,line,level,path,tag,value,m_outfile,f):
+def phase3(args,line,level,path,tag,value,f):
     '''
         2nd traverse: creating the new GEDCOM file
     '''
