@@ -760,6 +760,18 @@ class Repository:
         
     
     @staticmethod       
+    def get_repositories():
+        """ Luetaan kaikki repositoryt """
+        
+        global session
+                
+        query = """
+            MATCH (repo:Repository) RETURN repo
+            """
+        return  session.run(query)
+                
+    
+    @staticmethod       
     def get_total():
         """ Tulostaa arkistojen määrän tietokannassa """
         
