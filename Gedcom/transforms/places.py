@@ -73,7 +73,7 @@ def initialize(args):
 def phase2(args):
     pass
 
-def phase3(args,line,path,tag,value,f):
+def phase3(args,line,level,path,tag,value,f):
     if tag == "PLAC":
         if not value: return
         tkns = line.split(None,2)

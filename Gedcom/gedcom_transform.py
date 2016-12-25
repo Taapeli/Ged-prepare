@@ -138,9 +138,10 @@ def read_gedcom(args):
                 value = tkns[2]
             else:
                 value = ""
-            yield (line,".".join(curpath),tag,value)
-#    except FileNotFoundError:
-#        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
+            yield (line,level,".".join(curpath),tag,value)
+#    except FileNotFoundError:  # does not work before Python 3.3, temporary fix:
+    except OSError:
+        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
     except Exception as err:
         print(type(err))
         print("Virhe: {0}".format(err), file=stderr)
@@ -151,8 +152,8 @@ def process_gedcom(args,transformer):
 
     # 1st traverse
     if hasattr(transformer,"phase1"):
-        for line,path,tag,value in read_gedcom(args):
-            transformer.phase1(args,line,path,tag,value)
+        for line,level,path,tag,value in read_gedcom(args):
+            transformer.phase1(args,line,level,path,tag,value)
 
     # Intermediate processing of collected data
     if hasattr(transformer,"phase2"):
@@ -160,8 +161,8 @@ def process_gedcom(args,transformer):
 
     # 2nd traverse "phase3"
     with Output(args) as f:
-        for line,path,tag,value in read_gedcom(args):
-            transformer.phase3(args,line,path,tag,value,f)
+        for line,level,path,tag,value in read_gedcom(args):
+            transformer.phase3(args,line,level,path,tag,value,f)
 
 def get_transforms():
     # all transform modules should be in the package "transforms"

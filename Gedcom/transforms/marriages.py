@@ -68,7 +68,7 @@ def add_args(parser):
 def initialize(args):
     pass
 
-def phase1(args,line,path,tag,value):
+def phase1(args,line,level,path,tag,value):
     '''
 		1st traverse: finding all families
     '''
@@ -106,7 +106,7 @@ def phase2(args):
             resi[faminfo.wife].append((wife_place,faminfo.date))
             fixedfams[fam] = m.group(1)
 
-def phase3(args,line,path,tag,value,m_outfile,f):
+def phase3(args,line,level,path,tag,value,m_outfile,f):
     '''
         2nd traverse: creating the new GEDCOM file
     '''
@@ -124,7 +124,6 @@ def phase3(args,line,path,tag,value,m_outfile,f):
         parts = path.split(".")
         fam = parts[0]
         if fam in fixedfams:
-            level = line.split()[0]
             line = level + " PLAC " + fixedfams[fam]
         f.emit(line)
         return

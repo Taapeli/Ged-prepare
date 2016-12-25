@@ -11,10 +11,9 @@ def add_args(parser):
 def initialize(args):
     pass
 
-def phase3(args,line,path,tag,value,f):
+def phase3(args,line,level,path,tag,value,f):
     if tag.endswith("-X"):
         tag = tag[:-2]
-        level = line.split()[0]
         line = "{} {} {}".format(level,tag,value)
     f.emit(line)
 
