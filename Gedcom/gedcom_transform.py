@@ -67,6 +67,7 @@ The parameters of each phases:
 
 import sys
 import os
+import time
 import argparse
 import tempfile
 from sys import stderr
@@ -78,10 +79,12 @@ def numeric(s):
 class Output:
     def __init__(self,args):
         self.args = args
+        self.log = True
     def __enter__(self):
-        tempfile.tempdir = "."
+        input_gedcom = self.args.input_gedcom
+        tempfile.tempdir = os.path.dirname(input_gedcom) # create tempfile in the same directory so you can rename it later
         self.tempname = tempfile.mktemp()
-        print(">>>>>>>>>>>>",self.tempname)
+        self.newname = self.generate_name(input_gedcom)
         self.f = open(self.tempname,"w",encoding=self.args.encoding)
         return self
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -91,12 +94,20 @@ class Output:
 
     def emit(self,s):
         self.f.write(s+"\n")
+        if self.log:
+            self.log = False
+            self.emit("1 _TRANSFORM " + " ".join(sys.argv))
+            datestring = time.strftime("%d %b %Y %H:%M:%S", time.localtime(time.time()))
+            self.emit("2 _TIME " + datestring)
+            #user = os.environ.get('USER',"")
+            user = os.getlogin()
+            if user: self.emit("2 _USER " + user)
+            self.emit("2 _SAVEDFILE " + self.newname)
     def save(self):
         input_gedcom = self.args.input_gedcom
-        newname = self.generate_name(input_gedcom)
-        os.rename(input_gedcom,newname)
+        os.rename(input_gedcom,self.newname)
         os.rename(self.tempname,input_gedcom)
-        print("Input file renamed to '{}'".format(newname))
+        print("Input file renamed to '{}'".format(self.newname))
         print("New version saved as '{}'".format(input_gedcom))
     def generate_name(self,name):
         i = 0
