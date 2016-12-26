@@ -31,6 +31,7 @@ def read_sources_from_Neo4j(repository_handle):
     for record in result:
         s = Source()
         s.handle = record["source"]['gramps_handle']
+        s.change = record["source"]['change']
         s.id = record["source"]['id']
         s.stitle = record["source"]['stitle']
         
@@ -49,14 +50,15 @@ def read_sources_from_Neo4j(repository_handle):
 def write_sources_to_xml_file(repository_handle, sources, f):
     cnt = cnt2 =0
     
-    # Write the begin group tag
+    # Write the start tag
     output_line = '  <sources>\n'
     f.write(output_line)
     cnt2 += 1
     
     for source in sources:
         output_line = '    ' +\
-            '<source handle="' + source.handle + '"'\
+            '<source handle="' + source.handle + '"' +\
+            ' change="' + source.change + '"' +\
             ' id="' + source.id + '">\n'
             
         f.write(output_line)
@@ -70,7 +72,7 @@ def write_sources_to_xml_file(repository_handle, sources, f):
         
         output_line = '      ' +\
             '<reporef hlink="' + repository_handle +\
-                '" medium="' + source.reporef_medium + '"/>\n'
+            '" medium="' + source.reporef_medium + '"/>\n'
         
         f.write(output_line)
         cnt2 += 1
@@ -83,7 +85,7 @@ def write_sources_to_xml_file(repository_handle, sources, f):
         cnt += 1
         
     
-    # Write the end group tag
+    # Write the end tag
     output_line = '  </sources>\n'
     f.write(output_line)
     cnt2 += 1

@@ -34,7 +34,7 @@ def handle_citations(collection):
         if citation.hasAttribute("handle"):
             c.handle = citation.getAttribute("handle")
         if citation.hasAttribute("change"):
-            change = citation.getAttribute("change")
+            c.change = citation.getAttribute("change")
         if citation.hasAttribute("id"):
             c.id = citation.getAttribute("id")
     
@@ -96,7 +96,7 @@ def handle_events(collection):
         if event.hasAttribute("handle"):
             e.handle = event.getAttribute("handle")
         if event.hasAttribute("change"):
-            change = event.getAttribute("change")
+            e.change = event.getAttribute("change")
         if event.hasAttribute("id"):
             e.id = event.getAttribute("id")
             
@@ -151,7 +151,7 @@ def handle_families(collection):
         if family.hasAttribute("handle"):
             f.handle = family.getAttribute("handle")
         if family.hasAttribute("change"):
-            change = family.getAttribute("change")
+            f.change = family.getAttribute("change")
         if family.hasAttribute("id"):
             f.id = family.getAttribute("id")
     
@@ -214,7 +214,7 @@ def handle_notes(collection):
         if note.hasAttribute("handle"):
             n.handle = note.getAttribute("handle")
         if note.hasAttribute("change"):
-            change = note.getAttribute("change")
+            n.change = note.getAttribute("change")
         if note.hasAttribute("id"):
             n.id = note.getAttribute("id")
         if note.hasAttribute("type"):
@@ -248,7 +248,7 @@ def handle_people(collection):
         if person.hasAttribute("handle"):
             p.handle = person.getAttribute("handle")
         if person.hasAttribute("change"):
-            change = person.getAttribute("change")
+            p.change = person.getAttribute("change")
         if person.hasAttribute("id"):
             p.id = person.getAttribute("id")
     
@@ -337,7 +337,7 @@ def handle_places(collection):
         if placeobj.hasAttribute("handle"):
             place.handle = placeobj.getAttribute("handle")
         if placeobj.hasAttribute("change"):
-            change = placeobj.getAttribute("change")
+            place.change = placeobj.getAttribute("change")
         if placeobj.hasAttribute("id"):
             place.id = placeobj.getAttribute("id")
         if placeobj.hasAttribute("type"):
@@ -386,7 +386,7 @@ def handle_repositories(collection):
         if repository.hasAttribute("handle"):
             r.handle = repository.getAttribute("handle")
         if repository.hasAttribute("change"):
-            change = repository.getAttribute("change")
+            r.change = repository.getAttribute("change")
         if repository.hasAttribute("id"):
             r.id = repository.getAttribute("id")
     
@@ -426,7 +426,7 @@ def handle_sources(collection):
         if source.hasAttribute("handle"):
             s.handle = source.getAttribute("handle")
         if source.hasAttribute("change"):
-            change = source.getAttribute("change")
+            s.change = source.getAttribute("change")
         if source.hasAttribute("id"):
             s.id = source.getAttribute("id")
     
@@ -501,21 +501,52 @@ def process_xml(args):
         DOMTree = xml.dom.minidom.parse(open(args.input_xml))
         collection = DOMTree.documentElement
     
+        t = time.perf_counter()
         handle_notes(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_notes()
+        
+        t = time.perf_counter()
         handle_repositories(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_repositories()
+        
+        t = time.perf_counter()
         handle_places(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_places()
+        
+        t = time.perf_counter()
         handle_sources(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_sources()
+        
+        t = time.perf_counter()
         handle_citations(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_citations()
+        
+        t = time.perf_counter()
         handle_events(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_events()
+        
+        t = time.perf_counter()
         handle_people(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_people()
+        
+        t = time.perf_counter()
         handle_families(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_families()
     except FileNotFoundError:
         print("Tiedostoa '{}' ei ole!".format(args.input_xml), file=stderr)

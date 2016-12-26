@@ -5,7 +5,7 @@ from neo4j.v1 import GraphDatabase, basic_auth
 #import logging
 from sys import stderr
 import config as dbconf      # Tietokannan tiedot
-from flask.globals import session
+#from flask.globals import session
 
 def connect_db():
     """ 
@@ -38,6 +38,7 @@ class Citation:
             
         Properties:
                 handle          
+                change
                 id               esim. "C0001"
                 confidence       str confidence
                 noteref_hlink    str huomautuksen osoite
@@ -47,6 +48,7 @@ class Citation:
     def __init__(self):
         """ Luo uuden citation-instanssin """
         self.handle = ''
+        self.change = ''
         self.id = ''
         self.noteref_hlink = ''
         self.sourceref_hlink = ''
@@ -61,19 +63,22 @@ class Citation:
             # Create a new Citation node
             query = """
                 CREATE (n:Citation) 
-                SET n.gramps_handle='{}', n.id='{}', n.confidence='{}'
-                """.format(self.handle, self.id, self.confidence)
+                SET n.gramps_handle='{}', 
+                    n.change='{}', 
+                    n.id='{}', 
+                    n.confidence='{}'
+                """.format(self.handle, self.change, self.id, self.confidence)
                 
             session.run(query)
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
 
         try:
-            # Make possible relations from the Citation node
+            # Make relation to the Note node
             if self.noteref_hlink != '':
                 query = """
                     MATCH (n:Citation) WHERE n.gramps_handle='{}'
-                    MATCH (m:Source) WHERE m.gramps_handle='{}'
+                    MATCH (m:Note) WHERE m.gramps_handle='{}'
                     MERGE (n)-[r:SOURCE]->(m)
                      """.format(self.handle, self.noteref_hlink)
                                  
@@ -82,6 +87,7 @@ class Citation:
             print("Virhe: {0}".format(err), file=stderr)
 
         try:   
+            # Make relation to the Source node
             if self.sourceref_hlink != '':
                 query = """
                     MATCH (n:Citation) WHERE n.gramps_handle='{}'
@@ -100,6 +106,7 @@ class Citation:
         """ Tulostaa tiedot """
         print ("*****Citation*****")
         print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Confidence: " + self.confidence)
         if self.noteref_hlink != '':
@@ -129,6 +136,7 @@ class Event:
             
         Properties:
                 handle          
+                change
                 id                 esim. "E0001"
                 type               esim. "Birth"
                 date               str aika
@@ -139,6 +147,7 @@ class Event:
     def __init__(self):
         """ Luo uuden event-instanssin """
         self.handle = ''
+        self.change = ''
         self.id = ''
         self.date = ''
         self.place_hlink = ''
@@ -153,15 +162,19 @@ class Event:
         try:
             query = """
                 CREATE (e:Event) 
-                SET e.gramps_handle='{}', e.id='{}', e.type='{}', e.date='{}'
-                """.format(self.handle, self.id, self.type, self.date)
+                SET e.gramps_handle='{}', 
+                    e.change='{}', 
+                    e.id='{}', 
+                    e.type='{}', 
+                    e.date='{}'
+                """.format(self.handle, self.change, self.id, self.type, self.date)
                 
             session.run(query)
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
 
         try:
-            # Make possible relations from the Event node
+            # Make relation to the Place node
             if self.place_hlink != '':
                 query = """
                     MATCH (n:Event) WHERE n.gramps_handle='{}'
@@ -174,6 +187,7 @@ class Event:
             print("Virhe: {0}".format(err), file=stderr)
 
         try:
+            # Make relation to the Citation node
             if self.citationref_hlink != '':
                 query = """
                     MATCH (n:Event) WHERE n.gramps_handle='{}'
@@ -191,6 +205,7 @@ class Event:
     def print_data(self):
         """ Tulostaa tiedot """
         print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Type: " + self.type)
         print ("Dateval: " + self.date)
@@ -219,6 +234,7 @@ class Family:
             
         Properties:
                 handle          
+                change
                 id              esim. "F0001"
                 rel_type        str suhteen tyyppi
                 father          str isän osoite
@@ -231,6 +247,7 @@ class Family:
     def __init__(self):
         """ Luo uuden family-instanssin """
         self.handle = ''
+        self.change = ''
         self.id = ''
         self.eventref_hlink = []
         self.eventref_role = []
@@ -245,15 +262,18 @@ class Family:
         try:
             query = """
                 CREATE (n:Family) 
-                SET n.gramps_handle='{}', n.id='{}', n.rel_type='{}'
-                """.format(self.handle, self.id, self.rel_type)
+                SET n.gramps_handle='{}', 
+                    n.change='{}', 
+                    n.id='{}', 
+                    n.rel_type='{}'
+                """.format(self.handle, self.change, self.id, self.rel_type)
                 
             session.run(query)
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
 
         try:
-            # Make possible relations from the Family node
+            # Make relation to the Person node
             if self.father != '':
                 query = """
                     MATCH (n:Family) WHERE n.gramps_handle='{}'
@@ -266,6 +286,7 @@ class Family:
             print("Virhe: {0}".format(err), file=stderr)
 
         try:
+            # Make relation to the Person node
             if self.mother != '':
                 query = """
                     MATCH (n:Family) WHERE n.gramps_handle='{}'
@@ -277,6 +298,7 @@ class Family:
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
 
+        # Make relation(s) to the Event node
         if len(self.eventref_hlink) > 0:
             for i in range(len(self.eventref_hlink)):
                 try:
@@ -293,7 +315,7 @@ class Family:
                 try:
                     query = """
                         MATCH (n:Family)-[r:EVENT]->(m:Event)
-                        WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
+                            WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
                         SET r.role ='{}'
                          """.format(self.handle, self.eventref_hlink[i], self.eventref_role[i])
                                  
@@ -301,6 +323,7 @@ class Family:
                 except Exception as err:
                     print("Virhe: {0}".format(err), file=stderr)
   
+        # Make relation(s) to the Person node
         if len(self.childref_hlink) > 0:
             for i in range(len(self.childref_hlink)):
                 try:
@@ -321,6 +344,7 @@ class Family:
         """ Tulostaa tiedot """
         print ("*****Family*****")
         print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Rel: " + self.rel_type)
         print ("Father: " + self.father)
@@ -374,12 +398,13 @@ class Name:
         
     @staticmethod
     def get_people_with_surname(surname):
-        """ Etsi kaikki henkilöt, joiden syntymä nimi on annettu"""
+        """ Etsi kaikki henkilöt, joiden sukunimi on annettu"""
         
         global session
         
         query = """
-            MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.surname='{}' RETURN p.gramps_handle AS handle
+            MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.surname='{}'
+                RETURN p.gramps_handle AS handle
             """.format(surname)
         return session.run(query)
         
@@ -391,7 +416,8 @@ class Name:
         global session
         
         query = """
-            MATCH (n:Name) RETURN distinct n.surname AS surname ORDER BY n.surname
+            MATCH (n:Name) RETURN distinct n.surname AS surname
+                ORDER BY n.surname
             """
         return session.run(query)
     
@@ -401,6 +427,7 @@ class Note:
             
         Properties:
                 handle          
+                change
                 id              esim. "N0001"
                 type            str huomautuksen tyyppi
                 text            str huomautuksen sisältö
@@ -409,6 +436,7 @@ class Note:
     def __init__(self):
         """ Luo uuden note-instanssin """
         self.handle = ''
+        self.change = ''
         self.id = ''
         self.type = ''
 
@@ -421,8 +449,12 @@ class Note:
         try:
             query = """
                 CREATE (n:Note) 
-                SET n.gramps_handle='{}', n.id='{}', n.type='{}', n.text='{}'
-                """.format(self.handle, self.id, self.type, self.text)
+                SET n.gramps_handle='{}', 
+                    n.change='{}', 
+                    n.id='{}', 
+                    n.type='{}', 
+                    n.text='{}'
+                """.format(self.handle, self.change, self.id, self.type, self.text)
                 
             return session.run(query)
         except Exception as err:
@@ -433,6 +465,7 @@ class Note:
         """ Tulostaa tiedot """
         print ("*****Note*****")
         print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Type: " + self.type)
         print ("Text: " + self.text)
@@ -460,6 +493,7 @@ class Person:
             
         Properties:
                 handle          
+                change
                 id                 esim. "I0001"
                 gender             str sukupuoli
                 name:
@@ -476,6 +510,7 @@ class Person:
     def __init__(self):
         """ Luo uuden person-instanssin """
         self.handle = ''
+        self.change = ''
         self.id = ''
         self.name = []
         self.eventref_role = []
@@ -493,8 +528,11 @@ class Person:
             try:
                 query = """
                     CREATE (p:Person) 
-                    SET p.gramps_handle='{}', p.id='{}', p.gender='{}'
-                    """.format(self.handle, self.id, self.gender)
+                    SET p.gramps_handle='{}', 
+                        p.change='{}', 
+                        p.id='{}', 
+                        p.gender='{}'
+                    """.format(self.handle, self.change, self.id, self.gender)
                     
                 session.run(query)
             except Exception as err:
@@ -511,17 +549,26 @@ class Person:
                     
                     query = """
                         CREATE (m:Name) 
-                        SET m.alt='{}', m.type='{}', m.first='{}', m.surname='{}', m.suffix='{}'
+                        SET m.alt='{}', 
+                            m.type='{}', 
+                            m.first='{}', 
+                            m.surname='{}', 
+                            m.suffix='{}'
                         WITH m
                         MATCH (n:Person) WHERE n.gramps_handle='{}'
                         MERGE (n)-[r:NAME]->(m)
-                    """.format(p_alt, p_type, p_first, p_surname, p_suffix, self.handle)
+                    """.format(p_alt, 
+                               p_type, 
+                               p_first, 
+                               p_surname, 
+                               p_suffix, 
+                               self.handle)
                 
                     session.run(query)
             except Exception as err:
                 print("Virhe: {0}".format(err), file=stderr)
 
-        # Make possible relations from the Person node
+        # Make possible relations to the Event node
         if len(self.eventref_hlink) > 0:
             for i in range(len(self.eventref_hlink)):
                 try:
@@ -538,14 +585,17 @@ class Person:
                 try:
                     query = """
                         MATCH (n:Person)-[r:EVENT]->(m:Event)
-                        WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
+                            WHERE n.gramps_handle='{}' AND m.gramps_handle='{}'
                         SET r.role ='{}'
-                         """.format(self.handle, self.eventref_hlink[i], self.eventref_role[i])
+                         """.format(self.handle, 
+                                    self.eventref_hlink[i], 
+                                    self.eventref_role[i])
                                  
                     session.run(query)
                 except Exception as err:
                     print("Virhe: {0}".format(err), file=stderr)
    
+        # Make relations to the Family node
         if len(self.parentin_hlink) > 0:
             try:
                 query = """
@@ -558,6 +608,7 @@ class Person:
             except Exception as err:
                 print("Virhe: {0}".format(err), file=stderr)
    
+        # Make relations to the Citation node
         if len(self.citationref_hlink) > 0:
             try:
                 query = """
@@ -578,7 +629,10 @@ class Person:
         global session
                 
         query = """
-            MATCH (person:Person)-[r:NAME]-(name:Name) WHERE person.gramps_handle='{}' RETURN person, name ORDER BY name.alt
+            MATCH (person:Person)-[r:NAME]-(name:Name) 
+                WHERE person.gramps_handle='{}'
+                RETURN person, name
+                ORDER BY name.alt
             """.format(self.handle)
         return  session.run(query)
 
@@ -587,6 +641,7 @@ class Person:
         """ Tulostaa tiedot """
         print ("*****Person*****")
         print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Gender: " + self.gender)
         if len(self.name) > 0:
@@ -632,6 +687,7 @@ class Place:
             
         Properties:
                 handle          
+                change
                 id              esim. "P0001"
                 type            str paikan tyyppi
                 pname           str paikan nimi
@@ -641,6 +697,7 @@ class Place:
     def __init__(self):
         """ Luo uuden place-instanssin """
         self.handle = ''
+        self.change = ''
         self.id = ''
         self.type = ''
         self.pname = []
@@ -655,21 +712,26 @@ class Place:
         if len(self.pname) >= 1:
             p_pname = self.pname[0]
             if len(self.pname) > 1:
-                print("Warning: More than one pname in a place, handle: " + self.handle)
+                print("Warning: More than one pname in a place, " + 
+                      "handle: " + self.handle)
         else:
             p_pname = ''
 
         try:
             query = """
                 CREATE (p:Place) 
-                SET p.gramps_handle='{}', p.id='{}', p.type='{}', p.pname='{}'
-                """.format(self.handle, self.id, self.type, p_pname)
+                SET p.gramps_handle='{}', 
+                    p.change='{}', 
+                    p.id='{}', 
+                    p.type='{}', 
+                    p.pname='{}'
+                """.format(self.handle, self.change, self.id, self.type, p_pname)
                 
             session.run(query)
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
 
-        # Make possible relations from the Person node
+        # Make hierarchy relations to the Place node
         if len(self.placeref_hlink) > 0:
             try:
                 query = """
@@ -689,6 +751,7 @@ class Place:
         """ Tulostaa tiedot """
         print ("*****Placeobj*****")
         print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Type: " + self.type)
         if len(self.pname) > 0:
@@ -719,6 +782,7 @@ class Repository:
             
         Properties:
                 handle          
+                change
                 id              esim. "R0001"
                 rname           str arkiston nimi
                 type            str arkiston tyyppi
@@ -728,6 +792,7 @@ class Repository:
     def __init__(self):
         """ Luo uuden repository-instanssin """
         self.handle = ''
+        self.change = ''
         self.id = ''
 
 
@@ -739,8 +804,12 @@ class Repository:
         try:
             query = """
                 CREATE (r:Repository) 
-                SET r.gramps_handle='{}', r.id='{}', r.rname='{}', r.type='{}'
-                """.format(self.handle, self.id, self.rname, self.type)
+                SET r.gramps_handle='{}', 
+                    r.change='{}', 
+                    r.id='{}', 
+                    r.rname='{}', 
+                    r.type='{}'
+                """.format(self.handle, self.change, self.id, self.rname, self.type)
                 
             session.run(query)
         except Exception as err:
@@ -753,6 +822,7 @@ class Repository:
         """ Tulostaa tiedot """
         print ("*****Repository*****")
         print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Rname: " + self.rname)
         print ("Type: " + self.type)
@@ -766,7 +836,8 @@ class Repository:
         global session
                 
         query = """
-            MATCH (repository:Repository) WHERE repository.rname='{}' RETURN repository.gramps_handle
+            MATCH (repository:Repository) WHERE repository.rname='{}'
+                RETURN repository.gramps_handle
             """.format(rname)
         return  session.run(query)
         
@@ -803,6 +874,7 @@ class Source:
             
         Properties:
                 handle          
+                change
                 id              esim. "S0001"
                 stitle          str lähteen otsikko
                 noteref_hlink   str huomautuksen osoite
@@ -813,6 +885,7 @@ class Source:
     def __init__(self):
         """ Luo uuden source-instanssin """
         self.handle = ''
+        self.change = ''
         self.id = ''
         self.stitle = ''
         self.noteref_hlink = ''
@@ -828,14 +901,17 @@ class Source:
         try:
             query = """
                 CREATE (s:Source) 
-                SET s.gramps_handle='{}', s.id='{}', s.stitle='{}'
-                """.format(self.handle, self.id, self.stitle)
+                SET s.gramps_handle='{}', 
+                    s.change='{}', 
+                    s.id='{}', 
+                    s.stitle='{}'
+                """.format(self.handle, self.change, self.id, self.stitle)
                 
             session.run(query)
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
  
-        # Make possible relations from the Source node
+        # Make relation to the Note node
         if self.noteref_hlink != '':
             try:
                 query = """
@@ -848,6 +924,7 @@ class Source:
             except Exception as err:
                 print("Virhe: {0}".format(err), file=stderr)
    
+        # Make relation to the Repository node
         if self.reporef_hlink != '':
             try:
                 query = """
@@ -860,9 +937,11 @@ class Source:
             except Exception as err:
                 print("Virhe: {0}".format(err), file=stderr)
                 
+            # Set the medium data of the Source node
             try:
                 query = """
-                    MATCH (n:Source)-[r:REPOSITORY]->(m) WHERE n.gramps_handle='{}'
+                    MATCH (n:Source)-[r:REPOSITORY]->(m) 
+                        WHERE n.gramps_handle='{}'
                     SET r.medium='{}'
                      """.format(self.handle, self.reporef_medium)
                                  
@@ -877,6 +956,7 @@ class Source:
         """ Tulostaa tiedot """
         print ("*****Source*****")
         print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
         print ("Id: " + self.id)
         if self.stitle != '':
             print ("Stitle: " + self.stitle)
@@ -895,7 +975,8 @@ class Source:
                 
         query = """
             MATCH (source:Source)-[r:REPOSITORY]->(repo:Repository) 
-                WHERE repo.gramps_handle='{}' RETURN r.medium AS medium, source
+                WHERE repo.gramps_handle='{}' 
+                RETURN r.medium AS medium, source
             """.format(repository_handle)
         return  session.run(query)
         
@@ -913,4 +994,3 @@ class Source:
         
         for result in results:
             return str(result[0])
-    

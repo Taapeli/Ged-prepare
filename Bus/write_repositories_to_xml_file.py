@@ -14,19 +14,23 @@ from classes.genealogy import connect_db, Repository
 connect_db()
     
 
-def read_repositories_from_Neo4j(repos):
+def read_repositories_from_Neo4j():
     result = Repository.get_repositories()
 
     cnt = 0
+    repos = []
+    
     for record in result:
         r = Repository()
         r.handle = record["repo"]['gramps_handle']
+        r.change = record["repo"]['change']
         r.id = record["repo"]['id']
         r.rname = record["repo"]['rname']
         r.type = record["repo"]['type']
         repos.append(r)
         cnt += 1
     print("Number of repositories read: " + str(cnt))
+    return repos
     
 
 def write_repositories_to_xml_file(repos, f):
@@ -39,7 +43,8 @@ def write_repositories_to_xml_file(repos, f):
     
     for repo in repos:
         output_line = '    ' +\
-            '<repository handle="' + repo.handle + '"'\
+            '<repository handle="' + repo.handle + '"' +\
+            ' change="' + repo.change + '"' +\
             ' id="' + repo.id + '">\n'
             
         f.write(output_line)
@@ -78,8 +83,7 @@ def process_neo4j(args):
 
     # Read all repositoeies from Neo4j and writo tpo the XML file
     try:
-        repos = []
-        read_repositories_from_Neo4j(repos)
+        repos = read_repositories_from_Neo4j()
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
 
