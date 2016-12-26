@@ -757,11 +757,23 @@ class Repository:
         print ("Rname: " + self.rname)
         print ("Type: " + self.type)
         return True
+    
+    
+    @staticmethod       
+    def get_repository(rname):
+        """ Luetaan arkiston handle """
+        
+        global session
+                
+        query = """
+            MATCH (repository:Repository) WHERE repository.rname='{}' RETURN repository.gramps_handle
+            """.format(rname)
+        return  session.run(query)
         
     
     @staticmethod       
     def get_repositories():
-        """ Luetaan kaikki repositoryt """
+        """ Luetaan kaikki arkistot """
         
         global session
                 
@@ -861,6 +873,19 @@ class Source:
         if self.reporef_hlink != '':
             print ("Reporef_hlink: " + self.reporef_hlink)
         return True
+        
+    
+    @staticmethod       
+    def get_sources(repository_handle):
+        """ Luetaan kaikki arkiston lähteet """
+        
+        global session
+                
+        query = """
+            MATCH (source:Source)-[r:REPOSITORY]->(repo:Repository) 
+                WHERE repo.gramps_handle='{}' RETURN source
+            """.format(repository_handle)
+        return  session.run(query)
         
     
     @staticmethod       
