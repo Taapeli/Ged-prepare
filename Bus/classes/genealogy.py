@@ -807,6 +807,7 @@ class Source:
                 stitle          str lähteen otsikko
                 noteref_hlink   str huomautuksen osoite
                 reporef_hlink   str arkiston osoite
+                reporef_medium  str arkiston laatu, esim. "Book"
      """
 
     def __init__(self):
@@ -816,6 +817,7 @@ class Source:
         self.stitle = ''
         self.noteref_hlink = ''
         self.reporef_hlink = ''
+        self.reporef_medium = ''
 
 
     def save(self):
@@ -858,6 +860,16 @@ class Source:
             except Exception as err:
                 print("Virhe: {0}".format(err), file=stderr)
                 
+            try:
+                query = """
+                    MATCH (n:Source)-[r:REPOSITORY]->(m) WHERE n.gramps_handle='{}'
+                    SET r.medium='{}'
+                     """.format(self.handle, self.reporef_medium)
+                                 
+                session.run(query)
+            except Exception as err:
+                print("Virhe: {0}".format(err), file=stderr)
+                
         return
 
 
@@ -883,7 +895,7 @@ class Source:
                 
         query = """
             MATCH (source:Source)-[r:REPOSITORY]->(repo:Repository) 
-                WHERE repo.gramps_handle='{}' RETURN source
+                WHERE repo.gramps_handle='{}' RETURN r.medium AS medium, source
             """.format(repository_handle)
         return  session.run(query)
         

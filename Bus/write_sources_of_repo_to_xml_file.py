@@ -23,10 +23,11 @@ def read_repository_from_Neo4j(repository_name):
     return handle
     
 
-def read_sources_from_Neo4j(repository_handle, sources):
+def read_sources_from_Neo4j(repository_handle):
     result = Source.get_sources(repository_handle)
 
     cnt = 0
+    sources = []
     for record in result:
         s = Source()
         s.handle = record["source"]['gramps_handle']
@@ -35,10 +36,14 @@ def read_sources_from_Neo4j(repository_handle, sources):
         
         if record["source"]['reporef_hlink']:
             s.reporef_hlink = record["source"]['reporef_hlink']
+        
+        if record["medium"]:
+            s.reporef_medium = record["medium"]
             
         sources.append(s)
         cnt += 1
     print("Number of sources read: " + str(cnt))
+    return sources
     
 
 def write_sources_to_xml_file(repository_handle, sources, f):
@@ -64,7 +69,8 @@ def write_sources_to_xml_file(repository_handle, sources, f):
         cnt2 += 1
         
         output_line = '      ' +\
-            '<reporef hlink="' + repository_handle + '">\n'
+            '<reporef hlink="' + repository_handle +\
+                '" medium="' + source.reporef_medium + '"/>\n'
         
         f.write(output_line)
         cnt2 += 1
@@ -88,19 +94,16 @@ def write_sources_to_xml_file(repository_handle, sources, f):
 
 def process_neo4j(args):
 
-    # Read all sources of the repository from Neo4j and writo to the XML file
+    # Read all sources of the repository from Neo4j and write to the XML file
     try:
-        repository_handle = ''
         repository_handle = read_repository_from_Neo4j(args.repository)
-        print("Repository handle_ " + repository_handle)
     except Exception as err:
-        print("Virhe01: {0}".format(err), file=stderr)
+        print("Virhe: {0}".format(err), file=stderr)
         
     try:
-        sources = []
-        read_sources_from_Neo4j(repository_handle, sources)
+        sources = read_sources_from_Neo4j(repository_handle)
     except Exception as err:
-        print("Virhe02: {0}".format(err), file=stderr)
+        print("Virhe: {0}".format(err), file=stderr)
 
     try:        
         f = open(args.output_xml, 'wt', encoding='utf-8')
