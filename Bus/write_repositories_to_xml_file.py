@@ -88,8 +88,8 @@ def process_neo4j(args):
         print("Virhe: {0}".format(err), file=stderr)
 
     try:        
-        f = open(args.output_xml, 'wt', encoding='utf-8')
-        write_repositories_to_xml_file(repos, f)
+        with open(args.output_xml, 'wt', encoding='utf-8') as f:
+            write_repositories_to_xml_file(repos, f)
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
 
