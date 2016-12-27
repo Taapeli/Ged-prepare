@@ -11,7 +11,7 @@ import logging
 from sys import argv
 import sys
 
-from jsonutils.create_gramps_object import CreateGrampsObject 
+from jsonutils.create_gramps_object import CreateGrampsObject
 
 
 tag     = None
@@ -21,10 +21,12 @@ rhandle    = None
 source  = None
 shandle = None
 
+refstr = ''
+
 logging.basicConfig(level=logging.DEBUG)
 
 def main(argv):
-#    def main(argv = ['write_json_sources', 'C:/Temp/', 'Lahteet.txt', 'Result.json', Result.csv, 500000, 500000]):
+#    def main(argv = ['write_json_sources', 'C:/Temp/', 'Sources.csv', 'Result.json', Result.csv, 500000, 500000]):
     if argv is None:
         argv = sys.argv   
     print(argv)   
@@ -36,6 +38,7 @@ def main(argv):
     parser.add_argument('cout', help = 'Output file of type .csv - input file with ids and handles added.')
     parser.add_argument('ridno', default = 1000, help = 'Repository id numeric part starting value.')
     parser.add_argument('ridincr', default = 10, help = 'Repository id numeric part increment.')
+    parser.add_argument('refind', default = '', help = 'Reference instamce indicator part for Gramps id.')
 #    args = parser.parse_args()
     parser.print_help() 
     args = parser.parse_args(argv)
@@ -46,17 +49,8 @@ def main(argv):
     cout = fdir + args.cout
     repository_idno = int(args.ridno)
     repository_incr = int(args.ridincr)
-        
-#    if len(argv) != 7:
-#        logging.error('Wrong number of arguments: ' + str(len(argv)))
-#        return 8
+    refstr = args.refind
 
-#    fdir = argv[1]                   # Directory for input and output files
-#    fin  = fdir + argv[2]            # Input file
-#    fout = fdir + argv[3]            # Output file
-#    cout = fdir + argv[4]
-#    repository_idno = int(argv[5])   # Start value for repository id numbers
-#    repository_incr = int(argv[6])   # Increment value  for repository id numbers
     source_idno = 0                  # Start value for source id number within repository
     
     logging.info('File directory for program ' + argv[0] + ' is ' + fdir)
@@ -64,6 +58,7 @@ def main(argv):
     logging.info('  output file ' + fout)
     logging.info('  output file ' + cout)
 
+    tags = {}
     rtag = None            # Tag used for repositories
     stag = None            # Tag used for sources
         
@@ -103,11 +98,12 @@ def main(argv):
                             if handle != '':
                                 thandle = handle
                             tagr = cgo.buildTag(otext, thandle)
-                            if   recobj == 'R': 
-                                rtag = tagr[0]     # The tag for repositories
-                            elif recobj == 'S': 
-                                stag = tagr[0]     # The tag for sources
-                            print(tagr[0].to_struct(), file=j_out) 
+                            print(tagr[0].to_struct(), file=j_out)
+                            tags[recobj] = tagr[0]
+#                            if   recobj == 'R': 
+#                                rtag = tagr[0]     # The tag for repositories
+#                            elif recobj == 'S': 
+#                                stag = tagr[0]     # The tag for sources
                             try: 
                                 r_writer.writerow([rectype, recobj, '', tagr[1], otext, '', '', '', ''])
                             except:    
@@ -119,9 +115,10 @@ def main(argv):
                                 rhandle = handle
                             if idno == '':
                                 repository_idno = repository_idno + repository_incr
-                                ridno = rectype + 'ref' + arctype + str(repository_idno)
+                                ridno = rectype + refstr + arctype + str(repository_idno)
                             else:
-                                ridno = idno    
+                                ridno = idno 
+                            rtag = tags.get('R')    
                             repor = cgo.buildRepository(ridno, otext, rtag, int(arctype), rhandle)
                             print(repor[0].to_struct(), file=j_out)
                             try: 
@@ -134,11 +131,11 @@ def main(argv):
                                 shandle = handle
                             if idno == '':    
                                 source_idno = source_idno + 1
-                                sidno = rectype +'ref' + str(arctype) + str(repository_idno * 1000 + source_idno)
+                                sidno = rectype + refstr + str(arctype) + str(repository_idno * 1000 + source_idno)
                             else:
                                 sidno = idno 
                             attribs = (row[5], row[6], row[7])   
-                            sour = cgo.buildSource(sidno, otext, stag, repor[0], shandle, attribs)
+                            sour = cgo.buildSource(sidno, otext, tags.get('S'), repor[0], shandle, attribs)
                             print(sour[0].to_struct(), file=j_out)
                             try:
                                 r_writer.writerow([rectype, arctype, sidno, sour[1], otext, attribs[0], attribs[1], attribs[2], ''])
@@ -155,10 +152,10 @@ def main(argv):
                 logging.info('    Repositories   ' + str(r_count))
                 logging.info('    Sources        ' + str(s_count))
                 logging.info('    Comments       ' + str(c_count))
+                logging.info('    Unknown types  ' + str(u_count))
                 logging.info('  Total            ' + str(t_count + r_count + s_count + c_count + u_count))
     except  IOError: 
-        logging.error(IOError.winerror)
-        logging.error('IOError in j_out handling')
+        logging.error('IOError in file handling: ' + IOError.filename)
         return 8    
     
 if __name__ == '__main__':

@@ -1,0 +1,212 @@
+#
+# Gramps - a GTK+/GNOME based genealogy program
+#
+# Copyright (C) 2015-2016 Nick Hall
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, 
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+
+"""Tools/Database Processing/Generate hierarchy from place titles"""
+
+import os
+import sys
+import csv
+import time
+import logging
+logging.basicConfig(level=logging.DEBUG)
+LOG = logging.getLogger()
+LOG.setLevel(logging.DEBUG)
+
+#LOG.basicConfig(filename='importsources.log',level=logging.DEBUG)
+
+#import configparser
+
+from gramps.gen.db import DbTxn
+from gramps.gen.lib import Note, NoteType, Repository, RepoRef, RepositoryType, Source, Tag
+# from gramps.gui.utils import ProgressMeter
+# from gramps.gen.plug.utils import OpenFileOrStdin
+from gramps.gen.config import config as configman
+
+from gramps.gen.const import GRAMPS_LOCALE as glocale
+_ = glocale.translation.gettext
+
+# LOG = logging.getLogger(".importSources")
+from gramps.gen.utils.libformatting import ImportInfo
+
+#-------------------------------------------------------------------------
+#
+# Import Repositories and Sources
+#
+#-------------------------------------------------------------------------
+def importSources(db, filename, user):
+    
+    fdir = os.path.dirname(filename) 
+    fh = logging.FileHandler(fdir + '\\sourceimport.log')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(formatter)
+    LOG.addHandler(fh)                   
+    LOG.info("   fdir = " + fdir)
+    cout = fdir + "\\result0.cvs" 
+     
+    config = configman.register_manager("importsources")
+    if os.path.exists('importsources.ini'):
+        pass
+    else:
+        config.register("options.repositoryidno", "1000")    
+        config.register("options.repositoryincr", "5") 
+        config.register("options.refstring", "r") 
+    config.load()
+    config.save()
+    repository_idno = int(config.get('options.repositoryidno'))
+    repository_incr = int(config.get('options.repositoryincr'))
+    refstr = config.get('options.refstring')
+
+    source_idno = 0                  
+    t_count = 0
+    r_count = 0
+    s_count = 0
+    c_count = 0
+    u_count = 0
+    tags = {}
+    chgtime = int(time.time())
+    LOG.info("   chgtime = " + str(chgtime)) 
+
+    try:
+        with open(cout, 'w', newline = '\n') as csv_out:
+            r_writer = csv.writer(csv_out, delimiter=',')
+            with open(filename, 'r', encoding="utf-8") as t_in:
+                rhandle = None
+                t_dialect = csv.Sniffer().sniff(t_in.read(1024))
+                t_in.seek(0)
+                t_reader = csv.reader(t_in, t_dialect)
+                LOG.info('CSV input file delimiter is ' + t_dialect.delimiter)
+                for row in t_reader:
+                    ridno = None
+                    sidno = None
+        #            LOG.debug(row)
+                    rectype = row[0]         # Object type = Gramps object id prefix character
+                    idno = row[2]            # Possibly previously assigned Gramps object id
+                    handle = row[3]          # Possibly previously assigned Gramps object handle
+                    otext = row[4].strip()
+                    
+                    if rectype == 'T':
+                        t_count += 1
+                        recobj  = row[1]     # Tag related to repositories or sources
+        #                tag = None
+                        with DbTxn(_("Read Tag"), db) as trans:
+                            tag = db.get_tag_from_name(otext)
+                        if tag == None:   
+                            tag = Tag()                  
+                            tag.set_name(otext)
+                            tag.set_change_time(chgtime)
+                            tag.set_color("#EF2929")
+                            with DbTxn(_("Add Tag"), db) as trans:
+                                thandle = db.add_tag(tag, trans)
+                        tags[recobj] = tag
+                        try: 
+                            r_writer.writerow([rectype, recobj, '', thandle, otext, '', '', '', ''])
+                        except:    
+                            LOG.error('Error writing T-csv')   
+        
+                    elif rectype == 'R':
+                        r_count += 1
+                        repotype = row[1]         # repository type number
+                        if idno == '':
+                            repository_idno = repository_idno + repository_incr
+                            ridno = rectype + refstr + repotype + str(repository_idno)
+                        else:
+                            ridno = idno 
+                        repository = Repository()    
+                        if handle != '':
+                            repository.set_handle(handle)
+                        repositoryType = RepositoryType()
+                        repositoryType.set(int(repotype))       
+                        repository = Repository()
+                        repository.set_type(repositoryType)
+    
+                        repository.set_gramps_id(ridno)
+                        repository.set_name(otext)
+                        repository.set_change_time(chgtime)
+                        if tags.get(rectype) != None:
+                            repository.add_tag(tags[rectype].get_handle())
+                        with DbTxn(_("Add Repository"), db) as trans:
+                            rhandle = db.add_repository(repository, trans)
+                        try:    
+                            r_writer.writerow([rectype, repotype, ridno, rhandle, otext, '', '', '', ''])
+                        except:    
+                            LOG.error('Error writing R-csv')    
+                        
+                    elif rectype == 'S':
+                        s_count += 1
+                        attribs = (row[5], row[6], row[7]) 
+                        if idno == '':    
+                            source_idno = source_idno + 1
+                            sidno = rectype + refstr + str(repotype) + str(repository_idno * 1000 + source_idno)
+                        else:
+                            sidno = idno 
+                        source = Source()
+                        if handle != '':
+                            source.set_handle(handle)
+                        source.set_gramps_id(sidno)
+                        source.set_title(otext)
+                        source.set_author(attribs[0])
+                        source.set_publication_info(attribs[1])
+                        source.set_abbreviation(attribs[2])
+                        if tags.get(rectype) != None:
+                            source.add_tag(tags[rectype].get_handle())
+                        repoRef = RepoRef()
+                        repoRef.set_reference_handle(rhandle) 
+                        source.add_repo_reference(repoRef)
+                        source.set_change_time(chgtime)                 
+                        with DbTxn(_("Add Source"), db) as trans:
+                            shandle = db.add_source(source, trans)
+                        try:
+                            r_writer.writerow([rectype, '', sidno, shandle, otext, attribs[0], attribs[1], attribs[2], ''])
+                        except:    
+                            LOG.error('Error writing S-csv')                           
+                       
+                    elif rectype == '#':
+                        c_count += 1      
+                    else:
+                        u_count += 1
+                        LOG.info('Unknown rectype: + rectype')
+    except:
+        LOG.error('*** Something went really wrong: ' + sys.exc_info()[0].__str__())
+        return ImportInfo({_('Results'): _('Something went really wrong  ' + (sys.exc_info()[0]).__str__())})
+    
+    results =  {  _('Results'): _('Input file handled.')
+                , _('    Tags           '): str(t_count)
+                , _('    Repositories   '): str(r_count)
+                , _('    Comments       '): str(c_count)
+                , _('    Unknown types  '): str(u_count)
+                , _('  Total            '): str(t_count + r_count + s_count + c_count + u_count)  }
+     
+    LOG.info('Input file handled.')
+    LOG.info('    Tags           ' + str(t_count))
+    LOG.info('    Repositories   ' + str(r_count))
+    LOG.info('    Sources        ' + str(s_count))
+    LOG.info('    Comments       ' + str(c_count))
+    LOG.info('    Unknown types  ' + str(u_count))
+    LOG.info('  Total            ' + str(t_count + r_count + s_count + c_count + u_count))
+    
+    db.enable_signals()
+    db.request_rebuild()
+
+    return ImportInfo(results)                   
+                   
+    
+

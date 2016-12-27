@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+Tries to recognize place names and order them correctly
+"""
+
+version = "1.0"
+
 from collections import defaultdict 
 
 ignored_text = """
@@ -28,6 +34,7 @@ las
 
 """
 
+
 def add_args(parser):
     parser.add_argument('--reverse', action='store_true',
                         help='Reverse the order of places')
@@ -43,26 +50,30 @@ def add_args(parser):
                         help='Try to discover correct order...')
     parser.add_argument('--auto-combine', action='store_true',
                         help='Try to combine certain names...')
-    parser.add_argument('--match', type=str,
-                        help='Only process places containing this string')
+    parser.add_argument('--match', type=str, action='append',
+                        help='Only process places containing any match string')
     parser.add_argument('--parishfile', type=str,
                         help='File with a list of parishes', default="seurakunnat.txt")
     parser.add_argument('--villagefile', type=str,
                         help='File with a list of villages', default="kylat.txt")
-    parser.add_argument('--display-changes', action='store_true',
-                        help='Display changed places')
+    #parser.add_argument('--display-changes', action='store_true',
+    #                    help='Display changed places')
     parser.add_argument('--display-nonchanges', action='store_true',
                         help='Display unchanged places')
     parser.add_argument('--display-ignored', action='store_true',
                         help='Display ignored places')
+    parser.add_argument('--mark-changes', action='store_true',
+                        help='Replace changed PLAC tags with PLAC-X')
                         
 def initialize(args):
-    pass
+    read_parishes(args.parishfile)
+    read_villages(args.villagefile)
+
 
 def phase2(args):
     pass
 
-def phase3(args,line,path,tag,value,f):
+def phase3(args,line,level,path,tag,value,f):
     if tag == "PLAC":
         if not value: return
         tkns = line.split(None,2)
@@ -71,6 +82,7 @@ def phase3(args,line,path,tag,value,f):
         if newplace != place: 
             if args.display_changes: print("'{}' -> '{}'".format(place,newplace))
             tkns[2] = newplace  
+            if args.mark_changes: tkns[1] = "PLAC-X"
             line = " ".join(tkns)
         else:
             if args.display_nonchanges: print("Not changed: '{}'".format(place))
@@ -149,8 +161,13 @@ def revert_auto_combine(place):
         place = place.replace(s.replace(" ","-"),s)
     return place
 
+def stringmatch(place,matches):
+    for match in matches:
+        if place.find(match) >= 0: return True
+    return False
+    
 def process_place(args,place):
-    if args.match and place.find(args.match) < 0: return place
+    if args.match and not stringmatch(place,args.match): return place
     if args.add_commas and "," not in place:
         if args.auto_combine:
             place = auto_combine(place)
