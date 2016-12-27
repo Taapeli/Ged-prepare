@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Generic GEDCOM transformer.
+Generic GEDCOM transformer v0.1
 Kari Kujansuu, 2016.
 
-The transforms are specified by separate Python modules ("plugins").
+The transforms are specified by separate Python modules ("plugins") in the subdirectory "transforms".
 
 Parameters of main():
  1. The name of the plugin. This can be the name of the Python file ("module.py")
@@ -67,9 +67,11 @@ The parameters of each phases:
 
 import sys
 import os
+import time
 import argparse
 import tempfile
 from sys import stderr
+import importlib
 
 def numeric(s):
     return s.replace(".","").isdigit()
@@ -77,8 +79,12 @@ def numeric(s):
 class Output:
     def __init__(self,args):
         self.args = args
+        self.log = True
     def __enter__(self):
+        input_gedcom = self.args.input_gedcom
+        tempfile.tempdir = os.path.dirname(input_gedcom) # create tempfile in the same directory so you can rename it later
         self.tempname = tempfile.mktemp()
+        self.newname = self.generate_name(input_gedcom)
         self.f = open(self.tempname,"w",encoding=self.args.encoding)
         return self
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -88,12 +94,20 @@ class Output:
 
     def emit(self,s):
         self.f.write(s+"\n")
+        if self.log:
+            self.log = False
+            self.emit("1 _TRANSFORM " + " ".join(sys.argv))
+            datestring = time.strftime("%d %b %Y %H:%M:%S", time.localtime(time.time()))
+            self.emit("2 _TIME " + datestring)
+            #user = os.environ.get('USER',"")
+            user = os.getlogin()
+            if user: self.emit("2 _USER " + user)
+            self.emit("2 _SAVEDFILE " + self.newname)
     def save(self):
         input_gedcom = self.args.input_gedcom
-        newname = self.generate_name(input_gedcom)
-        os.rename(input_gedcom,newname)
+        os.rename(input_gedcom,self.newname)
         os.rename(self.tempname,input_gedcom)
-        print("Input file renamed to '{}'".format(newname))
+        print("Input file renamed to '{}'".format(self.newname))
         print("New version saved as '{}'".format(input_gedcom))
     def generate_name(self,name):
         i = 0
@@ -124,10 +138,12 @@ def read_gedcom(args):
                 value = tkns[2]
             else:
                 value = ""
-            yield (line,".".join(curpath),tag,value)
-    except FileNotFoundError:
+            yield (line,level,".".join(curpath),tag,value)
+#    except FileNotFoundError:  # does not work before Python 3.3, temporary fix:
+    except OSError:
         print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
     except Exception as err:
+        print(type(err))
         print("Virhe: {0}".format(err), file=stderr)
 
 def process_gedcom(args,transformer):
@@ -136,8 +152,8 @@ def process_gedcom(args,transformer):
 
     # 1st traverse
     if hasattr(transformer,"phase1"):
-        for line,path,tag,value in read_gedcom(args):
-            transformer.phase1(args,line,path,tag,value)
+        for line,level,path,tag,value in read_gedcom(args):
+            transformer.phase1(args,line,level,path,tag,value)
 
     # Intermediate processing of collected data
     if hasattr(transformer,"phase2"):
@@ -145,13 +161,38 @@ def process_gedcom(args,transformer):
 
     # 2nd traverse "phase3"
     with Output(args) as f:
-        for line,path,tag,value in read_gedcom(args):
-            transformer.phase3(args,line,path,tag,value,f)
+        for line,level,path,tag,value in read_gedcom(args):
+            transformer.phase3(args,line,level,path,tag,value,f)
 
+def get_transforms():
+    # all transform modules should be in the package "transforms"
+    for name in os.listdir("transforms"):
+        if name.endswith(".py") and name != "__init__.py": 
+            modname = name[0:-3]
+            transformer = importlib.import_module("transforms."+modname)
+            doc = transformer.__doc__
+            if doc:
+                docline = doc.strip().splitlines()[0]
+            else:
+                docline = ""
+            version = getattr(transformer,"version","")
+            yield (modname,transformer,docline,version)
 
+def find_transform(prefix):
+    choices = []
+    for modname,transformer,docline,version in get_transforms():
+        if modname == prefix: return transformer
+        if modname.startswith(prefix):
+            choices.append((modname,transformer))
+    if len(choices) == 1: return choices[0][1]
+    if len(choices) > 1: 
+        print("Ambiguous transform name: {}".format(prefix))
+        print("Matching names: {}".format(",".join(name for name,t in choices)))
+    return False
 
 def main():
-    parser = argparse.ArgumentParser(description='GEDCOM transformations')
+    print("\nTaapeli GEDCOM transform program A (version 0.1)\n")
+    parser = argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
     #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
@@ -162,20 +203,27 @@ def main():
     #parser.add_argument('--display-nonchanges', action='store_true',
     #                    help='Display unchanged places')
     parser.add_argument('--encoding', type=str, default="utf-8",
-                        help="UTF-8, ISO8859-1 tai jokin muu")
+                        help="e.g, UTF-8, ISO8859-1")
+    parser.add_argument('-l', '--list', action='store_true', help="List transforms")
+
+    if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
+        print("List of transforms:")
+        for modname,transformer,docline,version in get_transforms():
+            print("  {:20.20} {:10.10} {}".format(modname,version,docline))
+        return
 
     if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] not in ("-h","--help"):
         print("First argument must be the name of the transform")
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] != '-':
-        modname = sys.argv[1]
-        if modname.endswith(".py"): modname = modname[:-3]
-        transformer = __import__(modname)
+        transformer = find_transform(sys.argv[1])
+        if not transformer: 
+            print("Transform not found; use -l to list the available transforms")
+            return
         transformer.add_args(parser)
 
     args = parser.parse_args()
-
     process_gedcom(args,transformer)
 
 
