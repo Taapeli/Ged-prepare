@@ -9,7 +9,7 @@ Jorma Haapasalo, 2016.
 import sys
 import argparse
 from sys import stderr
-from classes.genealogy import connect_db, Repository, Source
+from classes.genealogy import connect_db, Repository, Source, XML_generator
 
 connect_db()
     
@@ -49,7 +49,12 @@ def read_sources_from_Neo4j(repository_handle):
 
 def write_sources_to_xml_file(repository_handle, sources, f):
     cnt = cnt2 =0
-    
+     
+    lines = XML_generator.get_xml_header()
+    for line in lines:
+        f.write(line)
+        cnt2 += 1
+   
     # Write the start tag
     output_line = '  <sources>\n'
     f.write(output_line)
@@ -84,9 +89,13 @@ def write_sources_to_xml_file(repository_handle, sources, f):
         cnt2 += 1
         cnt += 1
         
-    
     # Write the end tag
     output_line = '  </sources>\n'
+    f.write(output_line)
+    cnt2 += 1
+        
+    # Write the end of database tag
+    output_line = '</database>\n'
     f.write(output_line)
     cnt2 += 1
     

@@ -4,6 +4,7 @@ from neo4j.v1 import GraphDatabase, basic_auth
 #from flask import flash
 #import logging
 from sys import stderr
+from datetime import date
 import config as dbconf      # Tietokannan tiedot
 #from flask.globals import session
 
@@ -994,3 +995,23 @@ class Source:
         
         for result in results:
             return str(result[0])
+    
+class XML_generator:
+    """ XML tiedoston luoja """
+    
+    @staticmethod       
+    def get_xml_header():
+        
+        lines = []
+        
+        lines.append('<?xml version="1.0" encoding="UTF-8"?>\n')
+        lines.append('<!DOCTYPE database PUBLIC "-//Gramps//DTD Gramps XML 1.7.1//EN"\n')
+        lines.append('"http://gramps-project.org/xml/1.7.1/grampsxml.dtd">\n')
+        lines.append('<database xmlns="http://gramps-project.org/xml/1.7.1/">\n')
+        lines.append('  <header>\n')
+        lines.append('    <created date="' + date.today().isoformat() + '" version="Neo4j 3.1.0"/>\n')
+        lines.append('    <researcher>\n')
+        lines.append('    </researcher>\n')
+        lines.append('  </header>\n')
+        
+        return lines
