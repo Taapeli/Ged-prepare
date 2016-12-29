@@ -26,13 +26,8 @@ import sys
 import csv
 import time
 import logging
-logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger()
 LOG.setLevel(logging.DEBUG)
-
-#LOG.basicConfig(filename='importsources.log',level=logging.DEBUG)
-
-#import configparser
 
 from gramps.gen.db import DbTxn
 from gramps.gen.lib import Note, NoteType, Repository, RepoRef, RepositoryType, Source, Tag
@@ -54,40 +49,47 @@ from gramps.gen.utils.libformatting import ImportInfo
 def importSources(db, filename, user):
     
     fdir = os.path.dirname(filename) 
+    '''
     fh = logging.FileHandler(fdir + '\\sourceimport.log')
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setLevel(logging.INFO)
+    fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
-    LOG.addHandler(fh)                   
+    LOG.addHandler(fh) 
+    '''                  
     LOG.info("   fdir = " + fdir)
-    cout = fdir + "\\result0.cvs" 
+    cout = fdir + "\\result0.csv" 
      
     config = configman.register_manager("importsources")
     if os.path.exists('importsources.ini'):
-        pass
+        LOG.debug('importsources.ini found')
+        config.load()
     else:
-        config.register("options.repositoryidno", "1000")    
-        config.register("options.repositoryincr", "5") 
+        LOG.debug('importsources.ini not found, applying default values')
+        config.register("options.repositoryidrng", "1000")    
+        config.register("options.repositoryincr", "1") 
         config.register("options.refstring", "r") 
-    config.load()
-    config.save()
-    repository_idno = int(config.get('options.repositoryidno'))
+        config.save()
+    repository_idrange = int(config.get('options.repositoryidrng'))
     repository_incr = int(config.get('options.repositoryincr'))
     refstr = config.get('options.refstring')
-
+    repository_idno  = 0
     source_idno = 0                  
     t_count = 0
     r_count = 0
     s_count = 0
     c_count = 0
     u_count = 0
+    
+    ridno = None
+    sidno = None
+    
     tags = {}
     chgtime = int(time.time())
     LOG.info("   chgtime = " + str(chgtime)) 
 
     try:
-        with open(cout, 'w', newline = '\n') as csv_out:
-            r_writer = csv.writer(csv_out, delimiter=',')
+        with open(cout, 'w', newline = '\n', encoding="utf-8") as csv_out:
+            r_writer = csv.writer(csv_out, delimiter=';')
             with open(filename, 'r', encoding="utf-8") as t_in:
                 rhandle = None
                 t_dialect = csv.Sniffer().sniff(t_in.read(1024))
@@ -95,98 +97,130 @@ def importSources(db, filename, user):
                 t_reader = csv.reader(t_in, t_dialect)
                 LOG.info('CSV input file delimiter is ' + t_dialect.delimiter)
                 for row in t_reader:
-                    ridno = None
-                    sidno = None
-        #            LOG.debug(row)
-                    rectype = row[0]         # Object type = Gramps object id prefix character
-                    idno = row[2]            # Possibly previously assigned Gramps object id
-                    handle = row[3]          # Possibly previously assigned Gramps object handle
-                    otext = row[4].strip()
                     
-                    if rectype == 'T':
-                        t_count += 1
-                        recobj  = row[1]     # Tag related to repositories or sources
-        #                tag = None
-                        with DbTxn(_("Read Tag"), db) as trans:
-                            tag = db.get_tag_from_name(otext)
-                        if tag == None:   
-                            tag = Tag()                  
-                            tag.set_name(otext)
-                            tag.set_change_time(chgtime)
-                            tag.set_color("#EF2929")
-                            with DbTxn(_("Add Tag"), db) as trans:
-                                thandle = db.add_tag(tag, trans)
-                        tags[recobj] = tag
-                        try: 
-                            r_writer.writerow([rectype, recobj, '', thandle, otext, '', '', '', ''])
-                        except:    
-                            LOG.error('Error writing T-csv')   
-        
-                    elif rectype == 'R':
-                        r_count += 1
-                        repotype = row[1]         # repository type number
-                        if idno == '':
-                            repository_idno = repository_idno + repository_incr
-                            ridno = rectype + refstr + repotype + str(repository_idno)
-                        else:
-                            ridno = idno 
-                        repository = Repository()    
-                        if handle != '':
-                            repository.set_handle(handle)
-                        repositoryType = RepositoryType()
-                        repositoryType.set(int(repotype))       
-                        repository = Repository()
-                        repository.set_type(repositoryType)
-    
-                        repository.set_gramps_id(ridno)
-                        repository.set_name(otext)
-                        repository.set_change_time(chgtime)
-                        if tags.get(rectype) != None:
-                            repository.add_tag(tags[rectype].get_handle())
-                        with DbTxn(_("Add Repository"), db) as trans:
-                            rhandle = db.add_repository(repository, trans)
-                        try:    
-                            r_writer.writerow([rectype, repotype, ridno, rhandle, otext, '', '', '', ''])
-                        except:    
-                            LOG.error('Error writing R-csv')    
-                        
-                    elif rectype == 'S':
-                        s_count += 1
-                        attribs = (row[5], row[6], row[7]) 
-                        if idno == '':    
-                            source_idno = source_idno + 1
-                            sidno = rectype + refstr + str(repotype) + str(repository_idno * 1000 + source_idno)
-                        else:
-                            sidno = idno 
-                        source = Source()
-                        if handle != '':
-                            source.set_handle(handle)
-                        source.set_gramps_id(sidno)
-                        source.set_title(otext)
-                        source.set_author(attribs[0])
-                        source.set_publication_info(attribs[1])
-                        source.set_abbreviation(attribs[2])
-                        if tags.get(rectype) != None:
-                            source.add_tag(tags[rectype].get_handle())
-                        repoRef = RepoRef()
-                        repoRef.set_reference_handle(rhandle) 
-                        source.add_repo_reference(repoRef)
-                        source.set_change_time(chgtime)                 
-                        with DbTxn(_("Add Source"), db) as trans:
-                            shandle = db.add_source(source, trans)
-                        try:
-                            r_writer.writerow([rectype, '', sidno, shandle, otext, attribs[0], attribs[1], attribs[2], ''])
-                        except:    
-                            LOG.error('Error writing S-csv')                           
-                       
-                    elif rectype == '#':
-                        c_count += 1      
+                    rectype = row[0]         # Object type = Gramps object id prefix character
+                    LOG.debug('Row type: -' + row[0] + '-')
+                    if rectype == '#':
+                        LOG.debug('Comment row: ' + row[0])
+                        c_count += 1  
+                        r_writer.writerow([row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]])
+
                     else:
-                        u_count += 1
-                        LOG.info('Unknown rectype: + rectype')
+                        idno = row[2]            # Possibly previously assigned Gramps object id
+                        handle = row[3].strip('"')          # Possibly previously assigned Gramps object handle
+                        otext = row[4].strip()
+                        LOG.debug('Handle = ' + handle)
+                    
+                        if rectype == 'T':
+                            LOG.debug('Tag row: ' + row[0])
+                            thandle = ''
+                            t_count += 1
+                            recobj  = row[1]     # Tag related to repositories or sources
+                            tag = None
+                            if handle != '':
+                                with DbTxn(_("Read Tag"), db) as trans:
+                                    tag = db.get_tag_from_name(otext)
+                                if tag != None:        
+                                    thandle = tag.get_handle()
+                                    LOG.info('Tag found: ' + handle + ' ' + tag.get_name())
+                                else:    
+                                    LOG.error('Tag NOT found: ' + handle + ' ' + otext)
+                            else:   
+                                tag = Tag()                  
+                                tag.set_name(otext)
+                                tag.set_change_time(chgtime)
+                                tag.set_color("#EF2929")
+                                with DbTxn(_("Add Tag"), db) as trans:
+                                    thandle = db.add_tag(tag, trans)
+                                    LOG.info('Tag added: ' + tag.get_name() + ' ' + thandle)
+                            tags[recobj] = tag
+                            try: 
+                                r_writer.writerow([rectype, recobj, '', '"' + thandle + '"', otext, '', '', '', ''])
+                            except IOError:    
+                                LOG.error('Error writing T-csv '  + IOError.strerror)   
+            
+                        elif rectype == 'R':
+                            LOG.debug('Repository row: ' + row[0])
+                            rhandle = ''
+                            source_idno = 0
+                            r_count += 1
+                            repotype = row[1]         # repository type number
+                            if idno == '':
+                                repository_idno = repository_idno + repository_incr
+                                ridno = rectype + refstr + str(int(repotype) * repository_idrange + repository_idno)
+                            else:
+                                ridno = idno 
+                            repository = Repository() 
+                            if handle != '':
+                                with DbTxn(_("Read Repository"), db) as trans:
+                                    repository = db.get_repository_from_handle(handle)   
+                            repositoryType = RepositoryType()
+                            repositoryType.set(int(repotype))       
+                            repository.set_type(repositoryType)
+                            repository.set_gramps_id(ridno)
+                            repository.set_name(otext)
+                            repository.set_change_time(chgtime)
+                            if tags.get(rectype) != None:
+                                repository.add_tag(tags[rectype].get_handle())
+                            if handle == '':                 
+                                with DbTxn(_("Add Repository"), db) as trans:
+                                    rhandle = db.add_repository(repository, trans)
+                            else:   
+                                with DbTxn(_("Update Repository"), db) as trans:
+                                    db.commit_repository(repository, trans)
+                                    rhandle = handle    
+                            try:
+                                r_writer.writerow([rectype, repotype, ridno, '"' + rhandle + '"', otext, '', '', '', ''])
+                            except IOError:    
+                                LOG.error('Error writing R-csv '  + IOError.strerror)     
+                            
+                        elif rectype == 'S':
+                            LOG.debug('Source row: ' + row[0])
+                            shandle = ''
+                            sidno = ''
+                            s_count += 1
+                            attribs = (row[5], row[6], row[7]) 
+                            if idno == '':    
+                                source_idno = source_idno + 1
+                                sidno = rectype + refstr + str((int(repotype) * repository_idrange + repository_idno) * 100 + source_idno)
+                            else:
+                                sidno = idno 
+                            source = Source()
+                            if handle != '':
+                                with DbTxn(_("Read Source"), db) as trans:
+                                    source = db.get_source_from_handle(handle)
+                            source.set_gramps_id(sidno)
+                            source.set_title(otext)
+                            source.set_author(attribs[0])
+                            source.set_publication_info(attribs[1])
+                            source.set_abbreviation(attribs[2])
+                            if tags.get(rectype) != None:
+                                source.add_tag(tags[rectype].get_handle())
+                            repoRef = RepoRef()
+                            repoRef.set_reference_handle(rhandle) 
+                            source.add_repo_reference(repoRef)
+                            source.set_change_time(chgtime)
+                            if handle == '':                 
+                                with DbTxn(_("Add Source"), db) as trans:
+                                    shandle = db.add_source(source, trans)
+                            else:   
+                                with DbTxn(_("Update Source"), db) as trans:
+                                    db.commit_source(source, trans)
+                                    shandle = handle    
+                            try:
+                                r_writer.writerow([rectype, '', sidno, '"' + shandle + '"', otext, attribs[0], attribs[1], attribs[2], ''])
+                            except IOError:    
+                                LOG.error('Error writing S-csv '  + IOError.strerror)  
+     
+    
+                        else:
+                            LOG.debug('Unrecognized row: ' + row)
+                            u_count += 1
+                            LOG.error('Unknown rectype: ' + rectype)
+        
     except:
-        LOG.error('*** Something went really wrong: ' + sys.exc_info()[0].__str__())
-        return ImportInfo({_('Results'): _('Something went really wrong  ' + (sys.exc_info()[0]).__str__())})
+        LOG.error('*** Something went really wrong! ' )
+        return ImportInfo({_('Results'): _('Something went really wrong  ')})
     
     results =  {  _('Results'): _('Input file handled.')
                 , _('    Tags           '): str(t_count)
