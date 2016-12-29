@@ -14,7 +14,6 @@ from gramps.gen.lib import Source
 from gramps.gen.lib import Tag
 from gramps.gen.utils import id
 
-
 try:
     _trans = glocale.get_addon_translator(__file__)
 except ValueError:
