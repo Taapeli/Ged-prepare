@@ -9,7 +9,7 @@ Jorma Haapasalo, 2016.
 import sys
 import argparse
 from sys import stderr
-from classes.genealogy import connect_db, Repository
+from classes.genealogy import connect_db, Repository, XML_generator
 
 connect_db()
     
@@ -36,7 +36,12 @@ def read_repositories_from_Neo4j():
 def write_repositories_to_xml_file(repos, f):
     cnt = cnt2 =0
     
-    # Write the begin group tag
+    lines = XML_generator.get_xml_header()
+    for line in lines:
+        f.write(line)
+        cnt2 += 1
+        
+    # Write the begin tag
     output_line = '  <repositories>\n'
     f.write(output_line)
     cnt2 += 1
@@ -69,9 +74,13 @@ def write_repositories_to_xml_file(repos, f):
         cnt2 += 1
         cnt += 1
         
-    
-    # Write the end group tag
+    # Write the end tag
     output_line = '  </repositories>\n'
+    f.write(output_line)
+    cnt2 += 1
+        
+    # Write the end of database tag
+    output_line = '</database>\n'
     f.write(output_line)
     cnt2 += 1
     
@@ -88,8 +97,8 @@ def process_neo4j(args):
         print("Virhe: {0}".format(err), file=stderr)
 
     try:        
-        f = open(args.output_xml, 'wt', encoding='utf-8')
-        write_repositories_to_xml_file(repos, f)
+        with open(args.output_xml, 'wt', encoding='utf-8') as f:
+            write_repositories_to_xml_file(repos, f)
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
 

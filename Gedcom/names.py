@@ -94,6 +94,7 @@ def phase3(args,line,path,tag,value,f):
         f.emit(line)
         return
     if isIndi == False:
+        # Lines not included any 0 INDI group
         f.emit(line)
         return
 
@@ -103,6 +104,7 @@ def phase3(args,line,path,tag,value,f):
 #        new pname()
 #        pname.add(tag, value) # proper name conversion occurs
     if line.startswith("1 NAME"):  # @indi@.NAME Antti /Puuhaara/
+        # Check, if previous 1 NAME group has to be completed
         if type(pname) is PersonName:
             # Emit the previous name
             for row in pname.get_rows():
