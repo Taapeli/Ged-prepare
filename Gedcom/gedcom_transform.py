@@ -139,12 +139,34 @@ def read_gedcom(args):
             else:
                 value = ""
             yield (line,level,".".join(curpath),tag,value)
-#    except FileNotFoundError:  # does not work before Python 3.3, temporary fix:
-    except OSError:
+    except FileNotFoundError:
         print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
+        raise
     except Exception as err:
         print(type(err))
         print("Virhe: {0}".format(err), file=stderr)
+
+def read_gedcom(args):
+    curpath = [None]
+    for linenum,line in enumerate(open(args.input_gedcom,encoding=args.encoding)):
+
+        line = line[:-1]
+        if line[0] == "\ufeff": line = line[1:]
+        tkns = line.split(None,2)
+        level = int(tkns[0])
+        tag = tkns[1]
+        if level > len(curpath):
+            raise RuntimeError("Invalid level {}: {}".format(linenum,line))
+        if level == len(curpath):
+            curpath.append(tag)
+        else:
+            curpath[level] = tag
+            curpath = curpath[:level+1]
+        if len(tkns) > 2:
+            value = tkns[2]
+        else:
+            value = ""
+        yield (line,level,".".join(curpath),tag,value)
 
 def process_gedcom(args,transformer):
 
@@ -165,7 +187,7 @@ def process_gedcom(args,transformer):
             transformer.phase3(args,line,level,path,tag,value,f)
 
 def get_transforms():
-    # all transform modules should be in the package "transforms"
+    # all transform modules should be .py files in the package/subdirectory "transforms"
     for name in os.listdir("transforms"):
         if name.endswith(".py") and name != "__init__.py": 
             modname = name[0:-3]
