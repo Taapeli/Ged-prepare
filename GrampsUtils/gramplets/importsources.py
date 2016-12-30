@@ -78,7 +78,9 @@ def importSources(db, filename, user):
     '''                  
     LOG.info("   fdir = " + fdir)
     cout = fdir + "\\result0.csv" 
-    LOG.debug('ini file handling')   
+    LOG.debug('ini file handling')
+     
+    '''  
     config = configman.register_manager("importsources")
     config.register("options.repositoryidrng", "1000")    
     config.register("options.repositoryincr", "1") 
@@ -95,6 +97,7 @@ def importSources(db, filename, user):
     refstr = config.get('options.refstring')
     repository_idno  = 0
     source_idno = 0
+    '''
                       
     t_count = 0
     r_count = 0
@@ -177,7 +180,7 @@ def importSources(db, filename, user):
                             repotype = row[1]         # repository type number
                             if idno == '':
                                 # repository type based numbering should be applied but not supplied by Gramps
-                                ridno = findNextRidno(rectype + refstr + repotype)
+                                ridno = findNextRidno(rectype + 'r' + repotype)
 #                                repository_idno = repository_idno + repository_incr
 #                                ridno = rectype + refstr + str(int(repotype) * repository_idrange + repository_idno)
                             else:
