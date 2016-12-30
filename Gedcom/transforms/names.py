@@ -25,6 +25,10 @@
         - The following level 2 name data (GIVN, SURN, NICK, SPFX) are replaced with the stored values if available
         - a new "2 _CALL" line shall be added (call name)
 
+    TODO: 
+        - The SPFX line does not  print to output file
+        - CALL names are not processed
+
 Created on 26.11.2016
 
 @author: JMä
@@ -111,10 +115,8 @@ def phase3(args,line,level,path,tag,value,f):
                 f.emit(row)
 
         pname = PersonName()
-        print ('# / {}'.format(path))
 
     if type(pname) is PersonName:
-        print ("pname = {}".format(pname))
         if pname.add(path, line[:1], tag, value):
             print("#   ++ {}: {}".format(path, value))
         else:
