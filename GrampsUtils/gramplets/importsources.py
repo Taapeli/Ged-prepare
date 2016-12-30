@@ -19,7 +19,7 @@
 #
 
 
-"""Import / Database Processing / Import repository-source hierarchies from cvs file """
+"""Tools/Database Processing/Generate hierarchy from place titles"""
 
 import os
 import sys
@@ -29,7 +29,6 @@ import logging
 LOG = logging.getLogger()
 LOG.setLevel(logging.DEBUG)
 
-from gramps.gen.errors import GrampsImportError
 from gramps.gen.db import DbTxn
 from gramps.gen.lib import Note, NoteType, Repository, RepoRef, RepositoryType, Source, Tag
 # from gramps.gui.utils import ProgressMeter
@@ -47,26 +46,7 @@ from gramps.gen.utils.libformatting import ImportInfo
 # Import Repositories and Sources
 #
 #-------------------------------------------------------------------------
-
-
-
 def importSources(db, filename, user):
-    
-    def findNextRidno(ridstrt):
-        with DbTxn(_("Find next ridno"), db) as trans:
-            db.set_repository_id_prefix(ridstrt + '%03d')  
-            next_ridno = db.find_next_repository_gramps_id() 
-            LOG.debug('Next ridno = ' + next_ridno)
-            db.set_repository_id_prefix('R%04d') 
-        return next_ridno             
-                       
-    def findNextSidno(ridno):
-        with DbTxn(_("Find next sidno"), db) as trans:
-            db.set_source_id_prefix(ridno + '%03d')
-            next_sidno = db.find_next_source_gramps_id() 
-            LOG.debug('Next sidno = ' + next_sidno) 
-            db.set_source_id_prefix('S%04d')   
-        return next_sidno             
     
     fdir = os.path.dirname(filename) 
     '''
@@ -78,27 +58,34 @@ def importSources(db, filename, user):
     '''                  
     LOG.info("   fdir = " + fdir)
     cout = fdir + "\\result0.csv" 
+<<<<<<< HEAD
     LOG.debug('ini file handling')
      
     '''  
+=======
+     
+>>>>>>> branch 'master' of https://github.com/Taapeli/Ged-prepare.git
     config = configman.register_manager("importsources")
-    config.register("options.repositoryidrng", "1000")    
-    config.register("options.repositoryincr", "1") 
-    config.register("options.sourceidrng", "1000")    
-    config.register("options.sourceidincr", "1") 
-    config.register("options.refstring", "r") 
-    config.load()
-    config.save()
-    
+    if os.path.exists('importsources.ini'):
+        LOG.debug('importsources.ini found')
+        config.load()
+    else:
+        LOG.debug('importsources.ini not found, applying default values')
+        config.register("options.repositoryidrng", "1000")    
+        config.register("options.repositoryincr", "1") 
+        config.register("options.refstring", "r") 
+        config.save()
     repository_idrange = int(config.get('options.repositoryidrng'))
     repository_incr = int(config.get('options.repositoryincr'))
-    source_idrange = int(config.get('options.sourceidrng'))
-    source_idincr = int(config.get('options.sourceidincr'))
     refstr = config.get('options.refstring')
     repository_idno  = 0
+<<<<<<< HEAD
     source_idno = 0
     '''
                       
+=======
+    source_idno = 0                  
+>>>>>>> branch 'master' of https://github.com/Taapeli/Ged-prepare.git
     t_count = 0
     r_count = 0
     s_count = 0
@@ -108,8 +95,7 @@ def importSources(db, filename, user):
     ridno = None
     sidno = None
     
-    tags = {}       # Dictionary  recordtype: tag
-
+    tags = {}
     chgtime = int(time.time())
     LOG.info("   chgtime = " + str(chgtime)) 
 
@@ -124,7 +110,7 @@ def importSources(db, filename, user):
                 LOG.info('CSV input file delimiter is ' + t_dialect.delimiter)
                 for row in t_reader:
                     
-                    rectype = row[0]         # Record type = Gramps object id prefix character
+                    rectype = row[0]         # Object type = Gramps object id prefix character
                     LOG.debug('Row type: -' + row[0] + '-')
                     if rectype == '#':
                         LOG.debug('Comment row: ' + row[0])
@@ -148,24 +134,17 @@ def importSources(db, filename, user):
                                     tag = db.get_tag_from_name(otext)
                                 if tag != None:        
                                     thandle = tag.get_handle()
-                                    LOG.info('Tag found by handle: ' + handle + ' ' + tag.get_name())
+                                    LOG.info('Tag found: ' + handle + ' ' + tag.get_name())
                                 else:    
-                                    LOG.error('Tag NOT found by handle: ' + handle + ' ' + otext)
-                                    raise GrampsImportError('Tag NOT found by handle: ', handle + '/' + otext)
-                            else:
-                                with DbTxn(_("Read Tag"), db) as trans:
-                                    tag = db.get_tag_from_name(otext)
-                                    if tag != None: 
-                                        LOG.info('Tag found by name, no duplicates: ' + otext + ' ' + tag.get_name())       
-                                        thandle = tag.get_handle()
-                                    else:       
-                                        tag = Tag()                  
-                                        tag.set_name(otext)
-                                        tag.set_change_time(chgtime)
-                                        tag.set_color("#EF2929")
-                                        with DbTxn(_("Add Tag"), db) as trans:
-                                            thandle = db.add_tag(tag, trans)
-                                            LOG.info('Tag added: ' + tag.get_name() + ' ' + thandle)
+                                    LOG.error('Tag NOT found: ' + handle + ' ' + otext)
+                            else:   
+                                tag = Tag()                  
+                                tag.set_name(otext)
+                                tag.set_change_time(chgtime)
+                                tag.set_color("#EF2929")
+                                with DbTxn(_("Add Tag"), db) as trans:
+                                    thandle = db.add_tag(tag, trans)
+                                    LOG.info('Tag added: ' + tag.get_name() + ' ' + thandle)
                             tags[recobj] = tag
                             try: 
                                 r_writer.writerow([rectype, recobj, '', '"' + thandle + '"', otext, '', '', '', ''])
@@ -179,20 +158,21 @@ def importSources(db, filename, user):
                             r_count += 1
                             repotype = row[1]         # repository type number
                             if idno == '':
+<<<<<<< HEAD
                                 # repository type based numbering should be applied but not supplied by Gramps
                                 ridno = findNextRidno(rectype + 'r' + repotype)
 #                                repository_idno = repository_idno + repository_incr
 #                                ridno = rectype + refstr + str(int(repotype) * repository_idrange + repository_idno)
+=======
+                                repository_idno = repository_idno + repository_incr
+                                ridno = rectype + refstr + str(int(repotype) * repository_idrange + repository_idno)
+>>>>>>> branch 'master' of https://github.com/Taapeli/Ged-prepare.git
                             else:
                                 ridno = idno 
-                            LOG.debug('Ridno = ' + str(ridno))    
                             repository = Repository() 
                             if handle != '':
                                 with DbTxn(_("Read Repository"), db) as trans:
-                                    repository = db.get_repository_from_handle(handle)
-                                    if repository == None:        
-                                        LOG.error('Repository NOT found by handle: ' + handle + ' ' + otext)
-                                        raise GrampsImportError('Repository NOT found by handle: ', handle + '/' + otext)   
+                                    repository = db.get_repository_from_handle(handle)   
                             repositoryType = RepositoryType()
                             repositoryType.set(int(repotype))       
                             repository.set_type(repositoryType)
@@ -219,22 +199,15 @@ def importSources(db, filename, user):
                             sidno = ''
                             s_count += 1
                             attribs = (row[5], row[6], row[7]) 
-
-                            if idno == '':
-                                LOG.debug('Ridno for sidno = ' + str(ridno))                             
-                                sidno = findNextSidno(ridno)   
-#                                source_idno = source_idno + source_idincr
-#                                sidno = rectype + refstr + str((int(repotype) * repository_idrange + repository_idno) * source_idrange + source_idno)
+                            if idno == '':    
+                                source_idno = source_idno + 1
+                                sidno = rectype + refstr + str((int(repotype) * repository_idrange + repository_idno) * 100 + source_idno)
                             else:
                                 sidno = idno 
-                            LOG.debug('Sidno = ' + str(sidno))   
                             source = Source()
                             if handle != '':
                                 with DbTxn(_("Read Source"), db) as trans:
                                     source = db.get_source_from_handle(handle)
-                                    if source == None:        
-                                        LOG.error('Source NOT found by handle: ' + handle + ' ' + otext)
-                                        raise GrampsImportError('Source NOT found by handle: ', handle + '/' + otext)   
                             source.set_gramps_id(sidno)
                             source.set_title(otext)
                             source.set_author(attribs[0])
@@ -265,9 +238,7 @@ def importSources(db, filename, user):
                             LOG.error('Unknown rectype: ' + rectype)
         
     except:
-        exc = sys.exc_info()[0]
-        LOG.error('*** Something went really wrong! ', exc )
-        
+        LOG.error('*** Something went really wrong! ' )
         return ImportInfo({_('Results'): _('Something went really wrong  ')})
     
     results =  {  _('Results'): _('Input file handled.')
@@ -288,7 +259,7 @@ def importSources(db, filename, user):
     db.enable_signals()
     db.request_rebuild()
 
-    return ImportInfo(results)   
-
-                       
+    return ImportInfo(results)                   
+                   
+    
 
