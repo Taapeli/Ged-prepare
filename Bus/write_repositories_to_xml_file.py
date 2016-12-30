@@ -40,23 +40,29 @@ def write_repositories_to_xml_file(repos, f):
     
     impl = getDOMImplementation()
     
-    doc = impl.createDocument(None, "database", None)
+    doc = impl.createDocument(None, "top", None)
+    cnt2 += 3 # xml and two database tags
     
     top_element = doc.documentElement
-
-    header = doc.createElement("header")
     
+    database = doc.createElement("database")
+    database.setAttribute("xmlns", 'http://gramps-project.org/xml/1.7.1/')
+    top_element.appendChild(database)
+    cnt2 += 1
+    
+    header = doc.createElement("header")
     top_element.appendChild(header)
-
+    cnt2 += 2
+    
     created = doc.createElement("created")
     created.setAttribute("date", date.today().isoformat())
-    created.setAttribute("version", 'Neo4j 3.1.0')
-    
+    created.setAttribute("version", '4.2.2')
     header.appendChild(created)
-
-    repositories = doc.createElement("repositories")
+    cnt2 += 1
     
+    repositories = doc.createElement("repositories")
     top_element.appendChild(repositories)
+    cnt2 += 2
     
     for repo in repos:
 
@@ -64,24 +70,22 @@ def write_repositories_to_xml_file(repos, f):
         repository.setAttribute("handle", repo.handle)
         repository.setAttribute("change", repo.change)
         repository.setAttribute("id", repo.id)
-        
         repositories.appendChild(repository)
         cnt2 += 1
                 
         rname = doc.createElement("rname")
         repository.appendChild(rname)
         
-        rnametext = doc.createTextNode(repo.rname)
-        rname.appendChild(rnametext)
-        
+        rname_text = doc.createTextNode(repo.rname)
+        rname.appendChild(rname_text)
         cnt2 += 1
         
         rtype = doc.createElement("type")
         repository.appendChild(rtype)
+        cnt2 += 1
         
         rtypetext = doc.createTextNode(repo.type)
         rtype.appendChild(rtypetext)
-        
         repository.appendChild(rtype)
         cnt2 += 1
         
@@ -100,7 +104,7 @@ def write_repositories_to_xml_file(repos, f):
 
 def process_neo4j(args):
 
-    # Read all repositoeies from Neo4j and writo tpo the XML file
+    # Read all repositories from Neo4j and write to the XML file
     try:
         repos = read_repositories_from_Neo4j()
     except Exception as err:

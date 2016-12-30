@@ -836,8 +836,8 @@ class Repository:
         global session
                 
         query = """
-            MATCH (repository:Repository) WHERE repository.rname='{}'
-                RETURN repository.gramps_handle
+            MATCH (repo:Repository) WHERE repo.rname='{}'
+                RETURN repo
             """.format(rname)
         return  session.run(query)
         
