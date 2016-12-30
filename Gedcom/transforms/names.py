@@ -43,7 +43,7 @@ def initialize(args):
     isIndi = False
     pass
 
-def phase3(args,line,path,tag,value,f):
+def phase3(args,line,level,path,tag,value,f):
     '''
     Function phase3 is called once for each line in the input GEDCOM file.
     This function should produce the output GEDCOM by calling output_file.emit

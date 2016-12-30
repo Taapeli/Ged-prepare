@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Generic GEDCOM transformer v0.1
+Generic GEDCOM transformer 
 Kari Kujansuu, 2016.
 
 The transforms are specified by separate Python modules ("plugins") in the subdirectory "transforms".
@@ -64,9 +64,11 @@ The parameters of each phases:
 - "parser" is the ArgumentParser object of the argparse module
 
 """
+_VERSION="0.1"
 
 import sys
 import os
+import getpass
 import time
 import argparse
 import tempfile
@@ -100,7 +102,7 @@ class Output:
             datestring = time.strftime("%d %b %Y %H:%M:%S", time.localtime(time.time()))
             self.emit("2 _TIME " + datestring)
             #user = os.environ.get('USER',"")
-            user = os.getlogin()
+            user = getpass.getuser()
             if user: self.emit("2 _USER " + user)
             self.emit("2 _SAVEDFILE " + self.newname)
     def save(self):
@@ -213,7 +215,7 @@ def find_transform(prefix):
     return False
 
 def main():
-    print("\nTaapeli GEDCOM transform program A (version 0.1)\n")
+    print("\nTaapeli GEDCOM transform program A (version {})\n".format(_VERSION))
     parser = argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
