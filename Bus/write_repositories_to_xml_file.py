@@ -41,22 +41,23 @@ def write_repositories_to_xml_file(repos, f):
     impl = getDOMImplementation()
     
     doc = impl.createDocument(None, "database", None)
+    cnt2 += 3 # xml and two database tags
     
     top_element = doc.documentElement
-
-    header = doc.createElement("header")
     
+    header = doc.createElement("header")
     top_element.appendChild(header)
-
+    cnt2 += 2
+    
     created = doc.createElement("created")
     created.setAttribute("date", date.today().isoformat())
     created.setAttribute("version", 'Neo4j 3.1.0')
-    
     header.appendChild(created)
-
-    repositories = doc.createElement("repositories")
+    cnt2 += 1
     
+    repositories = doc.createElement("repositories")
     top_element.appendChild(repositories)
+    cnt2 += 2
     
     for repo in repos:
 
@@ -64,24 +65,22 @@ def write_repositories_to_xml_file(repos, f):
         repository.setAttribute("handle", repo.handle)
         repository.setAttribute("change", repo.change)
         repository.setAttribute("id", repo.id)
-        
         repositories.appendChild(repository)
         cnt2 += 1
                 
         rname = doc.createElement("rname")
         repository.appendChild(rname)
         
-        rnametext = doc.createTextNode(repo.rname)
-        rname.appendChild(rnametext)
-        
+        rname_text = doc.createTextNode(repo.rname)
+        rname.appendChild(rname_text)
         cnt2 += 1
         
         rtype = doc.createElement("type")
         repository.appendChild(rtype)
+        cnt2 += 1
         
         rtypetext = doc.createTextNode(repo.type)
         rtype.appendChild(rtypetext)
-        
         repository.appendChild(rtype)
         cnt2 += 1
         

@@ -55,21 +55,23 @@ def write_sources_to_xml_file(repository_handle, repo_sources, f):
     impl = getDOMImplementation()
     
     doc = impl.createDocument(None, "database", None)
+    cnt2 += 3 # xml and two database tags
     
     top_element = doc.documentElement
 
     header = doc.createElement("header")
     top_element.appendChild(header)
-
+    cnt2 += 2
+    
     created = doc.createElement("created")
     created.setAttribute("date", date.today().isoformat())
     created.setAttribute("version", 'Neo4j 3.1.0')
-    
     header.appendChild(created)
-
-    sources = doc.createElement("sources")
+    cnt2 += 1
     
+    sources = doc.createElement("sources")
     top_element.appendChild(sources)
+    cnt2 += 2
     
     for repo_source in repo_sources:
 
@@ -77,23 +79,20 @@ def write_sources_to_xml_file(repository_handle, repo_sources, f):
         source.setAttribute("handle", repo_source.handle)
         source.setAttribute("change", repo_source.change)
         source.setAttribute("id", repo_source.id)
-        
         sources.appendChild(source)
-        cnt2 += 1
+        cnt2 += 2
                 
         stitle = doc.createElement("stitle")
         source.appendChild(stitle)
         
-        stitletext = doc.createTextNode(repo_source.stitle)
-        stitle.appendChild(stitletext)
+        stitle_text = doc.createTextNode(repo_source.stitle)
+        stitle.appendChild(stitle_text)
         cnt2 += 1
 
         reporef = doc.createElement("reporef")
         reporef.setAttribute("hlink", repository_handle)
         reporef.setAttribute("medium", repo_source.reporef_medium)
-        
         source.appendChild(reporef)
-        
         cnt2 += 1
         
         cnt += 1
