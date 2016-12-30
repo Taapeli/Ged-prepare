@@ -9,7 +9,9 @@ Jorma Haapasalo, 2016.
 import sys
 import argparse
 from sys import stderr
-from classes.genealogy import connect_db, Repository, XML_generator
+from datetime import date
+from xml.dom.minidom import getDOMImplementation
+from classes.genealogy import connect_db, Repository
 
 connect_db()
     
@@ -36,54 +38,62 @@ def read_repositories_from_Neo4j():
 def write_repositories_to_xml_file(repos, f):
     cnt = cnt2 =0
     
-    lines = XML_generator.get_xml_header()
-    for line in lines:
-        f.write(line)
-        cnt2 += 1
-        
-    # Write the begin tag
-    output_line = '  <repositories>\n'
-    f.write(output_line)
-    cnt2 += 1
+    impl = getDOMImplementation()
+    
+    doc = impl.createDocument(None, "database", None)
+    
+    top_element = doc.documentElement
+
+    header = doc.createElement("header")
+    
+    top_element.appendChild(header)
+
+    created = doc.createElement("created")
+    created.setAttribute("date", date.today().isoformat())
+    created.setAttribute("version", 'Neo4j 3.1.0')
+    
+    header.appendChild(created)
+
+    repositories = doc.createElement("repositories")
+    
+    top_element.appendChild(repositories)
     
     for repo in repos:
-        output_line = '    ' +\
-            '<repository handle="' + repo.handle + '"' +\
-            ' change="' + repo.change + '"' +\
-            ' id="' + repo.id + '">\n'
-            
-        f.write(output_line)
+
+        repository = doc.createElement("repository")
+        repository.setAttribute("handle", repo.handle)
+        repository.setAttribute("change", repo.change)
+        repository.setAttribute("id", repo.id)
+        
+        repositories.appendChild(repository)
+        cnt2 += 1
+                
+        rname = doc.createElement("rname")
+        repository.appendChild(rname)
+        
+        rnametext = doc.createTextNode(repo.rname)
+        rname.appendChild(rnametext)
+        
         cnt2 += 1
         
-        output_line = '      ' +\
-            '<rname>' + repo.rname + '</rname>\n'
+        rtype = doc.createElement("type")
+        repository.appendChild(rtype)
         
-        f.write(output_line)
+        rtypetext = doc.createTextNode(repo.type)
+        rtype.appendChild(rtypetext)
+        
+        repository.appendChild(rtype)
         cnt2 += 1
         
-        output_line = '      ' +\
-            '<type>' + repo.type + '</type>\n'
-        
-        f.write(output_line)
-        cnt2 += 1
-        
-        output_line = '    ' +\
-            '</repository>\n'
-            
-        f.write(output_line)
-        cnt2 += 1
         cnt += 1
         
-    # Write the end tag
-    output_line = '  </repositories>\n'
-    f.write(output_line)
-    cnt2 += 1
-        
-    # Write the end of database tag
-    output_line = '</database>\n'
-    f.write(output_line)
-    cnt2 += 1
+    doc.writexml( f,
+                     indent="  ",
+                     addindent="  ",
+                     newl="\n")
     
+    doc.unlink()
+            
     print("Number of repositories written: " + str(cnt))
     print("Number of lines written: " + str(cnt2))
 

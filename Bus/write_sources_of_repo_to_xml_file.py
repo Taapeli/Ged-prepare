@@ -9,7 +9,9 @@ Jorma Haapasalo, 2016.
 import sys
 import argparse
 from sys import stderr
-from classes.genealogy import connect_db, Repository, Source, XML_generator
+from datetime import date
+from xml.dom.minidom import getDOMImplementation
+from classes.genealogy import connect_db, Repository, Source
 
 connect_db()
     
@@ -47,57 +49,61 @@ def read_sources_from_Neo4j(repository_handle):
     return sources
     
 
-def write_sources_to_xml_file(repository_handle, sources, f):
+def write_sources_to_xml_file(repository_handle, repo_sources, f):
     cnt = cnt2 =0
      
-    lines = XML_generator.get_xml_header()
-    for line in lines:
-        f.write(line)
-        cnt2 += 1
-   
-    # Write the start tag
-    output_line = '  <sources>\n'
-    f.write(output_line)
-    cnt2 += 1
+    impl = getDOMImplementation()
     
-    for source in sources:
-        output_line = '    ' +\
-            '<source handle="' + source.handle + '"' +\
-            ' change="' + source.change + '"' +\
-            ' id="' + source.id + '">\n'
-            
-        f.write(output_line)
+    doc = impl.createDocument(None, "database", None)
+    
+    top_element = doc.documentElement
+
+    header = doc.createElement("header")
+    top_element.appendChild(header)
+
+    created = doc.createElement("created")
+    created.setAttribute("date", date.today().isoformat())
+    created.setAttribute("version", 'Neo4j 3.1.0')
+    
+    header.appendChild(created)
+
+    sources = doc.createElement("sources")
+    
+    top_element.appendChild(sources)
+    
+    for repo_source in repo_sources:
+
+        source = doc.createElement("source")
+        source.setAttribute("handle", repo_source.handle)
+        source.setAttribute("change", repo_source.change)
+        source.setAttribute("id", repo_source.id)
+        
+        sources.appendChild(source)
+        cnt2 += 1
+                
+        stitle = doc.createElement("stitle")
+        source.appendChild(stitle)
+        
+        stitletext = doc.createTextNode(repo_source.stitle)
+        stitle.appendChild(stitletext)
+        cnt2 += 1
+
+        reporef = doc.createElement("reporef")
+        reporef.setAttribute("hlink", repository_handle)
+        reporef.setAttribute("medium", repo_source.reporef_medium)
+        
+        source.appendChild(reporef)
+        
         cnt2 += 1
         
-        output_line = '      ' +\
-            '<stitle>' + source.stitle + '</stitle>\n'
-        
-        f.write(output_line)
-        cnt2 += 1
-        
-        output_line = '      ' +\
-            '<reporef hlink="' + repository_handle +\
-            '" medium="' + source.reporef_medium + '"/>\n'
-        
-        f.write(output_line)
-        cnt2 += 1
-        
-        output_line = '    ' +\
-            '</source>\n'
-            
-        f.write(output_line)
-        cnt2 += 1
         cnt += 1
         
-    # Write the end tag
-    output_line = '  </sources>\n'
-    f.write(output_line)
-    cnt2 += 1
-        
-    # Write the end of database tag
-    output_line = '</database>\n'
-    f.write(output_line)
-    cnt2 += 1
+    doc.writexml( f,
+                 indent="  ",
+                 addindent="  ",
+                 newl="\n")
+    
+    doc.unlink()
     
     print("Number of sources written: " + str(cnt))
     print("Number of lines written: " + str(cnt2))
