@@ -14,7 +14,7 @@ class PersonName(object):
     - _CALL
     '''
     NONAME = 'N'   # Marker for missing name part
-    CHGTAG = "NOTE _TRANS "
+    CHGTAG = "NOTE orig_"
 
     def __init__(self):
         # Create a new instance
@@ -44,46 +44,67 @@ class PersonName(object):
             parts = self.name.split('/')
             if len(parts) == 3:     # Contains '/Surname/'
                 self.givn, self.surn, self.spfx = parts
+                
+                # 1. Process given name field
+                
                 if (self.givn):
+                    self.givn = self.givn.rstrip()
                     gnames = self.givn.split()
+                    
+                    # 1a) Set patronymes to spfx 
+                    
                     if (len(gnames) > 0) & \
                        ((gnames[-1].endswith('poika') | (gnames[-1].endswith('tytär')))):
-                        print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.spfx))
+                        # print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.spfx))
                         self.spfx = gnames[-1]
                         self.givn = ' '.join(gnames[0:-1])
-                    else:
-                        self.givn = self.givn.rstrip()
+                        #TODO: store new spfx as a SPFX line
+                    
+                    # 1b) Set call name, if ane of given names are marked with '*'
+                    #TODO:
+
                 else:
                     self.givn = self.NONAME
-                self.name = "{} /{}/ {}".format(self.givn, self.surn, self.spfx)
+                self.name = "{} /{}/ {}".format(self.givn, self.surn, self.spfx).rstrip()
                 self.appendRow(level, tag, self.name)
+               
+                # Compare the name parts from NAME tag to this got here
+                if str.strip(value) != self.name:
+                    print ("#### {} value {!r} changed to {!r}".format(tag, value, self.name))           
+                    self.appendRow(int(level) + 1, "{}{}".format(self.CHGTAG, tag), value)
             return True
+    
         elif tag == 'GIVN':
-            # TODO: Should compare the name parts from NAME tag to this given here!
-            if value != self.givn:
-                print ("#### {} value {!r} changed to {!r}".format(tag, value, self.givn))           
-                self.appendRow(int(level) + 1, "{} old: {}".format(self.CHGTAG, tag), value)
-            else:
+            # Compare the name parts from NAME tag to this got here
+            if value == self.givn:
+#                 print ("#### {} value {!r} changed to {!r}".format(tag, value, self.givn))           
+#                 self.appendRow(int(level) + 1, "{} old: {}".format(self.CHGTAG, tag), value)
+#             else:
                 self.givn = value
             self.appendRow(level, tag, self.givn)
             return True
+        
         elif tag == 'SURN':
             self.surn = value
             self.appendRow(level, tag, self.surn)
             return True
+        
         elif tag == 'SPFX':
             self.spfx = value
             self.appendRow(level, tag, self.spfx)
             return True
+        
         elif tag in ['TYPE', 'NOTE']:
             self.spfx = value
             self.appendRow(level, tag, value)
             return True
+        
         elif tag == '_CALL':    # So called call name
             self.call = value
             self.appendRow(level, tag, self.call)
             return True
-        else:
+        
+        else:                   # Something not in NAME tag group
             return False
 
     def get_name(self):
