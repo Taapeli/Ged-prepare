@@ -1,8 +1,8 @@
 0 HEAD
 1 _TRANSFORM /home/jm/git/Ged-prepare/Gedcom/gedcom_transform.py names My-test.ged
-2 _TIME 01 Jan 2017 17:43:16
+2 _TIME 01 Jan 2017 19:00:40
 2 _USER jm
-2 _SAVEDFILE My-test.ged.4
+2 _SAVEDFILE My-test.ged.14
 1 SOUR Gramps
 2 VERS 4.1.1
 2 NAME Gramps
@@ -31,6 +31,7 @@
 2 GIVN Maija Kyllikki
 2 SURN Airola
 1 NAME N /Mäkeläinen/
+2 NOTE orig_NAME /Mäkeläinen/
 2 TYPE married
 2 SURN Mäkeläinen
 1 SEX F
@@ -120,6 +121,7 @@
 3 PAGE ainoa sivu
 2 NOTE @N0157@
 1 NAME N /Silius/
+2 NOTE orig_NAME /Silius/
 2 SURN Silius
 2 SOUR @S0013@
 3 PAGE ainoa sivu
@@ -161,6 +163,7 @@
 2 GIVN Saimi Alli Zuleima
 2 SURN Serenius
 1 NAME N /Airola/
+2 NOTE orig_NAME /Airola/
 2 TYPE married
 2 SURN Airola
 2 SOUR @S0013@
@@ -291,7 +294,7 @@
 3 TIME 17:31:17
 0 @I0050@ INDI
 1 NAME Erland /Serenius/ Johanpoika
-3 NOTE _TRANS  old: GIVN Erland Johanpoika
+2 NOTE orig_NAME Erland Johanpoika /Serenius/
 2 GIVN Erland
 2 SURN Serenius
 1 SEX M
@@ -360,7 +363,7 @@
 3 TIME 20:28:04
 0 @I0084@ INDI
 1 NAME Amalia /Heikkilä/ Matintytär
-3 NOTE _TRANS  old: GIVN Amalia Matintytär
+2 NOTE orig_NAME Amalia Matintytär /Heikkilä/
 2 GIVN Amalia
 2 SURN Heikkilä
 1 SEX F
@@ -383,7 +386,7 @@
 3 TIME 18:45:54
 0 @I0104@ INDI
 1 NAME Johan /Sihvola/ Johanpoika
-3 NOTE _TRANS  old: GIVN Johan Johanpoika
+2 NOTE orig_NAME Johan Johanpoika /Sihvola/
 2 GIVN Johan
 2 SURN Sihvola
 1 SEX M
@@ -406,7 +409,7 @@
 3 TIME 20:26:03
 0 @I0105@ INDI
 1 NAME Maria // Eerikintytär
-3 NOTE _TRANS  old: GIVN Maria Eerikintytär
+2 NOTE orig_NAME Maria Eerikintytär //
 2 GIVN Maria
 1 SEX F
 1 BIRT
@@ -424,7 +427,7 @@
 3 TIME 23:51:17
 0 @I0116@ INDI
 1 NAME Jaakko /Silius/ Jaakonpoika
-3 NOTE _TRANS  old: GIVN Jaakko Jaakonpoika
+2 NOTE orig_NAME Jaakko Jaakonpoika /Silius/
 2 GIVN Jaakko
 2 SURN Silius
 1 SEX M
@@ -447,7 +450,7 @@
 3 TIME 15:02:34
 0 @I0117@ INDI
 1 NAME Leena /Eerola/ Juhontytär
-3 NOTE _TRANS  old: GIVN Leena Juhontytär
+2 NOTE orig_NAME Leena Juhontytär /Eerola/
 2 GIVN Leena
 2 SURN Eerola
 1 SEX F
@@ -468,7 +471,7 @@
 3 TIME 18:12:39
 0 @I0127@ INDI
 1 NAME Johan /Sihvola/ Johanpoika
-3 NOTE _TRANS  old: GIVN Johan Johanpoika
+2 NOTE orig_NAME Johan Johanpoika /Sihvola/
 2 GIVN Johan
 2 SURN Sihvola
 1 SEX M
@@ -509,7 +512,7 @@
 3 TIME 20:26:26
 0 @I0141@ INDI
 1 NAME Jaakko // Pietarinpoika
-3 NOTE _TRANS  old: GIVN Jaakko Pietarinpoika
+2 NOTE orig_NAME Jaakko Pietarinpoika //
 2 GIVN Jaakko
 1 SEX M
 1 BIRT
@@ -530,7 +533,7 @@
 3 TIME 23:49:37
 0 @I0142@ INDI
 1 NAME Kaisa // Matintytär
-3 NOTE _TRANS  old: GIVN Kaisa Matintytär
+2 NOTE orig_NAME Kaisa Matintytär //
 2 GIVN Kaisa
 1 SEX F
 1 BIRT
@@ -551,8 +554,8 @@
 3 TIME 23:49:54
 0 @I0149@ INDI
 1 NAME Johan /Sihvola/ Johanpoika
+2 NOTE orig_NAME Johan Johanpoika /Sihvola/
 2 TYPE aka
-3 NOTE _TRANS  old: GIVN Johan Johanpoika
 2 GIVN Johan
 2 SURN Sihvola
 1 NAME Johan /Johansson/
@@ -589,8 +592,8 @@
 3 TIME 20:26:18
 0 @I0150@ INDI
 1 NAME Maria /Sihvola/ Matintytär
+2 NOTE orig_NAME Maria Matintytär /Sihvola/
 2 TYPE married
-3 NOTE _TRANS  old: GIVN Maria Matintytär
 2 GIVN Maria
 2 SURN Sihvola
 1 SEX F
