@@ -29,11 +29,11 @@ end of the program.
 A plugin may contain the following functions:
 
 - add_args(parser)
-- initialize(args)                      # Called once in the beginning of the transformation
-- phase1(args,line,path,tag,value)      # [optional] called once per GEDCOM line
-- phase2(args)                          # [optional] called between phase1 and phase2
-- phase3(args,line,path,tag,value,output_file)
-                                        # [optional] called once per GEDCOM line
+- initialize(args)                              # Called once in the beginning of the transformation
+- phase1(args,line,level,path,tag,value)        # [optional] called once per GEDCOM line
+- phase2(args)                                  # [optional] called between phase1 and phase2
+- phase3(args,line,level,path,tag,value,output_file)
+                                                # [optional] called once per GEDCOM line
 
 The function "add_args" is called in the beginning of the program and it allows
 the plugin to add its own arguments for the program. The values of the arguments
@@ -56,6 +56,7 @@ as it's parameter.
 The parameters of each phases:
 - "args" is the object returned by ArgumentParser.parse_args.
 - "line" is the original line in the input GEDCOM (unicode string)
+- "level" is the level number of the line (integer)
 - "path" is the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE representing the DATE tag
   inside the BIRT tag for the individual @I123@.
 - "tag" is the current tag (last part of path)
