@@ -1,5 +1,5 @@
 /.pydevproject
-/Gedcom/*.ged
+/Gedcom/*.ged*
 /__pycache__
 .DS_Store
 *.pyc
