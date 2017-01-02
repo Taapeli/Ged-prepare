@@ -53,7 +53,7 @@ from gramps.gen.utils.libformatting import ImportInfo
 def importSources(db, filename, user):
     
     def findNextRidno(ridstrt):
-        with DbTxn(_("Find next ridno"), db) as trans:
+        with DbTxn(_("Find next ridno"), db):
             db.set_repository_id_prefix(ridstrt + '%03d')  
             next_ridno = db.find_next_repository_gramps_id() 
             LOG.debug('Next ridno = ' + next_ridno)
@@ -61,7 +61,7 @@ def importSources(db, filename, user):
         return next_ridno             
                        
     def findNextSidno(ridno):
-        with DbTxn(_("Find next sidno"), db) as trans:
+        with DbTxn(_("Find next sidno"), db):
             db.set_source_id_prefix(ridno + '%03d')
             next_sidno = db.find_next_source_gramps_id() 
             LOG.debug('Next sidno = ' + next_sidno) 
