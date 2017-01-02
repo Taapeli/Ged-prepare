@@ -25,12 +25,16 @@ class Handler:
         op = combo.get_property('active-id')
         butt = builder.get_object("runButton")
         butt.set_sensitive(op != "-")
-        txt = "Valittu {}.py".format(op)
+        txt = "Toiminto '{}'".format(op)
         builder.get_object("checkbutton2").set_sensitive(op == 'places')
         self.appedShow(txt)
         
     def onRunClicked(self, button):
         self.appedShow("Painettu: " + button.get_label())
+        # Käynnistetään pyydetty toiminto
+        
+        process_gedcom(args,transformer)
+
         rev = builder.get_object("revertButton")
         rev.set_sensitive(True)
         
@@ -41,7 +45,7 @@ class Handler:
     
     def on_file_open_activate(self, menuitem, data=None):
         self.dialog = Gtk.FileChooserDialog("Open...",
-            None,
+            window,
             Gtk.FileChooserAction.OPEN, #Gtk.FILE_CHOOSER_ACTION_OPEN,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
@@ -49,11 +53,46 @@ class Handler:
             )
         self.response = self.dialog.run()
         if self.response == Gtk.ResponseType.OK:
-            self.appedShow("Avataan: " + self.dialog.get_filename())
+            self.appedShow("Syöte: " + self.dialog.get_filename())
             self.dialog.destroy()
         else:
             self.appedShow("Outo palaute {}".format(self.response))
 
+def runner():
+    print("\nTaapeli GEDCOM transform program A (version 0.1)\n")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('transform', help="Name of the transform (Python module)")
+    parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
+    #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
+    parser.add_argument('--display-changes', action='store_true',
+                        help='Display changed rows')
+    parser.add_argument('--dryrun', action='store_true',
+                        help='Do not produce an output file')
+    #parser.add_argument('--display-nonchanges', action='store_true',
+    #                    help='Display unchanged places')
+    parser.add_argument('--encoding', type=str, default="utf-8",
+                        help="e.g, UTF-8, ISO8859-1")
+    parser.add_argument('-l', '--list', action='store_true', help="List transforms")
+
+    if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
+        print("List of transforms:")
+        for modname,transformer,docline,version in get_transforms():
+            print("  {:20.20} {:10.10} {}".format(modname,version,docline))
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] not in ("-h","--help"):
+        print("First argument must be the name of the transform")
+        return
+
+    if len(sys.argv) > 1 and sys.argv[1][0] != '-':
+        transformer = find_transform(sys.argv[1])
+        if not transformer: 
+            print("Transform not found; use -l to list the available transforms")
+            return
+        transformer.add_args(parser)
+
+    args = parser.parse_args()
+    process_gedcom(args,transformer)
 
 
 
