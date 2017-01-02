@@ -34,7 +34,7 @@ from gramps.gen.db import DbTxn
 from gramps.gen.lib import Note, NoteType, Repository, RepoRef, RepositoryType, Source, Tag
 # from gramps.gui.utils import ProgressMeter
 # from gramps.gen.plug.utils import OpenFileOrStdin
-from gramps.gen.config import config as configman
+# from gramps.gen.config import config as configman
 
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 _ = glocale.translation.gettext
@@ -175,7 +175,7 @@ def importSources(db, filename, user):
                         elif rectype == 'R':
                             LOG.debug('Repository row: ' + row[0])
                             rhandle = ''
-                            source_idno = 0
+#                            source_idno = 0
                             r_count += 1
                             repotype = row[1]         # repository type number
                             if idno == '':
