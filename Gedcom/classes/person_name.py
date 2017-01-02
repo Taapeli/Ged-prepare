@@ -60,8 +60,17 @@ class PersonName(object):
                         self.givn = ' '.join(gnames[0:-1])
                         #TODO: store new spfx as a SPFX line
                     
-                    # 1b) Set call name, if ane of given names are marked with '*'
+                    # 1b) Set call name, if one of given names are marked with '*'
                     #TODO:
+                    for nm in gnames:
+                        if nm.endswith('*'):
+                            # Remove star
+                            nm = nm[:-1]
+                            self.givn = ''.join(self.givn.split(sep='*', maxsplit=1))
+                            # Set _CALL line
+                            self.call = nm
+                            # The Call name output is delayed after GIVN
+                            print ("## _CALL {!r} for {!r}".format(self.call, self.name))
 
                 else:
                     self.givn = self.NONAME
@@ -70,7 +79,7 @@ class PersonName(object):
                
                 # Compare the name parts from NAME tag to this got here
                 if str.strip(value) != self.name:
-                    print ("#### {} value {!r} changed to {!r}".format(tag, value, self.name))           
+                    print ("## {} value {!r} changed to {!r}".format(tag, value, self.name))           
                     self.appendRow(int(level) + 1, "{}{}".format(self.CHGTAG, tag), value)
             return True
     
@@ -82,6 +91,9 @@ class PersonName(object):
 #             else:
                 self.givn = value
             self.appendRow(level, tag, self.givn)
+            # If call name has been stored, put it here
+            if hasattr(self, 'call'):
+                self.appendRow(level, '_CALL', self.call)
             return True
         
         elif tag == 'SURN':
@@ -106,24 +118,6 @@ class PersonName(object):
         
         else:                   # Something not in NAME tag group
             return False
-
-    def get_name(self):
-        try:
-            return self.name
-        except AttributeError:
-            return "<unknown>"
-
-    def get_givn(self):
-        return self.givn
-
-    def get_surn(self):
-        return self.surn
-
-    def get_spfx(self):
-        return self.spfx
-
-    def get_call(self):
-        return self.call
 
     def get_rows(self):
         # Return all stored rows associated to this person name

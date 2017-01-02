@@ -72,8 +72,8 @@ def phase3(args,line,level,path,tag,value,f):
     #print("# Phase3: args={!r},line={!r},path={!r},tag={!r},value={!r},f={!r}".format(args,line,path,tag,value,f))
     level = line[:1]
 
-#  0. if 0 INDI:
-#   Set isIndi=True if a person data block starts
+# 1) Level 0: check if this is INDI
+#    Set isIndi=True when a person data block starts
 
     if level == "0":
         # Is this a line like "0 @I0008@ INDI"?
@@ -86,16 +86,17 @@ def phase3(args,line,level,path,tag,value,f):
         f.emit(line)
         return
 
-# 1. if isIndi: # A Person line
+# 2) Process a group of Person data
+#    isIndi == True
 
-#    1.1 if 1 NAME: # A new name definetion
-#        emit (pname.rows()) # if exists
+#   2.1) Level 1 NAME, a new name definition
+#        emit (pname.rows()) # if previous exists
 #        new pname()
 
     if line.startswith("1 NAME"):  # @indi@.NAME Antti /Puuhaara/
         # Check, if previous 1 NAME group has to be completed
         if type(pname) is PersonName:
-            # Yes, emit the previous name
+            # Yes, emit the previous name rows
             for row in pname.get_rows():
                 f.emit(row)
 
@@ -103,7 +104,7 @@ def phase3(args,line,level,path,tag,value,f):
 
     if type(pname) is PersonName:
 
-#    1.2 else if pname.add(line): 
+#   2.2) else if pname.add(line): 
 #        add() returns True, if line is still part of person name description
 #        The stored value is converted when added to person name group
 
@@ -111,17 +112,17 @@ def phase3(args,line,level,path,tag,value,f):
             #print("#   ++ {}: {}".format(path, value))
             pass
 
-#    1.3 else: # All names are processed
+#   2.3) else: # All names are processed
 #        emit all stored rows, clear pname and emit current row
 
         else:
             for row in pname.get_rows():
                 f.emit(row)
             pname = None
-            print ('# \\ {}'.format(path))
+            #print ('# \\ {}'.format(path))
             f.emit(line)
 
-# 2. else: # Other line, not in any person name group
+# 3) else: # Other line, not in any person name group
 #    emit (line)
 
     else:
