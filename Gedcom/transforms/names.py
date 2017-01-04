@@ -26,8 +26,7 @@
         - a new "2 _CALL" line shall be added (call name)
 
     TODO: 
-        - The SPFX line does not  print to output file
-        - CALL names are not processed
+        - The SPFX line does not print to output file
 
 Created on 26.11.2016
 

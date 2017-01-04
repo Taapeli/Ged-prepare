@@ -4,6 +4,8 @@ Created on 22.11.2016
 @author: jm
 '''
 
+import re
+
 class PersonName(object):
     '''
     Contains Gedcom individual name information from tags:
@@ -64,15 +66,18 @@ class PersonName(object):
                     # 1b) Set call name, if one of given names are marked with '*'
                     #TODO:
                     for nm in gnames:
+                        # Name has a star '*'
                         if nm.endswith('*'):
                             # Remove star
                             nm = nm[:-1]
                             self.givn = ''.join(self.givn.split(sep='*', maxsplit=1))
-                            # Set _CALL line
                             self.call = nm
-                            # The Call name output is delayed after GIVN
-                            print ("## _CALL {!r} for {!r}".format(self.call, self.name))
-
+                        # Name in parentehsins "(Jussi)"
+                        elif re.match("\(.*\)", nm) != None:
+                            # Remove parenthesis
+                            self.call = nm[1:-1]
+                            # Given names without call name
+                            self.givn = re.sub("\(.*\) *", "", self.givn).rstrip()
                 else:
                     self.givn = self.NONAME
                 self.name = "{} /{}/ {}".format(self.givn, self.surn, self.spfx).rstrip()
@@ -88,6 +93,7 @@ class PersonName(object):
             self.appendRow(level, tag, self.givn)
             # If call name has been stored, put it here
             if hasattr(self, 'call'):
+                print ("## _CALL {!r} for {!r}".format(self.call, self.name))
                 self.appendRow(level, '_CALL', self.call)
             return True
         
