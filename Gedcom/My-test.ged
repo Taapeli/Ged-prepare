@@ -24,7 +24,7 @@
 1 EMAIL juha.makelainen@iki.fi
 0 @I0001@ INDI
 1 NAME Maija Kyllikki* /Airola/
-2 GIVN Maija Kyllikki
+2 GIVN Maija Kyllikki*
 2 SURN Airola
 1 NAME  /Mäkeläinen/
 2 TYPE married
@@ -154,7 +154,7 @@
 3 TIME 21:44:35
 0 @I0009@ INDI
 1 NAME Saimi Alli* Zuleima /Serenius/
-2 GIVN Saimi Alli Zuleima
+2 GIVN Saimi Alli* Zuleima
 2 SURN Serenius
 1 NAME  /Airola/
 2 TYPE married
@@ -376,8 +376,8 @@
 2 DATE 11 MAY 2007
 3 TIME 18:45:54
 0 @I0104@ INDI
-1 NAME Johan Johanpoika /Sihvola/
-2 GIVN Johan Johanpoika
+1 NAME Johan (Jussi) Johanpoika /Sihvola/
+2 GIVN Johan (Jussi) Johanpoika
 2 SURN Sihvola
 1 SEX M
 1 BIRT

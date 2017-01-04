@@ -63,67 +63,46 @@ def phase3(args,line,level,path,tag,value,f):
         tag='NAME'
         value='Antti /Puuhaara/'
         f=<__main__.Output object at 0x101960fd0>
-
     '''
 
     global pname
     global isIndi
+    #print("# Phase3: args={!r}, line={!r}, path={!r}, tag={!r}, value={!r}, f={!r}".\
+    #      format(args,line,path,tag,value,f))
 
-    #print("# Phase3: args={!r},line={!r},path={!r},tag={!r},value={!r},f={!r}".format(args,line,path,tag,value,f))
-    level = line[:1]
+# 1) Level 0
+#    Check if this starts a person data block and emit current row
 
-# 1) Level 0: check if this is INDI
-#    Set isIndi=True when a person data block starts
-
-    if level == "0":
+    if level == 0:
         # Is this a line like "0 @I0008@ INDI"?
         isIndi = (value == "INDI")
-        # Emit any level 0 line
-        f.emit(line)
-        return
-    if isIndi == False:
-        # Emit any line outside person data blocks
         f.emit(line)
         return
 
 # 2) Process a group of Person data
-#    isIndi == True
 
-#   2.1) Level 1 NAME, a new name definition
-#        emit (pname.rows()) # if previous exists
-#        new pname()
+    if isIndi:
+        if level == 1:
+            if type(pname) is PersonName:
+                # Name group ended; Emit previous pname rows
+                for row in pname.lines():
+                    f.emit(row)
+                pname = None
 
-    if line.startswith("1 NAME"):  # @indi@.NAME Antti /Puuhaara/
-        # Check, if previous 1 NAME group has to be completed
-        if type(pname) is PersonName:
-            # Yes, emit the previous name rows
-            for row in pname.get_rows():
-                f.emit(row)
+            if tag == "NAME":
+                # Create new pname; 
+                pname = PersonName()
+                pname.add(path, level, tag, value)
+            else:
+                # Level 1 line, not NAME: Ends NAME group processing
+                isIndi = False
+                f.emit(line)
 
-        pname = PersonName()
+        else: # Higher level in NAME group
+            if type(pname) is PersonName:
+                pname.add(path, level, tag, value)
 
-    if type(pname) is PersonName:
-
-#   2.2) else if pname.add(line): 
-#        add() returns True, if line is still part of person name description
-#        The stored value is converted when added to person name group
-
-        if pname.add(path, line[:1], tag, value):
-            #print("#   ++ {}: {}".format(path, value))
-            pass
-
-#   2.3) else: # All names are processed
-#        emit all stored rows, clear pname and emit current row
-
-        else:
-            for row in pname.get_rows():
-                f.emit(row)
-            pname = None
-            #print ('# \\ {}'.format(path))
-            f.emit(line)
-
-# 3) else: # Other line, not in any person name group
-#    emit (line)
+# 3) else some other line, not in any person name group
 
     else:
         f.emit(line)

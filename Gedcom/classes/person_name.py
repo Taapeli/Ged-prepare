@@ -35,6 +35,7 @@ class PersonName(object):
             Returns True, while the path is one of name definitions
         Arguments example:
             path='@I0001@.NAME'
+            level=2
             tag='NAME'
             value='Antti /Puuhaara/'
         '''
@@ -80,16 +81,10 @@ class PersonName(object):
                 # Compare the name parts from NAME tag to this got here
                 if str.strip(value) != self.name:
                     print ("## {} value {!r} changed to {!r}".format(tag, value, self.name))           
-                    self.appendRow(int(level) + 1, "{}{}".format(self.CHGTAG, tag), value)
+                    self.appendRow(level + 1, "{}{}".format(self.CHGTAG, tag), value)
             return True
     
         elif tag == 'GIVN':
-            # Compare the name parts from NAME tag to this got here
-            if value == self.givn:
-#                 print ("#### {} value {!r} changed to {!r}".format(tag, value, self.givn))           
-#                 self.appendRow(int(level) + 1, "{} old: {}".format(self.CHGTAG, tag), value)
-#             else:
-                self.givn = value
             self.appendRow(level, tag, self.givn)
             # If call name has been stored, put it here
             if hasattr(self, 'call'):
@@ -97,18 +92,11 @@ class PersonName(object):
             return True
         
         elif tag == 'SURN':
-            self.surn = value
             self.appendRow(level, tag, self.surn)
             return True
         
         elif tag == 'SPFX':
-            self.spfx = value
             self.appendRow(level, tag, self.spfx)
-            return True
-        
-        elif tag in ['TYPE', 'NOTE']:
-            self.spfx = value
-            self.appendRow(level, tag, value)
             return True
         
         elif tag == '_CALL':    # So called call name
@@ -116,12 +104,15 @@ class PersonName(object):
             self.appendRow(level, tag, self.call)
             return True
         
-        else:                   # Something not in NAME tag group
-            return False
+        else: # like 'TYPE', 'NOTE', 'SOUR', ...
+            self.appendRow(level, tag, value)
+            return True
 
-    def get_rows(self):
-        # Return all stored rows associated to this person name
+
+    def lines(self):
+        # Return stored rows associated to this person name
         return self.rows
+
 
 if __name__ == "__main__":
     myname = PersonName()
