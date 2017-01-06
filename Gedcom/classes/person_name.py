@@ -15,8 +15,15 @@ class PersonName(object):
     - SPFX
     - _CALL
     '''
-    NONAME = 'N'   # Marker for missing name part
-    CHGTAG = "NOTE orig_"
+    NONAME = 'N'            # Marker for missing name part
+    CHGTAG = "NOTE orig_"   # Comment: original format
+    
+    RE_UNNAMED = ['nimetön', 'tuntematon', 'N.N.']
+    RE_PATRON = ['poika', 'p.', 'sson', 'ss.', 's.',
+                 'tytär', 'dotter', 'dr.', ]
+    RE_VON = ['von', 'af', 'de la', 'de']
+    RE_LYH = ['os.', 'o.s.', 'ent.','e.']
+    RE_SURN = {'os.':'MARR', 'o.s.':'MARR', 'ent.':'BORN', 'e.':'BORN'}
 
     def __init__(self):
         # Create a new instance
@@ -43,29 +50,36 @@ class PersonName(object):
         '''
         #TODO: Can not process '1 NAME Catharina (Caisa)/Riihiaho/Riihinen/'
         if tag == 'NAME':
-            #  Processes the value of NAME tag and tries to parse it to givn, surn, spfx fields
+           
+            # 1) Full name processing
+            #    The parts like 'givn/surn/spfx' will be isolated and analyzed
+        
             self.name = value
             parts = self.name.split('/')
             if len(parts) == 3:     # Contains '/Surname/'
                 self.givn, self.surn, self.spfx = parts
                 
-                # 1. Process given name field
+                # 1.1) GIVN given name part
                 
                 if (self.givn):
                     self.givn = self.givn.rstrip()
                     gnames = self.givn.split()
                     
-                    # 1a) Set patronymes to spfx 
+                    # 1.1a) Find id last givn is actually a patronyme; move it to spfx 
                     
-                    if (len(gnames) > 0) & \
-                       ((gnames[-1].endswith('poika') | (gnames[-1].endswith('tytär')))):
-                        # print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.spfx))
-                        self.spfx = gnames[-1]
-                        self.givn = ' '.join(gnames[0:-1])
-                        #TODO: store new spfx as a SPFX line
+                    if (len(gnames) > 0):
+                        nm = gnames[-1]
+                        for suff in self.RE_PATRON:
+                            if nm.endswith(suff):
+                                # print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.spfx))
+                                self.spfx = nm
+                                self.givn = ' '.join(gnames[0:-1])
+                                gnames = self.givn.split()
+                                #TODO: store new spfx as a SPFX line
+                                break
                     
-                    # 1b) Set call name, if one of given names are marked with '*'
-                    #TODO:
+                    # 1.1b) Set call name, if one of given names are marked with '*'
+
                     for nm in gnames:
                         # Name has a star '*'
                         if nm.endswith('*'):
@@ -81,6 +95,11 @@ class PersonName(object):
                             self.givn = re.sub("\(.*\) *", "", self.givn).rstrip()
                 else:
                     self.givn = self.NONAME
+                
+                # 1.2) SURN Surname part
+                
+                # 1.3) SPFX Suffix part
+                
                 self.name = "{} /{}/ {}".format(self.givn, self.surn, self.spfx).rstrip()
                 self.appendRow(level, tag, self.name)
                
