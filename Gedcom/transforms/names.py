@@ -40,11 +40,36 @@ def add_args(parser):
 
 def initialize(args):
     global pname        # Active Name object
-    global isIndi       # True, when processing an Individual
-
+    global state        # 0 = start, 1 = indi processing, 2 = name processing
+    state = 0
     pname = None
-    isIndi = False
-    pass
+
+# Process automation operations
+#
+def create_name_group():
+    # Create new PersonName
+    global pname
+
+    pname = PersonName()
+    
+def add_to_name_group(path, level, tag, value):
+    # Save current line in pname
+    global pname
+
+    pname.add(path, level, tag, value)
+    
+def emit_name_group(f):
+    # Print the lines of pname to output file
+    global pname
+
+    if type(pname) is PersonName:
+        # Name group ended; Emit previous pname rows
+        for row in pname.lines():
+            f.emit(row)
+        pname = None
+
+# ------------------------------
+
 
 def phase3(args,line,level,path,tag,value,f):
     '''
@@ -57,7 +82,8 @@ def phase3(args,line,level,path,tag,value,f):
     Arguments example:
         args=Namespace(display_changes=False, dryrun=True, encoding='utf-8', \
              input_gedcom='../Mun-testi.ged', transform='names')
-        line='1 NAME Antti /Puuhaara/',
+        line='1 NAME Antti /Puuhaara/'
+        level=1
         path='@I0001@.NAME'
         tag='NAME'
         value='Antti /Puuhaara/'
@@ -65,43 +91,57 @@ def phase3(args,line,level,path,tag,value,f):
     '''
 
     global pname
-    global isIndi
+    global state
     #print("# Phase3: args={!r}, line={!r}, path={!r}, tag={!r}, value={!r}, f={!r}".\
     #      format(args,line,path,tag,value,f))
 
-# 1) Level 0
-#    Check if this starts a person data block and emit current row
+    # Process automation engine
 
-    if level == 0:
-        # Is this a line like "0 @I0008@ INDI"?
-        isIndi = (value == "INDI")
+    if state == 0:      # Start, no active INDI
+        # The lines are written to output file
         f.emit(line)
+        if level == 0 and value == 'INDI':
+            state = 1
         return
 
-# 2) Process a group of Person data
+    if state == 1:      # INDI processing active
+        if level == 0:
+            # End of this individual
+            f.emit(line)
+            state = 0
+            return
 
-    if isIndi:
-        if level == 1:
-            if type(pname) is PersonName:
-                # Name group ended; Emit previous pname rows
-                for row in pname.lines():
-                    f.emit(row)
-                pname = None
+        if level == 1 and tag == 'NAME':    # line like '1 NAME Maija Liisa* /Nieminen/'
+            # Start of first name definition
+            create_name_group()
+            add_to_name_group(path, level, tag, value)
+            state = 2
+            return
 
-            if tag == "NAME":
-                # Create new pname; 
-                pname = PersonName()
-                pname.add(path, level, tag, value)
-            else:
-                # Level 1 line, not NAME: Ends NAME group processing
-                isIndi = False
-                f.emit(line)
-
-        else: # Higher level in NAME group
-            if type(pname) is PersonName:
-                pname.add(path, level, tag, value)
-
-# 3) else some other line, not in any person name group
-
-    else:
+        # Other INDI lines are written to output file
         f.emit(line)
+        return
+    
+    if state == 2:      # NAME processing active
+        if level == 0:
+            # End of Name and Indi group
+            emit_name_group(f)
+            if value == 'INDI':
+                state = 1
+            else:
+                state = 0
+            f.emit(line)
+        else:
+            if level > 1:
+                # Lines in Name group
+                add_to_name_group(path, level, tag, value)
+            else:
+                # Level 1, end of Name group
+                emit_name_group(f)
+                if tag == 'NAME':
+                    create_name_group()
+                    add_to_name_group(path, level, tag, value)
+                else:
+                    state = 1
+                    f.emit(line)
+        return

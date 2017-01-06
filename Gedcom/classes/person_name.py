@@ -41,6 +41,7 @@ class PersonName(object):
             tag='NAME'
             value='Antti /Puuhaara/'
         '''
+        #TODO: Can not process '1 NAME Catharina (Caisa)/Riihiaho/Riihinen/'
         if tag == 'NAME':
             #  Processes the value of NAME tag and tries to parse it to givn, surn, spfx fields
             self.name = value
@@ -85,15 +86,16 @@ class PersonName(object):
                
                 # Compare the name parts from NAME tag to this got here
                 if str.strip(value) != self.name:
-                    print ("## {} value {!r} changed to {!r}".format(tag, value, self.name))           
+                    print ("{} value {!r} changed to {!r}".format(path, value, self.name))           
                     self.appendRow(level + 1, "{}{}".format(self.CHGTAG, tag), value)
             return True
     
         elif tag == 'GIVN':
-            self.appendRow(level, tag, self.givn)
+            if hasattr(self, 'givn'):   #TODO: Why not? 
+                self.appendRow(level, tag, self.givn)
             # If call name has been stored, put it here
             if hasattr(self, 'call'):
-                print ("## _CALL {!r} for {!r}".format(self.call, self.name))
+                print ("# _CALL {!r} for {!r}".format(self.call, self.name))
                 self.appendRow(level, '_CALL', self.call)
             return True
         
