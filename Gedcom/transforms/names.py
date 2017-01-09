@@ -138,7 +138,6 @@ def _add_to_name_group(path, level, tag, value):
 def _emit_name_group(f):
     # Print the lines of pname to output file
     global pname
-
     if type(pname) is PersonName:
         # Name group ended; Emit previous pname rows
         for row in pname.lines():
