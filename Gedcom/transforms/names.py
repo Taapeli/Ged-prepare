@@ -20,13 +20,10 @@
 
     Processing:
         - When a "1 NAME" line is found, a new PersonName object is created
-        - The components of "1 NAME" line are stored and
-          modified NAME line is written out
-        - The following level 2 name data (GIVN, SURN, NICK, SPFX) are replaced with the stored values if available
-        - a new "2 _CALL" line shall be added (call name)
-
-    TODO: 
-        - The SPFX line does not print to output file
+        - The components of "1 NAME" line are stored in that object and
+          modified NAME line is written to output file
+        - The following name data rows are replaced with the stored values if available
+        - a new "2 _CALL" or '2 SPFX' lines may be added
 
 Created on 26.11.2016
 
@@ -43,32 +40,6 @@ def initialize(args):
     global state        # 0 = start, 1 = indi processing, 2 = name processing
     state = 0
     pname = None
-
-# Process automation operations
-#
-def create_name_group():
-    # Create new PersonName
-    global pname
-
-    pname = PersonName()
-    
-def add_to_name_group(path, level, tag, value):
-    # Save current line in pname
-    global pname
-
-    pname.add(path, level, tag, value)
-    
-def emit_name_group(f):
-    # Print the lines of pname to output file
-    global pname
-
-    if type(pname) is PersonName:
-        # Name group ended; Emit previous pname rows
-        for row in pname.lines():
-            f.emit(row)
-        pname = None
-
-# ------------------------------
 
 
 def phase3(args,line,level,path,tag,value,f):
@@ -106,15 +77,19 @@ def phase3(args,line,level,path,tag,value,f):
 
     if state == 1:      # INDI processing active
         if level == 0:
-            # End of this individual
+            # End of an individual
             f.emit(line)
-            state = 0
+            if value == 'INDI':
+                # New individual group
+                state = 1
+            else:
+                # Other group
+                state = 0
             return
 
         if level == 1 and tag == 'NAME':    # line like '1 NAME Maija Liisa* /Nieminen/'
             # Start of first name definition
-            create_name_group()
-            add_to_name_group(path, level, tag, value)
+            _create_name_group(path, level, tag, value)
             state = 2
             return
 
@@ -125,7 +100,7 @@ def phase3(args,line,level,path,tag,value,f):
     if state == 2:      # NAME processing active
         if level == 0:
             # End of Name and Indi group
-            emit_name_group(f)
+            _emit_name_group(f)
             if value == 'INDI':
                 state = 1
             else:
@@ -134,14 +109,38 @@ def phase3(args,line,level,path,tag,value,f):
         else:
             if level > 1:
                 # Lines in Name group
-                add_to_name_group(path, level, tag, value)
+                _add_to_name_group(path, level, tag, value)
             else:
                 # Level 1, end of Name group
-                emit_name_group(f)
+                _emit_name_group(f)
                 if tag == 'NAME':
-                    create_name_group()
-                    add_to_name_group(path, level, tag, value)
+                    _create_name_group(path, level, tag, value)
                 else:
                     state = 1
                     f.emit(line)
         return
+
+
+# Process automation operations
+#
+def _create_name_group(path, level, tag, value):
+    # Create new PersonName
+    global pname
+    pname = PersonName(path, level, tag, value)
+
+
+def _add_to_name_group(path, level, tag, value):
+    # Save current line in pname
+    global pname
+    pname.add(path, level, tag, value)
+
+
+def _emit_name_group(f):
+    # Print the lines of pname to output file
+    global pname
+
+    if type(pname) is PersonName:
+        # Name group ended; Emit previous pname rows
+        for row in pname.lines():
+            f.emit(row)
+        pname = None
