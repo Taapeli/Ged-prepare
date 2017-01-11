@@ -6,6 +6,17 @@ Created on 22.11.2016
 
 import re
 
+_NONAME = 'N'            # Marker for missing name part
+_CHGTAG = "NOTE orig_"   # Comment: original format
+
+_UNNAMED = ['nimetön', 'tuntematon', 'N.N.']
+_PATRONYME = ['poika', 'p.', 'sson', 'ss.', 's.',
+             'tytär', 'dotter', 'dr.', ]
+_VON = ['von', 'af', 'de la', 'de']
+_LYH = ['os.', 'o.s.', 'ent.','e.']
+_SURN = {'os.':'MARR', 'o.s.':'MARR', 'ent.':'PREV', 'e.':'PREV', '/':'AKA', ',':'AKA'}
+
+
 class PersonName(object):
     '''
     Stores and fixes Gedcom individual name information.
@@ -26,16 +37,6 @@ class PersonName(object):
     3. ...
     
     '''
-    _NONAME = 'N'            # Marker for missing name part
-    _CHGTAG = "NOTE orig_"   # Comment: original format
-    
-    _UNNAMED = ['nimetön', 'tuntematon', 'N.N.']
-    _PATRONYME = ['poika', 'p.', 'sson', 'ss.', 's.',
-                 'tytär', 'dotter', 'dr.', ]
-    _VON = ['von', 'af', 'de la', 'de']
-    _LYH = ['os.', 'o.s.', 'ent.','e.']
-    _SURN = {'os.':'MARR', 'o.s.':'MARR', 'ent.':'PREV', 'e.':'PREV'}
-
 
     def __str__(self):
         return "PersonName({})".format(self.name)
@@ -95,17 +96,36 @@ class PersonName(object):
                         self.givn = ''.join(self.givn.split(sep='*', maxsplit=1))
                         self.call = nm
                     # Name in parentehsins "(Jussi)"
-                    elif re.match("\(.*\)", nm) != None:
+                    elif re.match(r"\(.*\)", nm) != None:
                         # Remove parenthesis
                         self.call = nm[1:-1]
                         # Given names without call name
-                        self.givn = re.sub("\(.*\) *", "", self.givn).rstrip()
+                        self.givn = re.sub(r"\(.*\) *", "", self.givn).rstrip()
             else:
-                self.givn = self._NONAME
+                self.givn = _NONAME
             
             # 1.2) SURN Surname part
-            # TODO: Parse "Aho os. Mattila", "Suname1/Surname2", "Aho e. Mattila os. Laine"
-            pass
+            
+            # Parse "Aho os. Mattila", "Suname1/Surname2", "Aho e. Mattila os. Laine" etc
+            # TODO: must fix surnames!
+
+            n = 0
+            nm_next = ""
+            surnames = re.sub(r' */ *', ' / ', self.surn)   # "/" as separator symbol
+            for nm in surnames.split():
+                typ = self._match_surn_sep(nm)
+                if typ != None:
+                    # "Nm_left os. Nm" --> "2 NAME Name"; "3 TYPE MARR"
+                    self._append_row(level, 'NAME', nm)
+                    self._append_row(level + 1, 'TYPE', typ)
+                    n = n+1
+                    nm_next = "{} {}={!r} ".format(nm_next, typ,nm)
+                else:
+                    # Simple name "Nm" --> "2 NAME Nm"
+                    self._append_row(level, 'NAME', nm)
+            if n > 0:
+                print ("# {!r} surnames {!r}".format(value, nm))                           
+
 
             # 1.3) SPFX Suffix part
             
@@ -115,7 +135,7 @@ class PersonName(object):
             # Compare the name parts from NAME tag to this got here
             if re.sub(r' ', '', value) != re.sub(r' ', '', self.name):
                 print ("{} {!r} changed to {!r}".format(path, value, self.name))           
-                self._append_row(level + 1, "{}{}".format(self._CHGTAG, tag), value)
+                self._append_row(level + 1, "{}{}".format(_CHGTAG, tag), value)
         else:
             print ("{} missing /SURNAME/ in {!r}".format(path, value))         
 
@@ -176,19 +196,15 @@ class PersonName(object):
 
     def _match_patronyme(self, nm):
         '''Returns patronyme suffix, if matches, else None'''
-        for suff in self._PATRONYME:
+        for suff in _PATRONYME:
             if nm.endswith(suff):
                 return suff
         return None
 
+    def _match_surn_sep(self, nm):
+        '''Returns separator type, if nm matches any of them, else None'''
+        if nm in _SURN:
+            return _SURN[nm]
+        else:
+            return None
 
-if __name__ == "__main__":
-    myname = PersonName()
-    myname.add('@I0001@.NAME', 'NAME', "Antti /Puuhaara/")
-    print ("-->" + myname.get_name())
-    myname = PersonName()
-    myname.add('@I0002@.NAME', 'NAME', "Hello World")
-    print ("-->" + myname.get_name())
-    myname = PersonName()
-    myname.add('@I0003@.NAME', 'NAME', "Anders (Antti) Juhonpoika /Puuhaara/")
-    print ("-->" + myname.get_name())
