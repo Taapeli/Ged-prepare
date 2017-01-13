@@ -154,7 +154,7 @@ class Event:
         self.citationref_hlink = ''
 
 
-    def get_event_date(self):
+    def get_event_data(self):
         """ Luetaan tapahtuman tiedot """
         
         global session
@@ -162,7 +162,20 @@ class Event:
         query = """
             MATCH (event:Event)
                 WHERE event.gramps_handle='{}'
-                RETURN event.date AS date
+                RETURN event
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_place_handle(self):
+        """ Luetaan tapahtuman paikan handle """
+        
+        global session
+                
+        query = """
+            MATCH (event:Event)-[r:PLACE]->(place:Place) 
+                WHERE event.gramps_handle='{}'
+                RETURN place.gramps_handle AS handle
             """.format(self.handle)
         return  session.run(query)
         
@@ -597,6 +610,19 @@ class Person:
         return  session.run(query)
     
     
+    def get_death_handle(self):
+        """ Luetaan henkilön kuolintapahtuman handle """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:EVENT]->(event:Event) 
+                WHERE person.gramps_handle='{}' AND event.type='Death'
+                RETURN event.gramps_handle AS handle
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
     def get_family_handle(self):
         """ Luetaan henkilön perheen handle """
         
@@ -793,6 +819,19 @@ class Place:
         self.type = ''
         self.pname = []
         self.placeref_hlink = ''
+    
+    
+    def get_place_data(self):
+        """ Luetaan kaikki paikan tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (place:Place)
+                WHERE place.gramps_handle='{}'
+                RETURN place
+            """.format(self.handle)
+        return  session.run(query)
         
     
     @staticmethod       

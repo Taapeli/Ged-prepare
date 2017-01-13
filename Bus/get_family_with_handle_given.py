@@ -9,7 +9,7 @@ Jorma Haapasalo, 2017.
 import sys
 import argparse
 from sys import stderr
-from classes.genealogy import connect_db, Event, Family, Name, Person
+from classes.genealogy import connect_db, Event, Family, Name, Person, Place
 
 connect_db()
     
@@ -44,18 +44,48 @@ def get_family_data(handle):
                     pname.surname = father_name_record["name"]['surname']
                     pname.suffix = father_name_record["name"]['suffix']
                     father.name.append(pname)
-                    
-                    birth_result = father.get_birth_handle()
-                    for birth_record in birth_result:
-                        event = Event()
-                        event.handle = birth_record["handle"]
-                    
-                        event_result = event.get_event_date()
-                        for event_record in event_result:
-                            event_date = event_record["date"]
-                            print("Birth date: " + str(event_date))
                             
-                father.print_data()
+            father.print_data()
+                    
+            birth_result = father.get_birth_handle()
+            for birth_record in birth_result:
+                event = Event()
+                event.handle = birth_record["handle"]
+            
+                event_result = event.get_event_data()
+                for event_record in event_result:
+                    event_date = event_record["event"]["date"]
+                    print("\nBirth date: " + str(event_date))
+            
+                    event_place_result = event.get_place_handle()
+                    for event_place_record in event_place_result:
+                        place = Place()
+                        place.handle = event_place_record["handle"]
+                        
+                        place_result = place.get_place_data()
+                        for place_record in place_result:
+                            place_pname = place_record["place"]["pname"]
+                            print("Place: " + str(place_pname))
+                    
+            death_result = father.get_death_handle()
+            for death_record in death_result:
+                event = Event()
+                event.handle = death_record["handle"]
+            
+                event_result = event.get_event_data()
+                for event_record in event_result:
+                    event_date = event_record["event"]["date"]
+                    print("Death date: " + str(event_date))
+            
+                    event_place_result = event.get_place_handle()
+                    for event_place_record in event_place_result:
+                        place = Place()
+                        place.handle = event_place_record["handle"]
+                        
+                        place_result = place.get_place_data()
+                        for place_record in place_result:
+                            place_pname = place_record["place"]["pname"]
+                            print("Place: " + str(place_pname))
                       
         print("\nMOTHER: ")
         mother_result = f.get_mother()
@@ -75,18 +105,48 @@ def get_family_data(handle):
                     pname.surname = mother_name_record["name"]['surname']
                     pname.suffix = mother_name_record["name"]['suffix']
                     mother.name.append(pname)
-                                        
-                    birth_result = mother.get_birth_handle()
-                    for birth_record in birth_result:
-                        event = Event()
-                        event.handle = birth_record["handle"]
                     
-                        event_result = event.get_event_date()
-                        for event_record in event_result:
-                            event_date = event_record["date"]
-                            print("Birth date: " + str(event_date))
+            mother.print_data()
 
-                mother.print_data()
+            birth_result = mother.get_birth_handle()
+            for birth_record in birth_result:
+                event = Event()
+                event.handle = birth_record["handle"]
+            
+                event_result = event.get_event_data()
+                for event_record in event_result:
+                    event_date = event_record["event"]["date"]
+                    print("\nBirth date: " + str(event_date))
+            
+                    event_place_result = event.get_place_handle()
+                    for event_place_record in event_place_result:
+                        place = Place()
+                        place.handle = event_place_record["handle"]
+                        
+                        place_result = place.get_place_data()
+                        for place_record in place_result:
+                            place_pname = place_record["place"]["pname"]
+                            print("Place: " + str(place_pname))
+                    
+            death_result = mother.get_death_handle()
+            for death_record in death_result:
+                event = Event()
+                event.handle = death_record["handle"]
+            
+                event_result = event.get_event_data()
+                for event_record in event_result:
+                    event_date = event_record["event"]["date"]
+                    print("Death date: " + str(event_date))
+            
+                    event_place_result = event.get_place_handle()
+                    for event_place_record in event_place_result:
+                        place = Place()
+                        place.handle = event_place_record["handle"]
+                        
+                        place_result = place.get_place_data()
+                        for place_record in place_result:
+                            place_pname = place_record["place"]["pname"]
+                            print("Place: " + str(place_pname))
                             
         print("\nCHILDREN: ")
         children_result = f.get_children()
@@ -105,18 +165,49 @@ def get_family_data(handle):
                     pname.surname = children_name_record["name"]['surname']
                     pname.suffix = children_name_record["name"]['suffix']
                     child.name.append(pname)
-                                        
-                    birth_result = child.get_birth_handle()
-                    for birth_record in birth_result:
-                        event = Event()
-                        event.handle = birth_record["handle"]
                     
-                        event_result = event.get_event_date()
-                        for event_record in event_result:
-                            event_date = event_record["date"]
-                            print("\nBirth date: " + str(event_date))
-                            
-                child.print_data()
+            print("\n")
+            child.print_data()
+                                        
+            birth_result = child.get_birth_handle()
+            for birth_record in birth_result:
+                event = Event()
+                event.handle = birth_record["handle"]
+            
+                event_result = event.get_event_data()
+                for event_record in event_result:
+                    event_date = event_record["event"]["date"]
+                    print("\nBirth date: " + str(event_date))
+                                        
+                    event_place_result = event.get_place_handle()
+                    for event_place_record in event_place_result:
+                        place = Place()
+                        place.handle = event_place_record["handle"]
+                        
+                        place_result = place.get_place_data()
+                        for place_record in place_result:
+                            place_pname = place_record["place"]["pname"]
+                            print("Place: " + str(place_pname))
+            
+            death_result = child.get_death_handle()
+            for death_record in death_result:
+                event = Event()
+                event.handle = death_record["handle"]
+            
+                event_result = event.get_event_data()
+                for event_record in event_result:
+                    event_date = event_record["event"]["date"]
+                    print("Death date: " + str(event_date))
+            
+                    event_place_result = event.get_place_handle()
+                    for event_place_record in event_place_result:
+                        place = Place()
+                        place.handle = event_place_record["handle"]
+                        
+                        place_result = place.get_place_data()
+                        for place_record in place_result:
+                            place_pname = place_record["place"]["pname"]
+                            print("Place: " + str(place_pname))
             
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
