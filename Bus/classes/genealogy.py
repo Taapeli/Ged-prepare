@@ -338,6 +338,45 @@ class Family:
                     print("Virhe: {0}".format(err), file=stderr)
             
         return
+    
+    
+    def get_family_data(self):
+        """ Luetaan perheen tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)
+                WHERE family.gramps_handle='{}'
+                RETURN family
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_father(self):
+        """ Luetaan perheen isän tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:FATHER]->(p:Person)
+                WHERE family.gramps_handle='{}'
+                RETURN p.gramps_handle AS father
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_mother(self):
+        """ Luetaan perheen äidin tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:MOTHER]->(p:Person)
+                WHERE family.gramps_handle='{}'
+                RETURN p.gramps_handle AS mother
+            """.format(self.handle)
+        return  session.run(query)
 
 
     def print_data(self):
@@ -621,6 +660,19 @@ class Person:
             except Exception as err:
                 print("Virhe: {0}".format(err), file=stderr)
         return
+    
+    
+    def get_family(self):
+        """ Luetaan henkilön perheen tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)<-[r:CHILD]-(family:Family) 
+                WHERE person.gramps_handle='{}'
+                RETURN family.gramps_handle AS handle
+            """.format(self.handle)
+        return  session.run(query)
     
     
     def get_name_data(self):
