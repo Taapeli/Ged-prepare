@@ -353,6 +353,19 @@ class Family:
         return  session.run(query)
     
     
+    def get_children(self):
+        """ Luetaan perheen lasten tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:CHILD]->(p:Person)
+                WHERE family.gramps_handle='{}'
+                RETURN p.gramps_handle AS children
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
     def get_father(self):
         """ Luetaan perheen isän tiedot """
         
