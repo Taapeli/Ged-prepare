@@ -53,6 +53,35 @@ class Citation:
         self.noteref_hlink = ''
         self.sourceref_hlink = ''
 
+    
+    @staticmethod       
+    def get_total():
+        """ Tulostaa lähteiden määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (c:Citation) RETURN COUNT(c)
+            """
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
+
+    def print_data(self):
+        """ Tulostaa tiedot """
+        print ("*****Citation*****")
+        print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
+        print ("Id: " + self.id)
+        print ("Confidence: " + self.confidence)
+        if self.noteref_hlink != '':
+            print ("Noteref_hlink: " + self.noteref_hlink)
+        if self.sourceref_hlink != '':
+            print ("Sourceref_hlink: " + self.sourceref_hlink)
+        return True
+
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -102,35 +131,6 @@ class Citation:
         return
 
 
-    def print_data(self):
-        """ Tulostaa tiedot """
-        print ("*****Citation*****")
-        print ("Handle: " + self.handle)
-        print ("Change: " + self.change)
-        print ("Id: " + self.id)
-        print ("Confidence: " + self.confidence)
-        if self.noteref_hlink != '':
-            print ("Noteref_hlink: " + self.noteref_hlink)
-        if self.sourceref_hlink != '':
-            print ("Sourceref_hlink: " + self.sourceref_hlink)
-        return True
-
-    
-    @staticmethod       
-    def get_total():
-        """ Tulostaa lähteiden määrän tietokannassa """
-        
-        global session
-                
-        query = """
-            MATCH (c:Citation) RETURN COUNT(c)
-            """
-        results =  session.run(query)
-        
-        for result in results:
-            return str(result[0])
-
-
 class Event:
     """ Tapahtuma
             
@@ -152,6 +152,46 @@ class Event:
         self.date = ''
         self.place_hlink = ''
         self.citationref_hlink = ''
+
+
+    def get_event_date(self):
+        """ Luetaan tapahtuman tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (event:Event)
+                WHERE event.gramps_handle='{}'
+                RETURN event.date AS date
+            """.format(self.handle)
+        return  session.run(query)
+        
+    
+    @staticmethod        
+    def get_total():
+        """ Tulostaa tapahtumien määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (e:Event) RETURN COUNT(e)
+            """
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
+
+    def print_data(self):
+        """ Tulostaa tiedot """
+        print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
+        print ("Id: " + self.id)
+        print ("Type: " + self.type)
+        print ("Dateval: " + self.date)
+        print ("Place_hlink: " + self.place_hlink)
+        print ("Citationref_hlink: " + self.citationref_hlink)
+        return True
 
 
     def save(self):
@@ -200,33 +240,6 @@ class Event:
             print("Virhe: {0}".format(err), file=stderr)
             
         return
-
-
-    def print_data(self):
-        """ Tulostaa tiedot """
-        print ("Handle: " + self.handle)
-        print ("Change: " + self.change)
-        print ("Id: " + self.id)
-        print ("Type: " + self.type)
-        print ("Dateval: " + self.date)
-        print ("Place_hlink: " + self.place_hlink)
-        print ("Citationref_hlink: " + self.citationref_hlink)
-        return True
-        
-    
-    @staticmethod        
-    def get_total():
-        """ Tulostaa tapahtumien määrän tietokannassa """
-        
-        global session
-                
-        query = """
-            MATCH (e:Event) RETURN COUNT(e)
-            """
-        results =  session.run(query)
-        
-        for result in results:
-            return str(result[0])
    
 
 class Family:
@@ -252,6 +265,94 @@ class Family:
         self.eventref_hlink = []
         self.eventref_role = []
         self.childref_hlink = []
+    
+    
+    def get_children(self):
+        """ Luetaan perheen lasten tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:CHILD]->(p:Person)
+                WHERE family.gramps_handle='{}'
+                RETURN p.gramps_handle AS children
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_family_data(self):
+        """ Luetaan perheen tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)
+                WHERE family.gramps_handle='{}'
+                RETURN family
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_father(self):
+        """ Luetaan perheen isän tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:FATHER]->(p:Person)
+                WHERE family.gramps_handle='{}'
+                RETURN p.gramps_handle AS father
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_mother(self):
+        """ Luetaan perheen äidin tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:MOTHER]->(p:Person)
+                WHERE family.gramps_handle='{}'
+                RETURN p.gramps_handle AS mother
+            """.format(self.handle)
+        return  session.run(query)
+        
+    
+    @staticmethod       
+    def get_total():
+        """ Tulostaa perheiden määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (f:Family) RETURN COUNT(f)
+            """
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
+
+    def print_data(self):
+        """ Tulostaa tiedot """
+        print ("*****Family*****")
+        print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
+        print ("Id: " + self.id)
+        print ("Rel: " + self.rel_type)
+        print ("Father: " + self.father)
+        print ("Mother: " + self.mother)
+        if len(self.eventref_hlink) > 0:
+            for i in range(len(self.eventref_hlink)):
+                print ("Eventref_hlink: " + self.eventref_hlink[i])
+        if len(self.eventref_role) > 0:
+            for i in range(len(self.eventref_role)):
+                print ("Role: " + self.eventref_role[i])
+        if len(self.childref_hlink) > 0:
+            for i in range(len(self.childref_hlink)):
+                print ("Childref_hlink: " + self.childref_hlink[i])
+        return True
 
 
     def save(self):
@@ -338,94 +439,6 @@ class Family:
                     print("Virhe: {0}".format(err), file=stderr)
             
         return
-    
-    
-    def get_family_data(self):
-        """ Luetaan perheen tiedot """
-        
-        global session
-                
-        query = """
-            MATCH (family:Family)
-                WHERE family.gramps_handle='{}'
-                RETURN family
-            """.format(self.handle)
-        return  session.run(query)
-    
-    
-    def get_children(self):
-        """ Luetaan perheen lasten tiedot """
-        
-        global session
-                
-        query = """
-            MATCH (family:Family)-[r:CHILD]->(p:Person)
-                WHERE family.gramps_handle='{}'
-                RETURN p.gramps_handle AS children
-            """.format(self.handle)
-        return  session.run(query)
-    
-    
-    def get_father(self):
-        """ Luetaan perheen isän tiedot """
-        
-        global session
-                
-        query = """
-            MATCH (family:Family)-[r:FATHER]->(p:Person)
-                WHERE family.gramps_handle='{}'
-                RETURN p.gramps_handle AS father
-            """.format(self.handle)
-        return  session.run(query)
-    
-    
-    def get_mother(self):
-        """ Luetaan perheen äidin tiedot """
-        
-        global session
-                
-        query = """
-            MATCH (family:Family)-[r:MOTHER]->(p:Person)
-                WHERE family.gramps_handle='{}'
-                RETURN p.gramps_handle AS mother
-            """.format(self.handle)
-        return  session.run(query)
-
-
-    def print_data(self):
-        """ Tulostaa tiedot """
-        print ("*****Family*****")
-        print ("Handle: " + self.handle)
-        print ("Change: " + self.change)
-        print ("Id: " + self.id)
-        print ("Rel: " + self.rel_type)
-        print ("Father: " + self.father)
-        print ("Mother: " + self.mother)
-        if len(self.eventref_hlink) > 0:
-            for i in range(len(self.eventref_hlink)):
-                print ("Eventref_hlink: " + self.eventref_hlink[i])
-        if len(self.eventref_role) > 0:
-            for i in range(len(self.eventref_role)):
-                print ("Role: " + self.eventref_role[i])
-        if len(self.childref_hlink) > 0:
-            for i in range(len(self.childref_hlink)):
-                print ("Childref_hlink: " + self.childref_hlink[i])
-        return True
-        
-    
-    @staticmethod       
-    def get_total():
-        """ Tulostaa perheiden määrän tietokannassa """
-        
-        global session
-                
-        query = """
-            MATCH (f:Family) RETURN COUNT(f)
-            """
-        results =  session.run(query)
-        
-        for result in results:
-            return str(result[0])
 
 
 class Name:
@@ -491,6 +504,33 @@ class Note:
         self.change = ''
         self.id = ''
         self.type = ''
+        
+        
+    @staticmethod
+    def get_total():
+        """ Tulostaa huomautusten määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (n:Note) RETURN COUNT(n)
+            """
+            
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
+
+    def print_data(self):
+        """ Tulostaa tiedot """
+        print ("*****Note*****")
+        print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
+        print ("Id: " + self.id)
+        print ("Type: " + self.type)
+        print ("Text: " + self.text)
+        return True
 
 
     def save(self):
@@ -511,33 +551,6 @@ class Note:
             return session.run(query)
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
-
-
-    def print_data(self):
-        """ Tulostaa tiedot """
-        print ("*****Note*****")
-        print ("Handle: " + self.handle)
-        print ("Change: " + self.change)
-        print ("Id: " + self.id)
-        print ("Type: " + self.type)
-        print ("Text: " + self.text)
-        return True
-        
-        
-    @staticmethod
-    def get_total():
-        """ Tulostaa huomautusten määrän tietokannassa """
-        
-        global session
-                
-        query = """
-            MATCH (n:Note) RETURN COUNT(n)
-            """
-            
-        results =  session.run(query)
-        
-        for result in results:
-            return str(result[0])
 
 
 class Person:
@@ -569,6 +582,91 @@ class Person:
         self.eventref_hlink = []
         self.parentin_hlink = []
         self.citationref_hlink = []
+    
+    
+    def get_birth_handle(self):
+        """ Luetaan henkilön syntymätapahtuman handle """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:EVENT]->(event:Event) 
+                WHERE person.gramps_handle='{}' AND event.type='Birth'
+                RETURN event.gramps_handle AS handle
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_family_handle(self):
+        """ Luetaan henkilön perheen handle """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)<-[r:CHILD]-(family:Family) 
+                WHERE person.gramps_handle='{}'
+                RETURN family.gramps_handle AS handle
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_name_data(self):
+        """ Luetaan kaikki henkilön tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:NAME]-(name:Name) 
+                WHERE person.gramps_handle='{}'
+                RETURN person, name
+                ORDER BY name.alt
+            """.format(self.handle)
+        return  session.run(query)
+
+
+    @staticmethod
+    def get_total():
+        """ Tulostaa henkilöiden määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (p:Person) RETURN COUNT(p)
+            """
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
+
+    def print_data(self):
+        """ Tulostaa tiedot """
+        print ("*****Person*****")
+        print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
+        print ("Id: " + self.id)
+        print ("Gender: " + self.gender)
+        if len(self.name) > 0:
+            names = self.name
+            for pname in names:
+                print ("Alt: " + pname.alt)
+                print ("Type: " + pname.type)
+                print ("First: " + pname.first)
+                print ("Surname: " + pname.surname)
+                print ("Suffix: " + pname.suffix)
+        if len(self.eventref_hlink) > 0:
+            for i in range(len(self.eventref_hlink)):
+                print ("Eventref_hlink: " + self.eventref_hlink[i])
+        if len(self.eventref_role) > 0:
+            for i in range(len(self.eventref_role)):
+                print ("Eventref_role: " + self.eventref_role[i])
+        if len(self.parentin_hlink) > 0:
+            for i in range(len(self.parentin_hlink)):
+                print ("Parentin_hlink: " + self.parentin_hlink[i])
+        if len(self.citationref_hlink) > 0:
+            for i in range(len(self.citationref_hlink)):
+                print ("Citationref_hlink: " + self.citationref_hlink[i])
+        return True
 
 
     def save(self):
@@ -673,78 +771,6 @@ class Person:
             except Exception as err:
                 print("Virhe: {0}".format(err), file=stderr)
         return
-    
-    
-    def get_family(self):
-        """ Luetaan henkilön perheen tiedot """
-        
-        global session
-                
-        query = """
-            MATCH (person:Person)<-[r:CHILD]-(family:Family) 
-                WHERE person.gramps_handle='{}'
-                RETURN family.gramps_handle AS handle
-            """.format(self.handle)
-        return  session.run(query)
-    
-    
-    def get_name_data(self):
-        """ Luetaan kaikki henkilön tiedot """
-        
-        global session
-                
-        query = """
-            MATCH (person:Person)-[r:NAME]-(name:Name) 
-                WHERE person.gramps_handle='{}'
-                RETURN person, name
-                ORDER BY name.alt
-            """.format(self.handle)
-        return  session.run(query)
-
-
-    def print_data(self):
-        """ Tulostaa tiedot """
-        print ("*****Person*****")
-        print ("Handle: " + self.handle)
-        print ("Change: " + self.change)
-        print ("Id: " + self.id)
-        print ("Gender: " + self.gender)
-        if len(self.name) > 0:
-            names = self.name
-            for pname in names:
-                print ("Alt: " + pname.alt)
-                print ("Type: " + pname.type)
-                print ("First: " + pname.first)
-                print ("Surname: " + pname.surname)
-                print ("Suffix: " + pname.suffix)
-        if len(self.eventref_hlink) > 0:
-            for i in range(len(self.eventref_hlink)):
-                print ("Eventref_hlink: " + self.eventref_hlink[i])
-        if len(self.eventref_role) > 0:
-            for i in range(len(self.eventref_role)):
-                print ("Eventref_role: " + self.eventref_role[i])
-        if len(self.parentin_hlink) > 0:
-            for i in range(len(self.parentin_hlink)):
-                print ("Parentin_hlink: " + self.parentin_hlink[i])
-        if len(self.citationref_hlink) > 0:
-            for i in range(len(self.citationref_hlink)):
-                print ("Citationref_hlink: " + self.citationref_hlink[i])
-        return True
-
-
-    @staticmethod
-    def get_total():
-        """ Tulostaa henkilöiden määrän tietokannassa """
-        
-        global session
-                
-        query = """
-            MATCH (p:Person) RETURN COUNT(p)
-            """
-        results =  session.run(query)
-        
-        for result in results:
-            return str(result[0])
 
 
 class Place:
@@ -767,6 +793,36 @@ class Place:
         self.type = ''
         self.pname = []
         self.placeref_hlink = ''
+        
+    
+    @staticmethod       
+    def get_total():
+        """ Tulostaa paikkojen määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (p:Place) RETURN COUNT(p)
+            """
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
+
+    def print_data(self):
+        """ Tulostaa tiedot """
+        print ("*****Placeobj*****")
+        print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
+        print ("Id: " + self.id)
+        print ("Type: " + self.type)
+        if len(self.pname) > 0:
+            for i in range(len(self.pname)):
+                print ("Pname: " + self.pname[i])
+        if self.placeref_hlink != '':
+            print ("Placeref_hlink: " + self.placeref_hlink)
+        return True
 
 
     def save(self):
@@ -812,36 +868,6 @@ class Place:
         return
 
 
-    def print_data(self):
-        """ Tulostaa tiedot """
-        print ("*****Placeobj*****")
-        print ("Handle: " + self.handle)
-        print ("Change: " + self.change)
-        print ("Id: " + self.id)
-        print ("Type: " + self.type)
-        if len(self.pname) > 0:
-            for i in range(len(self.pname)):
-                print ("Pname: " + self.pname[i])
-        if self.placeref_hlink != '':
-            print ("Placeref_hlink: " + self.placeref_hlink)
-        return True
-        
-    
-    @staticmethod       
-    def get_total():
-        """ Tulostaa paikkojen määrän tietokannassa """
-        
-        global session
-                
-        query = """
-            MATCH (p:Place) RETURN COUNT(p)
-            """
-        results =  session.run(query)
-        
-        for result in results:
-            return str(result[0])
-
-
 class Repository:
     """ Arkisto
             
@@ -859,6 +885,57 @@ class Repository:
         self.handle = ''
         self.change = ''
         self.id = ''
+        
+    
+    @staticmethod       
+    def get_repositories():
+        """ Luetaan kaikki arkistot """
+        
+        global session
+                
+        query = """
+            MATCH (repo:Repository) RETURN repo
+            """
+        return  session.run(query)
+    
+    
+    @staticmethod       
+    def get_repository(rname):
+        """ Luetaan arkiston handle """
+        
+        global session
+                
+        query = """
+            MATCH (repo:Repository) WHERE repo.rname='{}'
+                RETURN repo
+            """.format(rname)
+        return  session.run(query)
+                
+    
+    @staticmethod       
+    def get_total():
+        """ Tulostaa arkistojen määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (r:Repository) RETURN COUNT(r)
+            """
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
+
+
+    def print_data(self):
+        """ Tulostaa tiedot """
+        print ("*****Repository*****")
+        print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
+        print ("Id: " + self.id)
+        print ("Rname: " + self.rname)
+        print ("Type: " + self.type)
+        return True
 
 
     def save(self):
@@ -883,57 +960,6 @@ class Repository:
         return
 
 
-    def print_data(self):
-        """ Tulostaa tiedot """
-        print ("*****Repository*****")
-        print ("Handle: " + self.handle)
-        print ("Change: " + self.change)
-        print ("Id: " + self.id)
-        print ("Rname: " + self.rname)
-        print ("Type: " + self.type)
-        return True
-    
-    
-    @staticmethod       
-    def get_repository(rname):
-        """ Luetaan arkiston handle """
-        
-        global session
-                
-        query = """
-            MATCH (repo:Repository) WHERE repo.rname='{}'
-                RETURN repo
-            """.format(rname)
-        return  session.run(query)
-        
-    
-    @staticmethod       
-    def get_repositories():
-        """ Luetaan kaikki arkistot """
-        
-        global session
-                
-        query = """
-            MATCH (repo:Repository) RETURN repo
-            """
-        return  session.run(query)
-                
-    
-    @staticmethod       
-    def get_total():
-        """ Tulostaa arkistojen määrän tietokannassa """
-        
-        global session
-                
-        query = """
-            MATCH (r:Repository) RETURN COUNT(r)
-            """
-        results =  session.run(query)
-        
-        for result in results:
-            return str(result[0])
-
-
 class Source:
     """ Lähde
             
@@ -956,7 +982,51 @@ class Source:
         self.noteref_hlink = ''
         self.reporef_hlink = ''
         self.reporef_medium = ''
+        
+    
+    @staticmethod       
+    def get_sources(repository_handle):
+        """ Luetaan kaikki arkiston lähteet """
+        
+        global session
+                
+        query = """
+            MATCH (source:Source)-[r:REPOSITORY]->(repo:Repository) 
+                WHERE repo.gramps_handle='{}' 
+                RETURN r.medium AS medium, source
+            """.format(repository_handle)
+        return  session.run(query)
+        
+    
+    @staticmethod       
+    def get_total():
+        """ Tulostaa lähteiden määrän tietokannassa """
+        
+        global session
+                
+        query = """
+            MATCH (s:Source) RETURN COUNT(s)
+            """
+        results =  session.run(query)
+        
+        for result in results:
+            return str(result[0])
 
+
+    def print_data(self):
+        """ Tulostaa tiedot """
+        print ("*****Source*****")
+        print ("Handle: " + self.handle)
+        print ("Change: " + self.change)
+        print ("Id: " + self.id)
+        if self.stitle != '':
+            print ("Stitle: " + self.stitle)
+        if self.noteref_hlink != '':
+            print ("Noteref_hlink: " + self.noteref_hlink)
+        if self.reporef_hlink != '':
+            print ("Reporef_hlink: " + self.reporef_hlink)
+        return True
+        
 
     def save(self):
         """ Tallettaa sen kantaan """
@@ -1016,46 +1086,3 @@ class Source:
                 
         return
 
-
-    def print_data(self):
-        """ Tulostaa tiedot """
-        print ("*****Source*****")
-        print ("Handle: " + self.handle)
-        print ("Change: " + self.change)
-        print ("Id: " + self.id)
-        if self.stitle != '':
-            print ("Stitle: " + self.stitle)
-        if self.noteref_hlink != '':
-            print ("Noteref_hlink: " + self.noteref_hlink)
-        if self.reporef_hlink != '':
-            print ("Reporef_hlink: " + self.reporef_hlink)
-        return True
-        
-    
-    @staticmethod       
-    def get_sources(repository_handle):
-        """ Luetaan kaikki arkiston lähteet """
-        
-        global session
-                
-        query = """
-            MATCH (source:Source)-[r:REPOSITORY]->(repo:Repository) 
-                WHERE repo.gramps_handle='{}' 
-                RETURN r.medium AS medium, source
-            """.format(repository_handle)
-        return  session.run(query)
-        
-    
-    @staticmethod       
-    def get_total():
-        """ Tulostaa lähteiden määrän tietokannassa """
-        
-        global session
-                
-        query = """
-            MATCH (s:Source) RETURN COUNT(s)
-            """
-        results =  session.run(query)
-        
-        for result in results:
-            return str(result[0])
