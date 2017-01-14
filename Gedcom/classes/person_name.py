@@ -69,66 +69,14 @@ class PersonName(object):
             self.spfx = value[s2+1:]
             
             # 1.1) GIVN given name part
-            
-            if (self.givn):
-                self.givn = self.givn.rstrip()
-                gnames = self.givn.split()
-                #print('# {}: {!r} TÄSSÄ'.format(path, gnames))
-                
-                # 1.1a) Find if last givn is actually a patronyme; move it to spfx 
-                
-                if (len(gnames) > 0):
-                    nm = gnames[-1]
-                    if self._match_patronyme(nm) != None:
-                        # print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.spfx))
-                        self.spfx = nm
-                        self.givn = ' '.join(gnames[0:-1])
-                        gnames = self.givn.split()
-                        self.new_spfx_row = self._format_row(level+1, 'SPFX', nm)
-                
-                # 1.1b) Set call name, if one of given names are marked with '*'
-
-                for nm in gnames:
-                    # Name has a star '*'
-                    if nm.endswith('*'):
-                        # Remove star
-                        nm = nm[:-1]
-                        self.givn = ''.join(self.givn.split(sep='*', maxsplit=1))
-                        self.call = nm
-                    # Name in parentehsins "(Jussi)"
-                    elif re.match(r"\(.*\)", nm) != None:
-                        # Remove parenthesis
-                        self.call = nm[1:-1]
-                        # Given names without call name
-                        self.givn = re.sub(r"\(.*\) *", "", self.givn).rstrip()
-            else:
-                self.givn = _NONAME
+            self._proc_givn(level, value)
             
             # 1.2) SURN Surname part
-            
-            # Parse "Aho os. Mattila", "Suname1/Surname2", "Aho e. Mattila os. Laine" etc
-            # TODO: must fix surnames!
-
-            n = 0
-            nm_next = ""
-            surnames = re.sub(r' */ *', ' / ', self.surn)   # "/" as separator symbol
-            for nm in surnames.split():
-                typ = self._match_surn_sep(nm)
-                if typ != None:
-                    # "Nm_left os. Nm" --> "2 NAME Name"; "3 TYPE MARR"
-                    self._append_row(level, 'NAME', nm)
-                    self._append_row(level + 1, 'TYPE', typ)
-                    n = n+1
-                    nm_next = "{} {}={!r} ".format(nm_next, typ,nm)
-                else:
-                    # Simple name "Nm" --> "2 NAME Nm"
-                    self._append_row(level, 'NAME', nm)
-            if n > 0:
-                print ("# {!r} surnames {!r}".format(value, nm))                           
-                # Hei vaan
+            self._proc_surn(level, value)
 
             # 1.3) SPFX Suffix part
-            
+            pass
+
             self.name = "{}/{}/{}".format(self.givn, self.surn, self.spfx).rstrip()
             self._append_row(level, tag, self.name)
            
@@ -183,7 +131,63 @@ class PersonName(object):
         return self.rows
         
 # Local functions -------------
-        
+    def _proc_givn(self, level, value):
+        if (self.givn):
+            self.givn = self.givn.rstrip()
+            gnames = self.givn.split()
+            #print('# {}: {!r} TÄSSÄ'.format(path, gnames))
+            
+            # 1.1a) Find if last givn is actually a patronyme; move it to spfx 
+            
+            if (len(gnames) > 0):
+                nm = gnames[-1]
+                if self._match_patronyme(nm) != None:
+                    # print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.spfx))
+                    self.spfx = nm
+                    self.givn = ' '.join(gnames[0:-1])
+                    gnames = self.givn.split()
+                    self.new_spfx_row = self._format_row(level+1, 'SPFX', nm)
+            
+            # 1.1b) Set call name, if one of given names are marked with '*'
+    
+            for nm in gnames:
+                # Name has a star '*'
+                if nm.endswith('*'):
+                    # Remove star
+                    nm = nm[:-1]
+                    self.givn = ''.join(self.givn.split(sep='*', maxsplit=1))
+                    self.call = nm
+                # Name in parentehsins "(Jussi)"
+                elif re.match(r"\(.*\)", nm) != None:
+                    # Remove parenthesis
+                    self.call = nm[1:-1]
+                    # Given names without call name
+                    self.givn = re.sub(r"\(.*\) *", "", self.givn).rstrip()
+        else:
+            self.givn = _NONAME
+
+    def _proc_surn(self, level, value):
+        # Parse "Aho os. Mattila", "Suname1/Surname2", "Aho e. Mattila os. Laine" etc
+        # TODO: must fix surnames!
+    
+        n = 0
+        nm_next = ""
+        surnames = re.sub(r' */ *', ' / ', self.surn)   # "/" as separator symbol
+        for nm in surnames.split():
+            typ = self._match_surn_sep(nm)
+            if typ != None:
+                # "Nm_left os. Nm" --> "2 NAME Name"; "3 TYPE MARR"
+                self._append_row(level, 'NAME', nm)
+                self._append_row(level + 1, 'TYPE', typ)
+                n = n+1
+                nm_next = "{} {}={!r} ".format(nm_next, typ,nm)
+            else:
+                # Simple name "Nm" --> "2 NAME Nm"
+                ##self._append_row(level, 'NAME', nm)
+                pass
+        if n > 0:
+            print ("# {!r} surnames {!r}".format(value, nm))                           
+    
     def _format_row(self, level, tag, value):
         ''' Builds a gedcom row '''
         return("{} {} {}".format(level, tag, str.strip(value)))
