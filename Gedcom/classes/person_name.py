@@ -26,11 +26,10 @@ class PersonName(object):
     add(...)         Other, higher level rows are added
     lines()        Returns the list of Gedgom lines fixed
     
-    The fixes are don mostly from '1 NAME givn/surn/spfx' row.
+    The fixes are don mostly from '1 NAME givn/surn/nsfx' row.
     If NAME has significant changes, the original value is also written to 'NOTE orig_'
     
-    1. A patronyme in givn part is moved to spfx part and a new SPFX row is created, if needed
-    1.1. If a line '2 NSFX Joonaanpoika' exists and has patronyme, the tag must be changes to 'NSFX'
+    1. A patronyme in givn part is moved to nsfx part and a new NSFX row is created, if needed
     
     2. A missing givn or surn is replaced with noname mark 'N'
     
@@ -57,7 +56,7 @@ class PersonName(object):
             raise AttributeError('Need NAME tag for init PersonName')
            
         # 1) Full name processing
-        #    The parts like 'givn/surn/spfx' will be isolated and analyzed
+        #    The parts like 'givn/surn/nsfx' will be isolated and analyzed
     
         self.name = value
         s1 = value.find('/')
@@ -66,18 +65,16 @@ class PersonName(object):
             # Contains '/Surname/' or '/Surname1/Surname2/' etc
             self.givn = value[:s1]
             self.surn = value[s1+1:s2]
-            self.spfx = value[s2+1:]
+            self.nsfx = value[s2+1:]
             
             # 1.1) GIVN given name part
             self._proc_givn(level, value)
-            
             # 1.2) SURN Surname part
             self._proc_surn(level, value)
-
-            # 1.3) SPFX Suffix part
+            # 1.3) nsfx Suffix part: nothing to do?
             pass
 
-            self.name = "{}/{}/{}".format(self.givn, self.surn, self.spfx).rstrip()
+            self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
             self._append_row(level, tag, self.name)
            
             # Compare the name parts from NAME tag to this got here
@@ -89,7 +86,7 @@ class PersonName(object):
 
  
     def add(self, path, level, tag, value):
-        ''' Adds arguments of a gedcom line as a new row of NAME group
+        ''' Adds a new row of NAME group from this gedcom line 
 
         Arguments example:
             path='@I0001@.NAME'
@@ -106,19 +103,20 @@ class PersonName(object):
         
         elif tag == 'SURN' and hasattr(self, 'surn'):
             self._append_row(level, tag, self.surn)
-        
-        elif tag == 'SPFX' and hasattr(self, 'spfx'):
-            self._append_row(level, tag, self.spfx)
-        
-        elif tag == 'NSFX' and hasattr(self, 'spfx') and self.spfx != '':
-            if self._match_patronyme(value) != None:
-                # Now patronyme is defined twice; abandon this
-                pass
-        
+
+        elif tag == 'NSFX' and hasattr(self, 'nsfx'): # and not hasattr(self, 'new_nsfx_row'):
+            if self.nsfx != value:
+                if self.nsfx == '':
+                    self._append_row(level, tag, value)
+                else:
+                    self._append_row(level, tag, self.nsfx)
+                    print ("{} {!r} changed to {!r}".format(path, value, self.nsfx))           
+                    self._append_row(level + 1, "{}{}".format(_CHGTAG, tag), value)
+
         elif tag == '_CALL':    # So called call name
             self.call = value
             self._append_row(level, tag, self.call)
-        
+
         else: # all others like 'TYPE', 'NOTE', 'SOUR', ...
             self._append_row(level, tag, value)
 
@@ -126,8 +124,8 @@ class PersonName(object):
     def lines(self):
         ''' Returns the stored rows associated to this person name
         '''
-        if hasattr(self, 'new_spfx_row'):
-            self.rows.append(self.new_spfx_row)
+#         if hasattr(self, 'new_nsfx_row'):
+#             self.rows.append(self.new_nsfx_row)
         return self.rows
         
 # Local functions -------------
@@ -137,16 +135,16 @@ class PersonName(object):
             gnames = self.givn.split()
             #print('# {}: {!r} TÄSSÄ'.format(path, gnames))
             
-            # 1.1a) Find if last givn is actually a patronyme; move it to spfx 
+            # 1.1a) Find if last givn is actually a patronyme; move it to nsfx 
             
             if (len(gnames) > 0):
                 nm = gnames[-1]
                 if self._match_patronyme(nm) != None:
-                    # print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.spfx))
-                    self.spfx = nm
+                    # print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.nsfx))
+                    self.nsfx = nm
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
-                    self.new_spfx_row = self._format_row(level+1, 'SPFX', nm)
+                    self.new_nsfx_row = self._format_row(level+1, 'NSFX', nm)
             
             # 1.1b) Set call name, if one of given names are marked with '*'
     
