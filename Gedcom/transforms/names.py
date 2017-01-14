@@ -23,7 +23,7 @@
         - The components of "1 NAME" line are stored in that object and
           modified NAME line is written to output file
         - The following name data rows are replaced with the stored values if available
-        - a new "2 _CALL" or '2 SPFX' lines may be added
+        - a new "2 _CALL" or '2 NSFX' lines may be added
 
 Created on 26.11.2016
 

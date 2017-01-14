@@ -9,12 +9,11 @@ import re
 _NONAME = 'N'            # Marker for missing name part
 _CHGTAG = "NOTE orig_"   # Comment: original format
 
-_UNNAMED = ['nimetön', 'tuntematon', 'N.N.']
+_UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
 _PATRONYME = ['poika', 'p.', 'sson', 'ss.', 's.',
              'tytär', 'dotter', 'dr.', ]
 _VON = ['von', 'af', 'de la', 'de']
 _LYH = ['os.', 'o.s.', 'ent.','e.']
-_SURN = {'os.':'MARR', 'o.s.':'MARR', 'ent.':'PREV', 'e.':'PREV', '/':'AKA', ',':'AKA'}
 
 
 class PersonName(object):
@@ -53,7 +52,7 @@ class PersonName(object):
         '''
         self.rows = []
         if tag != 'NAME':
-            raise AttributeError('Need NAME tag for init PersonName')
+            raise AttributeError('Needs a NAME row for PersonName.init()')
            
         # 1) Full name processing
         #    The parts like 'givn/surn/nsfx' will be isolated and analyzed
@@ -68,9 +67,9 @@ class PersonName(object):
             self.nsfx = value[s2+1:]
             
             # 1.1) GIVN given name part
-            self._proc_givn(level, value)
+            self._proc_givn(path, level, value)
             # 1.2) SURN Surname part
-            self._proc_surn(level, value)
+            self._proc_surn(path, level, value)
             # 1.3) nsfx Suffix part: nothing to do?
             pass
 
@@ -86,7 +85,7 @@ class PersonName(object):
 
  
     def add(self, path, level, tag, value):
-        ''' Adds a new row of NAME group from this gedcom line 
+        ''' Adds a new, higher level row
 
         Arguments example:
             path='@I0001@.NAME'
@@ -104,32 +103,39 @@ class PersonName(object):
         elif tag == 'SURN' and hasattr(self, 'surn'):
             self._append_row(level, tag, self.surn)
 
-        elif tag == 'NSFX' and hasattr(self, 'nsfx'): # and not hasattr(self, 'new_nsfx_row'):
+        elif tag == 'NSFX' and hasattr(self, 'nsfx'): 
             if self.nsfx != value:
                 if self.nsfx == '':
                     self._append_row(level, tag, value)
                 else:
-                    self._append_row(level, tag, self.nsfx)
-                    print ("{} {!r} changed to {!r}".format(path, value, self.nsfx))           
-                    self._append_row(level + 1, "{}{}".format(_CHGTAG, tag), value)
+                    if hasattr(self, 'new_nsfx_row') == False:
+                        self._append_row(level, tag, self.nsfx)
+                        print ("{} {!r} changed to {!r}".format(path, value, self.nsfx))           
+                        self._append_row(level + 1, "{}{}".format(_CHGTAG, tag), value)
 
         elif tag == '_CALL':    # So called call name
             self.call = value
             self._append_row(level, tag, self.call)
 
         else: # all others like 'TYPE', 'NOTE', 'SOUR', ...
+            print ("{} # '{} {}'".format(path, tag, value))           
+
             self._append_row(level, tag, value)
 
 
     def lines(self):
         ''' Returns the stored rows associated to this person name
         '''
-#         if hasattr(self, 'new_nsfx_row'):
-#             self.rows.append(self.new_nsfx_row)
+        if hasattr(self, 'new_nsfx_row'):
+            self.rows.append(self.new_nsfx_row)
         return self.rows
-        
-# Local functions -------------
-    def _proc_givn(self, level, value):
+
+
+    # Local functions
+    
+    def _proc_givn(self, path, level, value):
+        ''' Process given name part of NAME record
+        '''
         if (self.givn):
             self.givn = self.givn.rstrip()
             gnames = self.givn.split()
@@ -164,27 +170,58 @@ class PersonName(object):
         else:
             self.givn = _NONAME
 
-    def _proc_surn(self, level, value):
-        # Parse "Aho os. Mattila", "Suname1/Surname2", "Aho e. Mattila os. Laine" etc
-        # TODO: must fix surnames!
-    
-        n = 0
-        nm_next = ""
+    def _proc_surn(self, path, level, value):
+        ''' Process surname part of NAME record
+
+        Examples:
+            "Aho os. Mattila"          => NAME="Aho"
+                                          NAME="Mattila" TYPE="MARR"
+            "Surname1/Surname2"        => NAME="Surname1"
+                                          NAME="Surname2" TYPE="AKA"
+            "Aho e. Mattila os. Laine" => NAME="Aho"
+                                          NAME="Mattila" TYPE="PREV"
+                                          NAME="Laine" TYP="MARR"
+
+        TODO: Pitäisikö käsitellä pilkuin erotetut sukunimet Gedcom 5.5:n mukaisesti?
+        '''
+        _SURN = {'os.':'MARR', 'o.s.':'MARR', 'ent.':'PREV', 'e.':'PREV', '/':'AKA', ',':'AKA'}
+
+        state = 0
+        type_left = None
+        name_left = None
+        note = ''
+        
         surnames = re.sub(r' */ *', ' / ', self.surn)   # "/" as separator symbol
+        
+        # Names processor automate
         for nm in surnames.split():
-            typ = self._match_surn_sep(nm)
-            if typ != None:
-                # "Nm_left os. Nm" --> "2 NAME Name"; "3 TYPE MARR"
-                self._append_row(level, 'NAME', nm)
-                self._append_row(level + 1, 'TYPE', typ)
-                n = n+1
-                nm_next = "{} {}={!r} ".format(nm_next, typ,nm)
-            else:
-                # Simple name "Nm" --> "2 NAME Nm"
-                ##self._append_row(level, 'NAME', nm)
-                pass
-        if n > 0:
-            print ("# {!r} surnames {!r}".format(value, nm))                           
+            if state == 0:          # Start state / the word on the right side of a separator
+                # Only name expected. 
+                # If a separator on the left, save with type found, else save without type
+                if type_left != None:
+                    self._append_row(level, 'NAME', name_left)
+                    self._append_row(level + 1, 'TYPE', type_left)
+                    note = "{} {}({})".format(note, name_left, type_left)
+                    type_left = None                    
+                name_left = nm
+                state = 1
+            else: # state = 1         Possible separator state / left side name has been stored
+                # Name or separator expected
+                # If name, concatenate to the left side name, else store the separator type
+                if nm in _SURN:
+                    type_left = _SURN[nm]
+                    state = 0
+                else:
+                    name_left = name_left + ' ' + nm
+                    note = "{} {!r}".format(note, name_left)
+
+        if type_left != None:
+            self._append_row(level, 'NAME', name_left)
+            self._append_row(level + 1, 'TYPE', type_left)
+            note = ''
+            type_left = None                    
+        if note != '':
+            print ("#{} {!r} surnames{}".format(path, value, note))                           
     
     def _format_row(self, level, tag, value):
         ''' Builds a gedcom row '''
@@ -202,11 +239,4 @@ class PersonName(object):
             if nm.endswith(suff):
                 return suff
         return None
-
-    def _match_surn_sep(self, nm):
-        '''Returns separator type, if nm matches any of them, else None'''
-        if nm in _SURN:
-            return _SURN[nm]
-        else:
-            return None
 
