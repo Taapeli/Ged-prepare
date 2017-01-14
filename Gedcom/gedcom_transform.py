@@ -149,28 +149,6 @@ def read_gedcom(args):
         print(type(err))
         print("Virhe: {0}".format(err), file=stderr)
 
-def read_gedcom(args):
-    curpath = [None]
-    for linenum,line in enumerate(open(args.input_gedcom,encoding=args.encoding)):
-
-        line = line[:-1]
-        if line[0] == "\ufeff": line = line[1:]
-        tkns = line.split(None,2)
-        level = int(tkns[0])
-        tag = tkns[1]
-        if level > len(curpath):
-            raise RuntimeError("Invalid level {}: {}".format(linenum,line))
-        if level == len(curpath):
-            curpath.append(tag)
-        else:
-            curpath[level] = tag
-            curpath = curpath[:level+1]
-        if len(tkns) > 2:
-            value = tkns[2]
-        else:
-            value = ""
-        yield (line,level,".".join(curpath),tag,value)
-
 def process_gedcom(args,transformer):
 
     transformer.initialize(args)
