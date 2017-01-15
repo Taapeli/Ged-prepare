@@ -817,7 +817,7 @@ class Place:
         self.change = ''
         self.id = ''
         self.type = ''
-        self.pname = []
+        self.pname = ''
         self.placeref_hlink = ''
     
     
@@ -856,9 +856,8 @@ class Place:
         print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Type: " + self.type)
-        if len(self.pname) > 0:
-            for i in range(len(self.pname)):
-                print ("Pname: " + self.pname[i])
+        if self.pname != '':
+            print ("Pname: " + self.pname)
         if self.placeref_hlink != '':
             print ("Placeref_hlink: " + self.placeref_hlink)
         return True
