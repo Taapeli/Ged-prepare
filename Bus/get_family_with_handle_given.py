@@ -70,9 +70,7 @@ def get_family_data(handle):
                         for place_record in place_result:
                             place.id = place_record["place"]["id"]
                             place.type = place_record["place"]["type"]
-                            if len(place_record["place"]["pname"]) > 0:
-                                pname = []
-                                place.pname.append(place_record["place"]["pname"])
+                            place.pname = place_record["place"]["pname"]
                             place.print_data()
                     
             death_result = father.get_death_handle()
@@ -96,9 +94,7 @@ def get_family_data(handle):
                         for place_record in place_result:
                             place.id = place_record["place"]["id"]
                             place.type = place_record["place"]["type"]
-                            if len(place_record["place"]["pname"]) > 0:
-                                pname = []
-                                place.pname.append(place_record["place"]["pname"])
+                            place.pname = place_record["place"]["pname"]
                             place.print_data()
                       
         print("\nMOTHER: ")
@@ -145,9 +141,7 @@ def get_family_data(handle):
                         for place_record in place_result:
                             place.id = place_record["place"]["id"]
                             place.type = place_record["place"]["type"]
-                            if len(place_record["place"]["pname"]) > 0:
-                                pname = []
-                                place.pname.append(place_record["place"]["pname"])
+                            place.pname = place_record["place"]["pname"]
                             place.print_data()
                     
             death_result = mother.get_death_handle()
@@ -171,9 +165,7 @@ def get_family_data(handle):
                         for place_record in place_result:
                             place.id = place_record["place"]["id"]
                             place.type = place_record["place"]["type"]
-                            if len(place_record["place"]["pname"]) > 0:
-                                pname = []
-                                place.pname.append(place_record["place"]["pname"])
+                            place.pname = place_record["place"]["pname"]
                             place.print_data()
                             
         print("\nCHILDREN: ")
@@ -221,9 +213,7 @@ def get_family_data(handle):
                         for place_record in place_result:
                             place.id = place_record["place"]["id"]
                             place.type = place_record["place"]["type"]
-                            if len(place_record["place"]["pname"]) > 0:
-                                pname = []
-                                place.pname.append(place_record["place"]["pname"])
+                            place.pname = place_record["place"]["pname"]
                             place.print_data()
             
             death_result = child.get_death_handle()
@@ -247,9 +237,7 @@ def get_family_data(handle):
                         for place_record in place_result:
                             place.id = place_record["place"]["id"]
                             place.type = place_record["place"]["type"]
-                            if len(place_record["place"]["pname"]) > 0:
-                                pname = []
-                                place.pname.append(place_record["place"]["pname"])
+                            place.pname = place_record["place"]["pname"]
                             place.print_data()
             
     except Exception as err:
