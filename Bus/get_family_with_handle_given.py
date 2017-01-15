@@ -31,6 +31,7 @@ def get_family_data(handle):
         for father_record in father_result:            
             father = Person()
             father.handle = father_record["father"]
+            f.father = father.handle
 
             father.name = []
             
@@ -102,6 +103,7 @@ def get_family_data(handle):
         for mother_record in mother_result:            
             mother = Person()
             mother.handle = mother_record["mother"]
+            f.mother = mother.handle
             
             mother_name_result = mother.get_name_data()
             
@@ -168,11 +170,14 @@ def get_family_data(handle):
                             place.pname = place_record["place"]["pname"]
                             place.print_data()
                             
+        f.childref_hlink = []
         print("\nCHILDREN: ")
+        
         children_result = f.get_children()
         for children_record in children_result:            
             child = Person()
             child.handle = children_record["children"]
+            f.childref_hlink.append(child.handle)
             children_name_result = child.get_name_data()
 
             child.name = []
@@ -239,6 +244,9 @@ def get_family_data(handle):
                             place.type = place_record["place"]["type"]
                             place.pname = place_record["place"]["pname"]
                             place.print_data()
+                            
+        print("\n")
+        f.print_data()
             
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
