@@ -12,6 +12,7 @@ _CHGTAG = "NOTE orig_"   # Comment: original format
 _UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
 _PATRONYME = ['poika', 'p.', 'sson', 'ss.', 's.',
              'tytär', 'dotter', 'dr.', ]
+_SURN = {'os.':'MARR', 'o.s.':'MARR', 'ent.':'PREV', 'e.':'PREV', '/':'AKA', ',':'AKA'}
 _VON = ['von', 'af', 'de la', 'de']
 _LYH = ['os.', 'o.s.', 'ent.','e.']
 
@@ -35,6 +36,7 @@ class PersonName(object):
     3. ...
     
     '''
+    global _surn_lines
 
     def __str__(self):
         return "PersonName({})".format(self.name)
@@ -50,7 +52,9 @@ class PersonName(object):
             tag='NAME'
             value='Antti /Puuhaara/'
         '''
+
         self.rows = []
+        self._surn_lines = []    # Surname lines after NAME line
         if tag != 'NAME':
             raise AttributeError('Needs a NAME row for PersonName.init()')
            
@@ -73,8 +77,13 @@ class PersonName(object):
             # 1.3) nsfx Suffix part: nothing to do?
             pass
 
+            # Write NAME line
             self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
             self._append_row(level, tag, self.name)
+            # Write new SURN lines, if any
+            for ln in self._surn_lines:
+                self.rows.append(ln)
+
            
             # Compare the name parts from NAME tag to this got here
             if re.sub(r' ', '', value) != re.sub(r' ', '', self.name):
@@ -118,8 +127,7 @@ class PersonName(object):
             self._append_row(level, tag, self.call)
 
         else: # all others like 'TYPE', 'NOTE', 'SOUR', ...
-            print ("{} # '{} {}'".format(path, tag, value))           
-
+            #print ("{} # '{} {}'".format(path, tag, value))           
             self._append_row(level, tag, value)
 
 
@@ -184,44 +192,55 @@ class PersonName(object):
 
         TODO: Pitäisikö käsitellä pilkuin erotetut sukunimet Gedcom 5.5:n mukaisesti?
         '''
-        _SURN = {'os.':'MARR', 'o.s.':'MARR', 'ent.':'PREV', 'e.':'PREV', '/':'AKA', ',':'AKA'}
-
-        state = 0
-        type_left = None
-        name_left = None
-        note = ''
+        #global _note
         
-        surnames = re.sub(r' */ *', ' / ', self.surn)   # "/" as separator symbol
+        def _put(name, name_type):
+            ''' Store ouput rows: SURN with TYPE, if defined '''
+            if name != '':
+                self._surn_lines.append(self._format_row(level+1, 'SURN', name))
+                if name_type != '':
+                    self._surn_lines.append(self._format_row(level + 2, 'TYPE', name_type))
+                    #_note = "{} {}({})".format(_note, name, name_type)
+
+
+        if value == '': #op_2 No surname
+            return
+        state = 0
+        oper = ''
+        name = ''
+        #_note = ''
+        
+        surnames = re.sub(r' */ *', ' / ', self.surn)   # pick "/" as separator symbol
         
         # Names processor automate
         for nm in surnames.split():
-            if state == 0:          # Start state / the word on the right side of a separator
-                # Only name expected. 
-                # If a separator on the left, save with type found, else save without type
-                if type_left != None:
-                    self._append_row(level, 'NAME', name_left)
-                    self._append_row(level + 1, 'TYPE', type_left)
-                    note = "{} {}({})".format(note, name_left, type_left)
-                    type_left = None                    
-                name_left = nm
+            if state == 0:          # Start state
+                #op_1 Only name expected.
+                name = nm
                 state = 1
-            else: # state = 1         Possible separator state / left side name has been stored
+            elif state == 1:        # Possible separator state / left side name has been stored
                 # Name or separator expected
                 # If name, concatenate to the left side name, else store the separator type
                 if nm in _SURN:
-                    type_left = _SURN[nm]
-                    state = 0
+                    #op_3: A separator found: output the previous name and it's type
+                    _put(name, oper)
+                    oper = _SURN[nm]
+                    state = 2
                 else:
-                    name_left = name_left + ' ' + nm
-                    note = "{} {!r}".format(note, name_left)
+                    #op_4: Another name found
+                    name = name + ' ' + nm
+                    #_note = "{} {!r}".format(_note, name)
+            else: # State = 2         Delimiter passed
+                #op_6: A name expected
+                name = nm
 
-        if type_left != None:
-            self._append_row(level, 'NAME', name_left)
-            self._append_row(level + 1, 'TYPE', type_left)
-            note = ''
-            type_left = None                    
-        if note != '':
-            print ("#{} {!r} surnames{}".format(path, value, note))                           
+        #op_5: End: output the previous name and it's type
+        _put(name, oper)
+        # The last name is the one used
+        self.surn = name
+        #if _note != '':
+        #    print ("#{} {!r} surnames{}".format(path, value, _note))                           
+
     
     def _format_row(self, level, tag, value):
         ''' Builds a gedcom row '''
