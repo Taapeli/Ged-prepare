@@ -25,7 +25,7 @@ def get_family_data(handle):
         f.get_family_object()
         f.print_data()
             
-        print("\nFATHER: ")
+        print("\nFATHER: \n")
         father = Person()
         father.handle = f.father
 
@@ -33,6 +33,7 @@ def get_family_data(handle):
         
         father_name_result = father.get_name_data()
         for father_name_record in father_name_result:
+            father.id = father_name_record["person"]['id']
             father.gender = father_name_record["person"]['gender']
             
             if len(father_name_record["name"]) > 0:
@@ -94,7 +95,7 @@ def get_family_data(handle):
                         place.pname = place_record["place"]["pname"]
                         place.print_data()
                       
-        print("\nMOTHER: ")
+        print("\nMOTHER: \n")
         mother = Person()
         mother.handle = f.mother
         
@@ -102,7 +103,9 @@ def get_family_data(handle):
 
         mother_name_result = mother.get_name_data()
         for mother_name_record in mother_name_result:
+            mother.id = mother_name_record["person"]['id']
             mother.gender = mother_name_record["person"]['gender']
+            
             if len(mother_name_record["name"]) > 0:
                 pname = Name()
                 pname.alt = mother_name_record["name"]['alt']
@@ -161,9 +164,31 @@ def get_family_data(handle):
                         place.type = place_record["place"]["type"]
                         place.pname = place_record["place"]["pname"]
                         place.print_data()
+                                    
+        for event_link in f.eventref_hlink:            
+            event = Event()
+            event.handle = event_link
+            
+            event_result = event.get_event_data()
+            for event_record in event_result:
+                event.id = event_record["event"]["id"]
+                event.type = event_record["event"]["type"]
+                event.date = event_record["event"]["date"]
+                event.print_data()
+
+                event_place_result = event.get_place_handle()
+                for event_place_record in event_place_result:
+                    place = Place()
+                    place.handle = event_place_record["handle"]
+                    
+                    place_result = place.get_place_data()
+                    for place_record in place_result:
+                        place.id = place_record["place"]["id"]
+                        place.type = place_record["place"]["type"]
+                        place.pname = place_record["place"]["pname"]
+                        place.print_data()
                             
         print("\nCHILDREN: ")
-        
         for child_link in f.childref_hlink:            
             child = Person()
             child.handle = child_link
@@ -172,6 +197,7 @@ def get_family_data(handle):
             
             children_name_result = child.get_name_data()
             for children_name_record in children_name_result:
+                child.id = children_name_record["person"]['id']
                 child.gender = children_name_record["person"]['gender']
                 
                 if len(children_name_record["name"]) > 0:

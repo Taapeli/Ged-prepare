@@ -197,6 +197,7 @@ class Event:
 
     def print_data(self):
         """ Tulostaa tiedot """
+        print ("*****Event*****")
         print ("Handle: " + self.handle)
         print ("Change: " + self.change)
         print ("Id: " + self.id)
@@ -293,15 +294,15 @@ class Family:
         return  session.run(query)
     
     
-    def get_family_data(self):
-        """ Luetaan perheen tiedot """
+    def get_event_data(self):
+        """ Luetaan perheen tapahtumien tiedot """
         
         global session
                 
         query = """
-            MATCH (family:Family)
+            MATCH (family:Family)-[r:EVENT]->(event:Event)
                 WHERE family.gramps_handle='{}'
-                RETURN family
+                RETURN r.role AS eventref_role, event.gramps_handle AS eventref_hlink
             """.format(self.handle)
         return  session.run(query)
     
@@ -317,6 +318,7 @@ class Family:
                 RETURN family
             """.format(self.handle)
         family_result = session.run(query)
+        
         for family_record in family_result:
             self.id = family_record["family"]['id']
             self.rel_type = family_record["family"]['rel_type']
@@ -329,7 +331,11 @@ class Family:
         for mother_record in mother_result:            
             self.mother = mother_record["mother"]
 
-        self.childref_hlink = []
+        event_result = self.get_event_data()
+        for event_record in event_result:            
+            self.eventref_hlink.append(event_record["eventref_hlink"])
+            self.eventref_role.append(event_record["eventref_role"])
+
         children_result = self.get_children()
         for children_record in children_result:            
             self.childref_hlink.append(children_record["children"])
