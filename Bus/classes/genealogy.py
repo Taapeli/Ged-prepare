@@ -306,6 +306,37 @@ class Family:
         return  session.run(query)
     
     
+    def get_family_object(self):
+        """ Luetaan kaikki perheen tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)
+                WHERE family.gramps_handle='{}'
+                RETURN family
+            """.format(self.handle)
+        family_result = session.run(query)
+        for family_record in family_result:
+            self.id = family_record["family"]['id']
+            self.rel_type = family_record["family"]['rel_type']
+            
+        father_result = self.get_father()
+        for father_record in father_result:            
+            self.father = father_record["father"]
+
+        mother_result = self.get_mother()
+        for mother_record in mother_result:            
+            self.mother = mother_record["mother"]
+
+        self.childref_hlink = []
+        children_result = self.get_children()
+        for children_record in children_result:            
+            self.childref_hlink.append(children_record["children"])
+            
+        return True
+    
+    
     def get_father(self):
         """ Luetaan perheen isän tiedot """
         
