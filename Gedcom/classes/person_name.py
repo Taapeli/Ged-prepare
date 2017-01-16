@@ -42,7 +42,7 @@ class PersonName(object):
         return "PersonName({})".format(self.name)
 
 
-    def __init__(self, path, level, tag, value):
+    def __init__(self, gedline):
         ''' Creates a new instance on person name definition.
             The arguments must be from a NAME gedcom line.
 
@@ -55,45 +55,45 @@ class PersonName(object):
 
         self.rows = []
         self._surn_lines = []    # Surname lines after NAME line
-        if tag != 'NAME':
+        if gedline.tag != 'NAME':
             raise AttributeError('Needs a NAME row for PersonName.init()')
            
         # 1) Full name processing
         #    The parts like 'givn/surn/nsfx' will be isolated and analyzed
     
-        self.name = value
-        s1 = value.find('/')
-        s2 = value.rfind('/')
+        self.name = gedline.value
+        s1 = gedline.value.find('/')
+        s2 = gedline.value.rfind('/')
         if s1 >= 0 and s2 >= 0 and s1 != s2:     
             # Contains '/Surname/' or '/Surname1/Surname2/' etc
-            self.givn = value[:s1]
-            self.surn = value[s1+1:s2]
-            self.nsfx = value[s2+1:]
+            self.givn = gedline.value[:s1]
+            self.surn = gedline.value[s1+1:s2]
+            self.nsfx = gedline.value[s2+1:]
             
             # 1.1) GIVN given name part
-            self._proc_givn(path, level, value)
+            self._proc_givn(gedline)
             # 1.2) SURN Surname part
-            self._proc_surn(path, level, value)
+            self._proc_surn(gedline)
             # 1.3) nsfx Suffix part: nothing to do?
             pass
 
             # Write NAME line
             self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
-            self._append_row(level, tag, self.name)
+            self._append_row(gedline.level, gedline.tag, self.name)
             # Write new SURN lines, if any
             for ln in self._surn_lines:
                 self.rows.append(ln)
 
            
             # Compare the name parts from NAME tag to this got here
-            if re.sub(r' ', '', value) != re.sub(r' ', '', self.name):
-                print ("{} {!r} changed to {!r}".format(path, value, self.name))           
-                self._append_row(level + 1, "{}{}".format(_CHGTAG, tag), value)
+            if re.sub(r' ', '', gedline.value) != re.sub(r' ', '', self.name):
+                print ("{} {!r} changed to {!r}".format(gedline.path, gedline.value, self.name))           
+                self._append_row(gedline.level + 1, "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
         else:
-            print ("{} missing /SURNAME/ in {!r}".format(path, value))         
+            print ("{} missing /SURNAME/ in {!r}".format(gedline.path, gedline.value))         
 
  
-    def add(self, path, level, tag, value):
+    def add(self, gedline):
         ''' Adds a new, higher level row
 
         Arguments example:
@@ -102,33 +102,34 @@ class PersonName(object):
             tag='GIVN'
             value='GIVN Brita Kristiina/'
         '''
-        if tag == 'GIVN' and hasattr(self, 'givn'): 
-            self._append_row(level, tag, self.givn)
+        if gedline.tag == 'GIVN' and hasattr(self, 'givn'): 
+            self._append_row(gedline.level, gedline.tag, self.givn)
             # If call name has been stored, put it here
             if hasattr(self, 'call'):
                 print ("# _CALL {!r} for {!r}".format(self.call, self.name))
-                self._append_row(level, '_CALL', self.call)
+                self._append_row(gedline.level, '_CALL', self.call)
         
-        elif tag == 'SURN' and hasattr(self, 'surn'):
-            self._append_row(level, tag, self.surn)
+        elif gedline.tag == 'SURN' and hasattr(self, 'surn'):
+            self._append_row(gedline.level, gedline.tag, self.surn)
 
-        elif tag == 'NSFX' and hasattr(self, 'nsfx'): 
-            if self.nsfx != value:
+        elif gedline.tag == 'NSFX' and hasattr(self, 'nsfx'): 
+            if self.nsfx != gedline.value:
                 if self.nsfx == '':
-                    self._append_row(level, tag, value)
+                    self._append_row(gedline.level, gedline.tag, gedline.value)
                 else:
                     if hasattr(self, 'new_nsfx_row') == False:
-                        self._append_row(level, tag, self.nsfx)
-                        print ("{} {!r} changed to {!r}".format(path, value, self.nsfx))           
-                        self._append_row(level + 1, "{}{}".format(_CHGTAG, tag), value)
+                        self._append_row(gedline.level, gedline.tag, self.nsfx)
+                        print ("{} {!r} changed to {!r}".format(gedline.path, gedline.value, self.nsfx))           
+                        self._append_row(gedline.level + 1, 
+                                         "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
 
-        elif tag == '_CALL':    # So called call name
+        elif gedline.tag == '_CALL':    # So called call name
             self.call = value
-            self._append_row(level, tag, self.call)
+            self._append_row(gedline.level, gedline.tag, self.call)
 
         else: # all others like 'TYPE', 'NOTE', 'SOUR', ...
             #print ("{} # '{} {}'".format(path, tag, value))           
-            self._append_row(level, tag, value)
+            self._append_row(gedline.level, gedline.tag, gedline.value)
 
 
     def lines(self):
@@ -141,7 +142,7 @@ class PersonName(object):
 
     # Local functions
     
-    def _proc_givn(self, path, level, value):
+    def _proc_givn(self, gedline):
         ''' Process given name part of NAME record
         '''
         if (self.givn):
@@ -158,7 +159,7 @@ class PersonName(object):
                     self.nsfx = nm
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
-                    self.new_nsfx_row = self._format_row(level+1, 'NSFX', nm)
+                    self.new_nsfx_row = self._format_row(gedline.level+1, 'NSFX', nm)
             
             # 1.1b) Set call name, if one of given names are marked with '*'
     
@@ -178,7 +179,7 @@ class PersonName(object):
         else:
             self.givn = _NONAME
 
-    def _proc_surn(self, path, level, value):
+    def _proc_surn(self, gedline):
         ''' Process surname part of NAME record
 
         Examples:
@@ -197,13 +198,13 @@ class PersonName(object):
         def _put(name, name_type):
             ''' Store ouput rows: SURN with TYPE, if defined '''
             if name != '':
-                self._surn_lines.append(self._format_row(level+1, 'SURN', name))
+                self._surn_lines.append(self._format_row(gedline.level+1, 'SURN', name))
                 if name_type != '':
-                    self._surn_lines.append(self._format_row(level + 2, 'TYPE', name_type))
+                    self._surn_lines.append(self._format_row(gedline.level + 2, 'TYPE', name_type))
                     #_note = "{} {}({})".format(_note, name, name_type)
 
 
-        if value == '': #op_2 No surname
+        if gedline.value == '': #op_2 No surname
             return
         state = 0
         oper = ''

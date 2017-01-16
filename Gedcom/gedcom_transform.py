@@ -55,17 +55,17 @@ as it's parameter.
 
 The parameters of each phases:
 - "args" is the object returned by ArgumentParser.parse_args.
-- "line" is the original line in the input GEDCOM (unicode string)
-- "level" is the level number of the line (integer)
-- "path" is the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE representing the DATE tag
-  inside the BIRT tag for the individual @I123@.
-- "tag" is the current tag (last part of path)
-- "value" is the value for the current tag, e.g. a date or a name
+- "gedline", a GedcomLine() object, which includes
+    - "line", the original line in the input GEDCOM (unicode string)
+    - "level", the level number of the line (integer)
+    - "path", the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE
+      representing the DATE tag inside the BIRT tag for the individual @I123@.
+    - "tag", the current tag (last part of path)
+    - "value", the value for the current tag, e.g. a date or a name
 - "output_file" is a file-like object containing the method emit(string) that is used to produce the output
-- "parser" is the ArgumentParser object of the argparse module
 
 """
-_VERSION="0.1"
+_VERSION="0.2"
 
 import sys
 import os
@@ -75,6 +75,8 @@ import argparse
 import tempfile
 from sys import stderr
 import importlib
+
+from classes.gedcom_line import GedcomLine
 
 def numeric(s):
     return s.replace(".","").isdigit()
@@ -121,33 +123,24 @@ class Output:
 
 
 def read_gedcom(args):
-    curpath = [None]
+    
     try:
-        for linenum,line in enumerate(open(args.input_gedcom,encoding=args.encoding)):
-
+        for linenum, line in enumerate(open(args.input_gedcom, encoding=args.encoding)):
+            # Clean the line
             line = line[:-1]
-            if line[0] == "\ufeff": line = line[1:]
-            tkns = line.split(None,2)
-            level = int(tkns[0])
-            tag = tkns[1]
-            if level > len(curpath):
-                raise RuntimeError("Invalid level {}: {}".format(linenum,line))
-            if level == len(curpath):
-                curpath.append(tag)
-            else:
-                curpath[level] = tag
-                curpath = curpath[:level+1]
-            if len(tkns) > 2:
-                value = tkns[2]
-            else:
-                value = ""
-            yield (line,level,".".join(curpath),tag,value)
+            if line[0] == "\ufeff": 
+                line = line[1:]
+            # Return a gedcom line object
+            gedline = GedcomLine(line, linenum)
+            yield gedline
+
     except FileNotFoundError:
-        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
+        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=sys.stderr)
         raise
     except Exception as err:
         print(type(err))
-        print("Virhe: {0}".format(err), file=stderr)
+        print("Virhe: {0}".format(err), file=sys.stderr)
+
 
 def process_gedcom(args,transformer):
 
@@ -155,8 +148,9 @@ def process_gedcom(args,transformer):
 
     # 1st traverse
     if hasattr(transformer,"phase1"):
-        for line,level,path,tag,value in read_gedcom(args):
-            transformer.phase1(args,line,level,path,tag,value)
+        for gedline in read_gedcom(args):
+            transformer.phase1(args, gedline)
+            #transformer.phase1(args,line,level,path,tag,value)
 
     # Intermediate processing of collected data
     if hasattr(transformer,"phase2"):
@@ -164,8 +158,9 @@ def process_gedcom(args,transformer):
 
     # 2nd traverse "phase3"
     with Output(args) as f:
-        for line,level,path,tag,value in read_gedcom(args):
-            transformer.phase3(args,line,level,path,tag,value,f)
+        for gedline in read_gedcom(args):
+            transformer.phase3(args, gedline, f)
+
 
 def get_transforms():
     # all transform modules should be .py files in the package/subdirectory "transforms"
@@ -181,6 +176,7 @@ def get_transforms():
             version = getattr(transformer,"version","")
             yield (modname,transformer,docline,version)
 
+
 def find_transform(prefix):
     choices = []
     for modname,transformer,docline,version in get_transforms():
@@ -192,6 +188,7 @@ def find_transform(prefix):
         print("Ambiguous transform name: {}".format(prefix))
         print("Matching names: {}".format(",".join(name for name,t in choices)))
     return False
+
 
 def main():
     print("\nTaapeli GEDCOM transform program A (version {})\n".format(_VERSION))

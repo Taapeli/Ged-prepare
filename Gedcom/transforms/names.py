@@ -31,6 +31,7 @@ Created on 26.11.2016
 '''
 
 from classes.person_name import PersonName
+from classes.gedcom_line import GedcomLine
 
 def add_args(parser):
     pass
@@ -42,7 +43,8 @@ def initialize(args):
     pname = None
 
 
-def phase3(args,line,level,path,tag,value,f):
+#def phase3(args,line,level,path,tag,value,f):
+def phase3(args, gedline, f):
     '''
     Function phase3 is called once for each line in the input GEDCOM file.
     This function should produce the output GEDCOM by calling output_file.emit
@@ -70,16 +72,16 @@ def phase3(args,line,level,path,tag,value,f):
 
     if state == 0:      # Start, no active INDI
         # The lines are written to output file
-        f.emit(line)
-        if level == 0 and value == 'INDI':
+        f.emit(gedline.get_line())
+        if gedline.level == 0 and gedline.value == 'INDI':
             state = 1
         return
 
     if state == 1:      # INDI processing active
-        if level == 0:
+        if gedline.level == 0:
             # End of an individual
-            f.emit(line)
-            if value == 'INDI':
+            f.emit(gedline.get_line())
+            if gedline.value == 'INDI':
                 # New individual group
                 state = 1
             else:
@@ -87,52 +89,52 @@ def phase3(args,line,level,path,tag,value,f):
                 state = 0
             return
 
-        if level == 1 and tag == 'NAME':    # line like '1 NAME Maija Liisa* /Nieminen/'
+        if gedline.level == 1 and gedline.tag == 'NAME':    # line like '1 NAME Maija Liisa* /Nieminen/'
             # Start of first name definition
-            _create_name_group(path, level, tag, value)
+            _create_name_group(gedline)
             state = 2
             return
 
         # Other INDI lines are written to output file
-        f.emit(line)
+        f.emit(gedline.get_line())
         return
     
     if state == 2:      # NAME processing active
-        if level == 0:
+        if gedline.level == 0:
             # End of Name and Indi group
             _emit_name_group(f)
-            if value == 'INDI':
+            if gedline.value == 'INDI':
                 state = 1
             else:
                 state = 0
-            f.emit(line)
+            f.emit(gedline.get_line())
         else:
-            if level > 1:
+            if gedline.level > 1:
                 # Lines in Name group
-                _add_to_name_group(path, level, tag, value)
+                _add_to_name_group(gedline)
             else:
                 # Level 1, end of Name group
                 _emit_name_group(f)
-                if tag == 'NAME':
-                    _create_name_group(path, level, tag, value)
+                if gedline.tag == 'NAME':
+                    _create_name_group(gedline)
                 else:
                     state = 1
-                    f.emit(line)
+                    f.emit(gedline.get_line())
         return
 
 
 # Process automation operations
 #
-def _create_name_group(path, level, tag, value):
+def _create_name_group(gedline):
     # Create new PersonName
     global pname
-    pname = PersonName(path, level, tag, value)
+    pname = PersonName(gedline)
 
 
-def _add_to_name_group(path, level, tag, value):
+def _add_to_name_group(gedline):
     # Save current line in pname
     global pname
-    pname.add(path, level, tag, value)
+    pname.add(gedline)
 
 
 def _emit_name_group(f):
