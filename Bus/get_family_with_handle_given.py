@@ -52,48 +52,30 @@ def get_family_data(handle):
             event = Event()
             event.handle = birth_record["handle"]
         
-            event_result = event.get_event_data()
-            for event_record in event_result:
-                event.id = event_record["event"]["id"]
-                event.type = event_record["event"]["type"]
-                event.date = event_record["event"]["date"]
-                event.print_data()
+            event.get_event_data()
+            event.print_data()
 
-                event_place_result = event.get_place_handle()
-                for event_place_record in event_place_result:
-                    place = Place()
-                    place.handle = event_place_record["handle"]
+            if event.place_hlink != '':
+                place = Place()
+                place.handle = event.place_hlink
                     
-                    place_result = place.get_place_data()
-                    for place_record in place_result:
-                        place.id = place_record["place"]["id"]
-                        place.type = place_record["place"]["type"]
-                        place.pname = place_record["place"]["pname"]
-                        place.print_data()
+                place.get_place_data()
+                place.print_data()
                 
         death_result = father.get_death_handle()
         for death_record in death_result:
             event = Event()
             event.handle = death_record["handle"]
         
-            event_result = event.get_event_data()
-            for event_record in event_result:
-                event.id = event_record["event"]["id"]
-                event.type = event_record["event"]["type"]
-                event.date = event_record["event"]["date"]
-                event.print_data()
+            event.get_event_data()
+            event.print_data()
         
-                event_place_result = event.get_place_handle()
-                for event_place_record in event_place_result:
-                    place = Place()
-                    place.handle = event_place_record["handle"]
+            if event.place_hlink != '':
+                place = Place()
+                place.handle = event.place_hlink
                     
-                    place_result = place.get_place_data()
-                    for place_record in place_result:
-                        place.id = place_record["place"]["id"]
-                        place.type = place_record["place"]["type"]
-                        place.pname = place_record["place"]["pname"]
-                        place.print_data()
+                place.get_place_data()
+                place.print_data()
                       
         print("\nMOTHER: \n")
         mother = Person()
@@ -122,71 +104,44 @@ def get_family_data(handle):
             event = Event()
             event.handle = birth_record["handle"]
         
-            event_result = event.get_event_data()
-            for event_record in event_result:
-                event.id = event_record["event"]["id"]
-                event.type = event_record["event"]["type"]
-                event.date = event_record["event"]["date"]
-                event.print_data()
+            event.get_event_data()
+            event.print_data()
         
-                event_place_result = event.get_place_handle()
-                for event_place_record in event_place_result:
-                    place = Place()
-                    place.handle = event_place_record["handle"]
+            if event.place_hlink != '':
+                place = Place()
+                place.handle = event.place_hlink
                     
-                    place_result = place.get_place_data()
-                    for place_record in place_result:
-                        place.id = place_record["place"]["id"]
-                        place.type = place_record["place"]["type"]
-                        place.pname = place_record["place"]["pname"]
-                        place.print_data()
+                place.get_place_data()
+                place.print_data()
                 
         death_result = mother.get_death_handle()
         for death_record in death_result:
             event = Event()
             event.handle = death_record["handle"]
         
-            event_result = event.get_event_data()
-            for event_record in event_result:
-                event.id = event_record["event"]["id"]
-                event.type = event_record["event"]["type"]
-                event.date = event_record["event"]["date"]
-                event.print_data()
+            event.get_event_data()
+            event.print_data()
         
-                event_place_result = event.get_place_handle()
-                for event_place_record in event_place_result:
-                    place = Place()
-                    place.handle = event_place_record["handle"]
+            if event.place_hlink != '':
+                place = Place()
+                place.handle = event.place_hlink
                     
-                    place_result = place.get_place_data()
-                    for place_record in place_result:
-                        place.id = place_record["place"]["id"]
-                        place.type = place_record["place"]["type"]
-                        place.pname = place_record["place"]["pname"]
-                        place.print_data()
+                place.get_place_data()
+                place.print_data()
                                     
         for event_link in f.eventref_hlink:            
             event = Event()
             event.handle = event_link
-            
-            event_result = event.get_event_data()
-            for event_record in event_result:
-                event.id = event_record["event"]["id"]
-                event.type = event_record["event"]["type"]
-                event.date = event_record["event"]["date"]
-                event.print_data()
-
-                event_place_result = event.get_place_handle()
-                for event_place_record in event_place_result:
-                    place = Place()
-                    place.handle = event_place_record["handle"]
+        
+            event.get_event_data()
+            event.print_data()
+        
+            if event.place_hlink != '':
+                place = Place()
+                place.handle = event.place_hlink
                     
-                    place_result = place.get_place_data()
-                    for place_record in place_result:
-                        place.id = place_record["place"]["id"]
-                        place.type = place_record["place"]["type"]
-                        place.pname = place_record["place"]["pname"]
-                        place.print_data()
+                place.get_place_data()
+                place.print_data()
                             
         print("\nCHILDREN: ")
         for child_link in f.childref_hlink:            
@@ -216,49 +171,31 @@ def get_family_data(handle):
             for birth_record in birth_result:
                 event = Event()
                 event.handle = birth_record["handle"]
+        
+                event.get_event_data()
+                event.print_data()
             
-                event_result = event.get_event_data()
-                for event_record in event_result:
-                    event.id = event_record["event"]["id"]
-                    event.type = event_record["event"]["type"]
-                    event.date = event_record["event"]["date"]
-                    event.print_data()
-                                        
-                    event_place_result = event.get_place_handle()
-                    for event_place_record in event_place_result:
-                        place = Place()
-                        place.handle = event_place_record["handle"]
-                        
-                        place_result = place.get_place_data()
-                        for place_record in place_result:
-                            place.id = place_record["place"]["id"]
-                            place.type = place_record["place"]["type"]
-                            place.pname = place_record["place"]["pname"]
-                            place.print_data()
+                if event.place_hlink != '':
+                    place = Place()
+                    place.handle = event.place_hlink
+                    
+                    place.get_place_data()
+                    place.print_data()
             
             death_result = child.get_death_handle()
             for death_record in death_result:
                 event = Event()
                 event.handle = death_record["handle"]
+        
+                event.get_event_data()
+                event.print_data()
             
-                event_result = event.get_event_data()
-                for event_record in event_result:
-                    event.id = event_record["event"]["id"]
-                    event.type = event_record["event"]["type"]
-                    event.date = event_record["event"]["date"]
-                    event.print_data()
-            
-                    event_place_result = event.get_place_handle()
-                    for event_place_record in event_place_result:
-                        place = Place()
-                        place.handle = event_place_record["handle"]
-                        
-                        place_result = place.get_place_data()
-                        for place_record in place_result:
-                            place.id = place_record["place"]["id"]
-                            place.type = place_record["place"]["type"]
-                            place.pname = place_record["place"]["pname"]
-                            place.print_data()
+                if event.place_hlink != '':
+                    place = Place()
+                    place.handle = event.place_hlink
+                    
+                    place.get_place_data()
+                    place.print_data()
                                         
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)

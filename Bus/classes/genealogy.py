@@ -152,6 +152,19 @@ class Event:
         self.date = ''
         self.place_hlink = ''
         self.citationref_hlink = ''
+    
+    
+    def get_citation_handle(self):
+        """ Luetaan tapahtuman viittauksen handle """
+        
+        global session
+                
+        query = """
+            MATCH (event:Event)-[r:CITATION]->(c:Citation) 
+                WHERE event.gramps_handle='{}'
+                RETURN c.gramps_handle AS handle
+            """.format(self.handle)
+        return  session.run(query)
 
 
     def get_event_data(self):
@@ -164,7 +177,22 @@ class Event:
                 WHERE event.gramps_handle='{}'
                 RETURN event
             """.format(self.handle)
-        return  session.run(query)
+        event_result = session.run(query)
+
+        for event_record in event_result:
+            self.id = event_record["event"]["id"]
+            self.type = event_record["event"]["type"]
+            self.date = event_record["event"]["date"]
+    
+            event_place_result = self.get_place_handle()
+            for event_place_record in event_place_result:
+                self.place_hlink = event_place_record["handle"]
+    
+            event_citation_result = self.get_citation_handle()
+            for event_citation_record in event_citation_result:
+                self.citationref_hlink = event_citation_record["handle"]
+                
+        return True
     
     
     def get_place_handle(self):
@@ -308,7 +336,7 @@ class Family:
     
     
     def get_family_object(self):
-        """ Luetaan kaikki perheen tiedot """
+        """ Luetaan perheen tiedot """
         
         global session
                 
@@ -868,7 +896,14 @@ class Place:
                 WHERE place.gramps_handle='{}'
                 RETURN place
             """.format(self.handle)
-        return  session.run(query)
+        place_result = session.run(query)
+        
+        for place_record in place_result:
+            self.id = place_record["place"]["id"]
+            self.type = place_record["place"]["type"]
+            self.pname = place_record["place"]["pname"]
+            
+        return True
         
     
     @staticmethod       
