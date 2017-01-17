@@ -162,7 +162,7 @@ class Event:
         query = """
             MATCH (event:Event)-[r:CITATION]->(c:Citation) 
                 WHERE event.gramps_handle='{}'
-                RETURN c.gramps_handle AS handle
+                RETURN c.gramps_handle AS citationref_hlink
             """.format(self.handle)
         return  session.run(query)
 
@@ -181,6 +181,7 @@ class Event:
 
         for event_record in event_result:
             self.id = event_record["event"]["id"]
+            self.change = event_record["event"]["change"]
             self.type = event_record["event"]["type"]
             self.date = event_record["event"]["date"]
     
@@ -190,7 +191,7 @@ class Event:
     
             event_citation_result = self.get_citation_handle()
             for event_citation_record in event_citation_result:
-                self.citationref_hlink = event_citation_record["handle"]
+                self.citationref_hlink = event_citation_record["citationref_hlink"]
                 
         return True
     
@@ -348,6 +349,7 @@ class Family:
         family_result = session.run(query)
         
         for family_record in family_result:
+            self.change = family_record["family"]['change']
             self.id = family_record["family"]['id']
             self.rel_type = family_record["family"]['rel_type']
             
@@ -510,6 +512,7 @@ class Family:
                         MATCH (n:Family) WHERE n.gramps_handle='{}'
                         MATCH (m:Person) WHERE m.gramps_handle='{}'
                         MERGE (n)-[r:CHILD]->(m)
+                        MERGE (n)<-[s:FAMILY]-(m)
                          """.format(self.handle, self.childref_hlink[i])
                                  
                     session.run(query)
@@ -646,6 +649,7 @@ class Person:
                    surname         str sukunimi
                    suffix          str patronyymi
                 eventref_hlink     str tapahtuman osoite
+                eventref_role      str tapahtuman rooli
                 parentin_hlink     str vanhempien osoite
                 citationref_hlink  str viittauksen osoite
      """
@@ -656,8 +660,8 @@ class Person:
         self.change = ''
         self.id = ''
         self.name = []
-        self.eventref_role = []
         self.eventref_hlink = []
+        self.eventref_role = []
         self.parentin_hlink = []
         self.citationref_hlink = []
     
@@ -675,6 +679,19 @@ class Person:
         return  session.run(query)
     
     
+    def get_citation_handle(self):
+        """ Luetaan henkilön viittauksen handle """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:CITATION]->(c:Citation) 
+                WHERE person.gramps_handle='{}'
+                RETURN c.gramps_handle AS citationref_hlink
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
     def get_death_handle(self):
         """ Luetaan henkilön kuolintapahtuman handle """
         
@@ -684,6 +701,19 @@ class Person:
             MATCH (person:Person)-[r:EVENT]->(event:Event) 
                 WHERE person.gramps_handle='{}' AND event.type='Death'
                 RETURN event.gramps_handle AS handle
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_event_data(self):
+        """ Luetaan henkilön tapahtumien handlet """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:EVENT]->(event:Event) 
+                WHERE person.gramps_handle='{}'
+                RETURN r.role AS eventref_role, event.gramps_handle AS eventref_hlink
             """.format(self.handle)
         return  session.run(query)
     
@@ -701,7 +731,20 @@ class Person:
         return  session.run(query)
     
     
-    def get_name_data(self):
+    def get_parentin_handle(self):
+        """ Luetaan henkilön perheen handle """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:FAMILY]->(family:Family) 
+                WHERE person.gramps_handle='{}'
+                RETURN family.gramps_handle AS handle
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_person_and_name_data(self):
         """ Luetaan kaikki henkilön tiedot """
         
         global session
@@ -712,9 +755,36 @@ class Person:
                 RETURN person, name
                 ORDER BY name.alt
             """.format(self.handle)
-        return  session.run(query)
+        person_result = session.run(query)
+        
+        for person_record in person_result:
+            self.change = person_record["person"]['change']
+            self.id = person_record["person"]['id']
+            self.gender = person_record["person"]['gender']
+            
+            if len(person_record["name"]) > 0:
+                pname = Name()
+                pname.alt = person_record["name"]['alt']
+                pname.type = person_record["name"]['type']
+                pname.first = person_record["name"]['first']
+                pname.surname = person_record["name"]['surname']
+                pname.suffix = person_record["name"]['suffix']
+                self.name.append(pname)
+                
+            event_result = self.get_event_data()
+            for event_record in event_result:            
+                self.eventref_hlink.append(event_record["eventref_hlink"])
+                self.eventref_role.append(event_record["eventref_role"])
 
-
+            family_result = self.get_parentin_handle()
+            for family_record in family_result:            
+                self.parentin_hlink.append(family_record["handle"])
+                
+            citation_result = self.get_citation_handle()
+            for citation_record in citation_result:            
+                self.citationref_hlink.append(citation_record["citationref_hlink"])
+                
+                
     @staticmethod
     def get_total():
         """ Tulostaa henkilöiden määrän tietokannassa """
@@ -837,17 +907,19 @@ class Person:
                     print("Virhe: {0}".format(err), file=stderr)
    
         # Make relations to the Family node
-        if len(self.parentin_hlink) > 0:
-            try:
-                query = """
-                    MATCH (n:Person) WHERE n.gramps_handle='{}'
-                    MATCH (m:Family) WHERE m.gramps_handle='{}'
-                    MERGE (n)-[r:FAMILY]->(m)
-                     """.format(self.handle, self.parentin_hlink[0])
-                                 
-                session.run(query)
-            except Exception as err:
-                print("Virhe: {0}".format(err), file=stderr)
+        # This is done in Family.save(), because the Family object is not yet created
+#        if len(self.parentin_hlink) > 0:
+#            for i in range(len(self.parentin_hlink)):
+#                try:
+#                    query = """
+#                        MATCH (n:Person) WHERE n.gramps_handle='{}'
+#                        MATCH (m:Family) WHERE m.gramps_handle='{}'
+#                        MERGE (n)-[r:FAMILY]->(m)
+#                        """.format(self.handle, self.parentin_hlink[i])
+#                                 
+#                    session.run(query)
+#                except Exception as err:
+#                    print("Virhe: {0}".format(err), file=stderr)
    
         # Make relations to the Citation node
         if len(self.citationref_hlink) > 0:
@@ -899,6 +971,7 @@ class Place:
         place_result = session.run(query)
         
         for place_record in place_result:
+            self.change = place_record["place"]["change"]
             self.id = place_record["place"]["id"]
             self.type = place_record["place"]["type"]
             self.pname = place_record["place"]["pname"]
@@ -941,7 +1014,7 @@ class Place:
         global session
         
         if len(self.pname) >= 1:
-            p_pname = self.pname[0]
+            p_pname = self.pname
             if len(self.pname) > 1:
                 print("Warning: More than one pname in a place, " + 
                       "handle: " + self.handle)
