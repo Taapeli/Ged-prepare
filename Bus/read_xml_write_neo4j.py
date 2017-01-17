@@ -447,6 +447,8 @@ def handle_sources(collection):
             source_reporef = source.getElementsByTagName('reporef')[0]
             if source_reporef.hasAttribute("hlink"):
                 s.reporef_hlink = source_reporef.getAttribute("hlink")
+            if source_reporef.hasAttribute("medium"):
+                s.reporef_medium = source_reporef.getAttribute("medium")
         elif len(source.getElementsByTagName('reporef') ) > 1:
             print("Error: More than one reporef in a source")
     
@@ -497,23 +499,55 @@ def process_xml(args):
     try:
         DOMTree = xml.dom.minidom.parse(open(args.input_xml))
         collection = DOMTree.documentElement
-    
+        
+        t = time.perf_counter()
         handle_notes(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_notes()
+        
+        t = time.perf_counter()
         handle_repositories(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_repositories()
+        
+        t = time.perf_counter()
         handle_places(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_places()
+        
+        t = time.perf_counter()
         handle_sources(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_sources()
+        
+        t = time.perf_counter()
         handle_citations(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_citations()
+        
+        t = time.perf_counter()
         handle_events(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_events()
+        
+        t = time.perf_counter()
         handle_people(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_people()
+        
+        t = time.perf_counter()
         handle_families(collection)
+        elapsed_time = time.perf_counter() - t
+        print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_families()
+        
     except FileNotFoundError:
         print("Tiedostoa '{}' ei ole!".format(args.input_xml), file=stderr)
     except Exception as err:
