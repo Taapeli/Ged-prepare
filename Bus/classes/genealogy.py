@@ -666,19 +666,6 @@ class Person:
         self.citationref_hlink = []
     
     
-    def get_birth_handle(self):
-        """ Luetaan henkilön syntymätapahtuman handle """
-        
-        global session
-                
-        query = """
-            MATCH (person:Person)-[r:EVENT]->(event:Event) 
-                WHERE person.gramps_handle='{}' AND event.type='Birth'
-                RETURN event.gramps_handle AS handle
-            """.format(self.handle)
-        return  session.run(query)
-    
-    
     def get_citation_handle(self):
         """ Luetaan henkilön viittauksen handle """
         
@@ -688,19 +675,6 @@ class Person:
             MATCH (person:Person)-[r:CITATION]->(c:Citation) 
                 WHERE person.gramps_handle='{}'
                 RETURN c.gramps_handle AS citationref_hlink
-            """.format(self.handle)
-        return  session.run(query)
-    
-    
-    def get_death_handle(self):
-        """ Luetaan henkilön kuolintapahtuman handle """
-        
-        global session
-                
-        query = """
-            MATCH (person:Person)-[r:EVENT]->(event:Event) 
-                WHERE person.gramps_handle='{}' AND event.type='Death'
-                RETURN event.gramps_handle AS handle
             """.format(self.handle)
         return  session.run(query)
     
@@ -716,19 +690,7 @@ class Person:
                 RETURN r.role AS eventref_role, event.gramps_handle AS eventref_hlink
             """.format(self.handle)
         return  session.run(query)
-    
-    
-    def get_family_handle(self):
-        """ Luetaan henkilön perheen handle """
-        
-        global session
-                
-        query = """
-            MATCH (person:Person)<-[r:CHILD]-(family:Family) 
-                WHERE person.gramps_handle='{}'
-                RETURN family.gramps_handle AS handle
-            """.format(self.handle)
-        return  session.run(query)
+
     
     def get_hlinks(self):
         """ Luetaan henkilön linkit """
@@ -823,8 +785,6 @@ class Person:
         if len(self.eventref_hlink) > 0:
             for i in range(len(self.eventref_hlink)):
                 print ("Eventref_hlink: " + self.eventref_hlink[i])
-        if len(self.eventref_role) > 0:
-            for i in range(len(self.eventref_role)):
                 print ("Eventref_role: " + self.eventref_role[i])
         if len(self.parentin_hlink) > 0:
             for i in range(len(self.parentin_hlink)):
