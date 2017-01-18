@@ -21,19 +21,8 @@ def get_name_data(handle):
     try:
         p = Person()
         p.handle = handle
-        result = p.get_name_data()
-        for record in result:
-            p.gender = record["person"]['gender']
-            p.name = []
-            if len(record["name"]) > 0:
-                pname = Name()
-                pname.alt = record["name"]['alt']
-                pname.type = record["name"]['type']
-                pname.first = record["name"]['first']
-                pname.surname = record["name"]['surname']
-                pname.suffix = record["name"]['suffix']
-                p.name.append(pname)
-            p.print_data()
+        p.get_person_and_name_data()
+        p.print_data()
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
 

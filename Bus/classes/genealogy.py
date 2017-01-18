@@ -336,7 +336,7 @@ class Family:
         return  session.run(query)
     
     
-    def get_family_object(self):
+    def get_family_data(self):
         """ Luetaan perheen tiedot """
         
         global session
@@ -730,6 +730,24 @@ class Person:
             """.format(self.handle)
         return  session.run(query)
     
+    def get_hlinks(self):
+        """ Luetaan henkilön linkit """
+            
+        event_result = self.get_event_data()
+        for event_record in event_result:            
+            self.eventref_hlink.append(event_record["eventref_hlink"])
+            self.eventref_role.append(event_record["eventref_role"])
+
+        family_result = self.get_parentin_handle()
+        for family_record in family_result:            
+            self.parentin_hlink.append(family_record["parentin_hlink"])
+            
+        citation_result = self.get_citation_handle()
+        for citation_record in citation_result:            
+            self.citationref_hlink.append(citation_record["citationref_hlink"])
+            
+        return True
+    
     
     def get_parentin_handle(self):
         """ Luetaan henkilön perheen handle """
@@ -739,7 +757,7 @@ class Person:
         query = """
             MATCH (person:Person)-[r:FAMILY]->(family:Family) 
                 WHERE person.gramps_handle='{}'
-                RETURN family.gramps_handle AS handle
+                RETURN family.gramps_handle AS parentin_hlink
             """.format(self.handle)
         return  session.run(query)
     
@@ -770,19 +788,6 @@ class Person:
                 pname.surname = person_record["name"]['surname']
                 pname.suffix = person_record["name"]['suffix']
                 self.name.append(pname)
-                
-            event_result = self.get_event_data()
-            for event_record in event_result:            
-                self.eventref_hlink.append(event_record["eventref_hlink"])
-                self.eventref_role.append(event_record["eventref_role"])
-
-            family_result = self.get_parentin_handle()
-            for family_record in family_result:            
-                self.parentin_hlink.append(family_record["handle"])
-                
-            citation_result = self.get_citation_handle()
-            for citation_record in citation_result:            
-                self.citationref_hlink.append(citation_record["citationref_hlink"])
                 
                 
     @staticmethod

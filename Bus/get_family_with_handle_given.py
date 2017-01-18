@@ -22,7 +22,7 @@ def get_family_data(handle):
         f = Family()
         f.handle = handle
         
-        f.get_family_object()
+        f.get_family_data()
         f.print_data()
             
         print("\nFATHER: \n")
@@ -30,6 +30,7 @@ def get_family_data(handle):
         father.handle = f.father
         
         father.get_person_and_name_data()
+        father.get_hlinks()
         father.print_data()
                 
         birth_result = father.get_birth_handle()
@@ -67,6 +68,7 @@ def get_family_data(handle):
         mother.handle = f.mother
         
         mother.get_person_and_name_data()                
+        mother.get_hlinks()
         mother.print_data()
 
         birth_result = mother.get_birth_handle()
@@ -119,6 +121,7 @@ def get_family_data(handle):
             child.handle = child_link
 
             child.get_person_and_name_data()                
+            child.get_hlinks()
             print("\n")
             child.print_data()
             
@@ -165,7 +168,7 @@ def process_neo4j(args):
         p.handle = args.handle
         result = p.get_parentin_handle()
         for record in result:
-            get_family_data(record["handle"])
+            get_family_data(record["parentin_hlink"])
 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
