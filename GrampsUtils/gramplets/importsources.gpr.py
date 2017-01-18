@@ -30,7 +30,7 @@ Gramps registration file
 
 register(IMPORT, 
 id    = 'importsources',
-name  = _("Repository - source hierarchies with optional tags from a csv file"),
+name  = _("Reference - source hierarchies with optional tags from a csv file"),
 description =  _("Import repositories and sources with optional tags from a csv file"),
 version = '0.1',
 gramps_target_version = "4.2",

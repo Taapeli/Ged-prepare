@@ -34,7 +34,7 @@ from gramps.gen.db import DbTxn
 from gramps.gen.lib import Note, NoteType, Repository, RepoRef, RepositoryType, Source, Tag
 # from gramps.gui.utils import ProgressMeter
 # from gramps.gen.plug.utils import OpenFileOrStdin
-# from gramps.gen.config import config as configman
+from gramps.gen.config import config as configman
 
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 _ = glocale.translation.gettext
@@ -79,22 +79,26 @@ def importSources(db, filename, user):
     LOG.info("   fdir = " + fdir)
     cout = fdir + "\\result0.csv" 
     LOG.debug('ini file handling')
-     
-    '''  
+   
     config = configman.register_manager("importsources")
+    '''
     config.register("options.repositoryidrng", "1000")    
     config.register("options.repositoryincr", "1") 
     config.register("options.sourceidrng", "1000")    
     config.register("options.sourceidincr", "1") 
-    config.register("options.refstring", "r") 
+    ''' 
+    config.register("options.refstring", "r")
+
     config.load()
     config.save()
-    
+    '''     
     repository_idrange = int(config.get('options.repositoryidrng'))
     repository_incr = int(config.get('options.repositoryincr'))
     source_idrange = int(config.get('options.sourceidrng'))
     source_idincr = int(config.get('options.sourceidincr'))
+    '''
     refstr = config.get('options.refstring')
+    '''
     repository_idno  = 0
     source_idno = 0
     '''
@@ -132,7 +136,7 @@ def importSources(db, filename, user):
                         r_writer.writerow([row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]])
 
                     else:
-                        idno = row[2]            # Possibly previously assigned Gramps object id
+                        idno = row[2]                       # Possibly previously assigned Gramps object id
                         handle = row[3].strip('"')          # Possibly previously assigned Gramps object handle
                         otext = row[4].strip()
                         LOG.debug('Handle = ' + handle)
@@ -143,29 +147,19 @@ def importSources(db, filename, user):
                             t_count += 1
                             recobj  = row[1]     # Tag related to repositories or sources
                             tag = None
-                            if handle != '':
-                                with DbTxn(_("Read Tag"), db) as trans:
-                                    tag = db.get_tag_from_name(otext)
-                                if tag != None:        
-                                    thandle = tag.get_handle()
-                                    LOG.info('Tag found by handle: ' + handle + ' ' + tag.get_name())
-                                else:    
-                                    LOG.error('Tag NOT found by handle: ' + handle + ' ' + otext)
-                                    raise GrampsImportError('Tag NOT found by handle: ', handle + '/' + otext)
-                            else:
-                                with DbTxn(_("Read Tag"), db) as trans:
-                                    tag = db.get_tag_from_name(otext)
-                                    if tag != None: 
-                                        LOG.info('Tag found by name, no duplicates: ' + otext + ' ' + tag.get_name())       
-                                        thandle = tag.get_handle()
-                                    else:       
-                                        tag = Tag()                  
-                                        tag.set_name(otext)
-                                        tag.set_change_time(chgtime)
-                                        tag.set_color("#EF2929")
-                                        with DbTxn(_("Add Tag"), db) as trans:
-                                            thandle = db.add_tag(tag, trans)
-                                            LOG.info('Tag added: ' + tag.get_name() + ' ' + thandle)
+                            with DbTxn(_("Read Tag"), db):
+                                tag = db.get_tag_from_name(otext)
+                            if tag != None: 
+                                LOG.info('Tag found by name, no duplicates: ' + otext + ' ' + tag.get_name())       
+                                thandle = tag.get_handle()
+                            else:       
+                                tag = Tag()                  
+                                tag.set_name(otext)
+                                tag.set_change_time(chgtime)
+                                tag.set_color("#EF2929")
+                                with DbTxn(_("Add Tag"), db) as trans:
+                                    thandle = db.add_tag(tag, trans)
+                                    LOG.info('Tag added: ' + tag.get_name() + ' ' + thandle)
                             tags[recobj] = tag
                             try: 
                                 r_writer.writerow([rectype, recobj, '', '"' + thandle + '"', otext, '', '', '', ''])
