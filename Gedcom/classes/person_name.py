@@ -5,6 +5,7 @@ Created on 22.11.2016
 '''
 
 import re
+from classes.gedcom_line import GedcomLine
 
 _NONAME = 'N'            # Marker for missing name part
 _CHGTAG = "NOTE orig_"   # Comment: original format
@@ -102,6 +103,9 @@ class PersonName(object):
             tag='GIVN'
             value='GIVN Brita Kristiina/'
         '''
+        if not type(gedline) is GedcomLine:
+            raise RuntimeError("GedcomLine argument expected")
+
         if gedline.tag == 'GIVN' and hasattr(self, 'givn'): 
             self._append_row(gedline.level, gedline.tag, self.givn)
             # If call name has been stored, put it here
@@ -145,6 +149,9 @@ class PersonName(object):
     def _proc_givn(self, gedline):
         ''' Process given name part of NAME record
         '''
+        if not type(gedline) is GedcomLine:
+            raise RuntimeError("GedcomLine argument expected, got {!r}".format(type(gedline)))
+
         if (self.givn):
             self.givn = self.givn.rstrip()
             gnames = self.givn.split()
@@ -203,6 +210,9 @@ class PersonName(object):
                     self._surn_lines.append(self._format_row(gedline.level + 2, 'TYPE', name_type))
                     #_note = "{} {}({})".format(_note, name, name_type)
 
+
+        if not type(gedline) is GedcomLine:
+            raise RuntimeError("GedcomLine argument expected")
 
         if gedline.value == '': #op_2 No surname
             return
