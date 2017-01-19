@@ -29,13 +29,13 @@ Gramps registration file
 #------------------------------------------------------------------------
 
 register(IMPORT, 
-id    = 'importsources',
-name  = _("Reference - source hierarchies with optional tags from a csv file"),
-description =  _("Import repositories and sources with optional tags from a csv file"),
-version = '0.1',
-gramps_target_version = "4.2",
-status = STABLE,
-fname = 'importsources.py',
-import_function = 'importSources'
-#extension = 'csv'
+    id    = 'importsources',
+    name  = _("Reference Source hierarchies with optional tags from a csv file"),
+    description =  _("Import repositories and sources with optional tags from a csv file"),
+    version = '0.1',
+    gramps_target_version = "4.2",
+    status = STABLE,
+    fname = 'importsources.py',
+    import_function = 'importSources'
+#extension = 'csv
 )

@@ -254,9 +254,9 @@ def importSources(db, filename, user):
      
     
                         else:
-                            LOG.debug('Unrecognized row: ' + row)
                             u_count += 1
-                            LOG.error('Unknown rectype: ' + rectype)
+                            LOG.debug('Unknown rectype: ' + rectype)
+                            raise GrampsImportError('Unknown record type ' + rectype) 
         
     except:
         exc = sys.exc_info()[0]
