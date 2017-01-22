@@ -8,10 +8,15 @@ curpath = []
 
 class GedcomLine(object):
     '''
-    Gedcom line container
-    - level
-    - tag
-    - value
+    Gedcom line container, which can also carry the lower level gedcom lines.
+    
+    Example
+    - level     2
+    - tag       'GIVN'
+    - value     'Johan'
+    - members[] {path:gedline, ...}
+    
+    TODO: Tarkasta rivijoukon muodostus
     '''
 
     def __init__(self, line, linenum):
@@ -19,7 +24,12 @@ class GedcomLine(object):
         Constructor: Parses and stores the next gedcom line
         '''
         global curpath
-
+#         self.path = path
+#         self.level = level
+#         self.tag = tag
+#         self.value = value
+        self.members = {}
+        
         tkns = line.split(None,2)
         self.level = int(tkns[0])
         self.tag = tkns[1]
@@ -36,23 +46,31 @@ class GedcomLine(object):
             self.value = ""
         self.path = ".".join(curpath)
 
-        
+
+    def add_name(self, gedline):
+        pass
+
+
+    def add_member(self, gedline):
+        ''' Store a next level gedcom line
+            Line "2 GIVN Johan" is stored the path as key: {'@I0001@.NAME.GIVN':GedcomLine()}
+        '''
+        if not type(gedline) is GedcomLine:
+            raise RuntimeError("GedcomLine argument expected")
+        self.members.append({gedline.path:gedline})
+
+
+    def get_member(self):
+        ''' Iterator for members of this '''
+        for gedline in self.members:
+            yield(gedline)
+
+    def find_member(self, path):
+        pass
+
+
     def get_parts(self):
         return (line, self.level, self.path, self.tag, self.value)
 
-
     def get_line(self):
         return "{} {} {}".format(self.level, self.tag, self.value)
-    
-
-
-# class GedcomLine(object):
-#     ''' Gedcom line container '''
-#     def __init__(self, path, level, tag, value):
-#         self.path = path
-#         self.level = level
-#         self.tag = tag
-#         self.value = value
-    
-
-

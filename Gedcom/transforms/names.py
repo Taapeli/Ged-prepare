@@ -43,7 +43,6 @@ def initialize(args):
     pname = None
 
 
-#def phase3(args,line,level,path,tag,value,f):
 def phase3(args, gedline, f):
     '''
     Function phase3 is called once for each line in the input GEDCOM file.
@@ -54,13 +53,17 @@ def phase3(args, gedline, f):
 
     Arguments example:
         args=Namespace(display_changes=False, dryrun=True, encoding='utf-8', \
-             input_gedcom='../Mun-testi.ged', transform='names')
-        line='1 NAME Antti /Puuhaara/'
-        level=1
-        path='@I0001@.NAME'
-        tag='NAME'
-        value='Antti /Puuhaara/'
+                       input_gedcom='../Mun-testi.ged', transform='names')
+        gedline=(
+            line='1 NAME Antti /Puuhaara/'
+            level=1
+            path='@I0001@.NAME'
+            tag='NAME'
+            value='Antti /Puuhaara/'
+        )
         f=<__main__.Output object at 0x101960fd0>
+    
+    TODO: Store Names and other level +1 lines as members of Indi GedcomLine 
     '''
 
     global pname
@@ -68,80 +71,107 @@ def phase3(args, gedline, f):
     #print("# Phase3: args={!r}, line={!r}, path={!r}, tag={!r}, value={!r}, f={!r}".\
     #      format(args,line,path,tag,value,f))
 
-    # Process automation engine
+    # ---- INDI automation engine for processing person data ----
 
-    if state == 0:      # Start, no active INDI
-        # The lines are written to output file
-        f.emit(gedline.get_line())
-        if gedline.level == 0 and gedline.value == 'INDI':
+    # For all states
+    if gedline.level == 0:
+        if gedline.value == 'INDI':  # Start new INDI
+            # "0 INDI" starts a new logical record
+            _T1_emit_and_start_record(gedline, f)
             state = 1
+        else:
+            # 0 level line ends previous logical record, if any and
+            # starts a non-INDI logical record, which is emitted as is
+            _T2_emit_record_and_gedline(gedline, f)
+            state = 0
+        return
+    
+    # For all but "0 INDI" lines
+    if state == 0:      # Started, no active INDI
+        # Lines are emitted as is
+        _T3_emit_gedline(gedline, f)
         return
 
     if state == 1:      # INDI processing active
-        if gedline.level == 0:
-            # End of an individual
-            f.emit(gedline.get_line())
-            if gedline.value == 'INDI':
-                # New individual group
-                state = 1
-            else:
-                # Other group
-                state = 0
-            return
+        if gedline.level == 1:
+            if gedline.value == 'NAME':
+                # Start a new PersonName in GedcomRecord
+                _T4_store_name(gedline)
+                state = 2
+                return
 
-        if gedline.level == 1 and gedline.tag == 'NAME':    # line like '1 NAME Maija Liisa* /Nieminen/'
-            # Start of first name definition
-            _create_name_group(gedline)
-            state = 2
-            return
+            if gedline.value == 'BIRT':
+                state = 3
 
-        # Other INDI lines are written to output file
-        f.emit(gedline.get_line())
+        # Higher level lines are stored as a new members in the INDI logical record
+        _T6_store_member(gedline)
         return
     
-    if state == 2:      # NAME processing active
-        if gedline.level == 0:
-            # End of Name and Indi group
-            _emit_name_group(f)
-            if gedline.value == 'INDI':
+    if state == 2:      # NAME processing active in INDI
+        if gedline.level == 1:
+            # Level 1 lines terminate current NAME group
+            if gedline.value == 'NAME':
+                # Start a new PersonName in GedcomRecord
+                _T4_store_name(gedline)
+                state = 2
+                return
+            # Other level 1 lines terminate NAME and are stored as INDI members
+            if gedline.value == 'BIRT':
+                state = 3
+            else:
                 state = 1
-            else:
-                state = 0
-            f.emit(gedline.get_line())
+            _T6_store_member(gedline)
         else:
-            if gedline.level > 1:
-                # Lines in Name group
-                _add_to_name_group(gedline)
-            else:
-                # Level 1, end of Name group
-                _emit_name_group(f)
-                if gedline.tag == 'NAME':
-                    _create_name_group(gedline)
-                else:
-                    state = 1
-                    f.emit(gedline.get_line())
+            # Higher level lines are stored as a new members in the latest NAME group
+            _T7_store_name_member(gedline)
         return
 
+    if state == 3:       # BIRT processing (to find birth date) active in INDI
+        if gedline.level == 2 and gedline.tag == 'DATE':
+            _T5_save_date(gedline)
+            state = 1
+            return
+        if gedline.level == 1:
+            if gedline.value == 'NAME':
+                # Start a new PersonName in GedcomRecord
+                _T4_store_name(gedline)
+                state = 2
+            else:
+                _T6_store_member(gedline)
+                state = 1
+            return
+        # Level > 1, still waiting DATE
+        _T6_store_member(gedline)
+        return
 
-# Process automation operations
-#
-def _create_name_group(gedline):
-    # Create new PersonName
+    # ---- Automation operations ----
+
+def _T1_emit_and_start_record(gedline, f):
+    ''' Emit previous logical person record (if any) and create a new one '''
+    pass
+
+def _T2_emit_record_and_gedline(gedline, f):
+    ''' Emit previous logical person record (if any) and emit line '''
+    pass
+
+def _T3_emit_gedline(gedline, f): 
+    ''' Emit current line '''
+    f.emit(gedline.get_line())
+
+def _T4_store_name(gedline):
+    ''' Save gedline as a new PersonName in the logical person record '''
     global pname
     pname = PersonName(gedline)
 
+def _T5_save_date(gedline):
+    ''' Pick year from gedline '''
+    return gedline.get_year()
 
-def _add_to_name_group(gedline):
-    # Save current line in pname
+def _T6_store_member(gedline):
+    ''' Save a new gedline member in the logical record '''
+    pass
+
+def _T7_store_name_member(gedline):
+    ''' Save current line in pname '''
     global pname
     pname.add(gedline)
-
-
-def _emit_name_group(f):
-    # Print the lines of pname to output file
-    global pname
-    if type(pname) is PersonName:
-        # Name group ended; Emit previous pname rows
-        for row in pname.lines():
-            f.emit(row)
-        pname = None
