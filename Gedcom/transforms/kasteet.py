@@ -37,22 +37,22 @@ def add_args(parser):
 def initialize(args):
     pass
 
-def phase1(args,line,level,path,tag,value):
+def phase1(args,gedline):
     if path.endswith(".BIRT.PLAC") and value.startswith("(kastettu)"):  # @id@.BIRT.PLACE (kastettu) xxx
-        parts = path.split(".")
+        parts = gedline.path.split(".")
         id = parts[0]
         ids.add(id)
 
 def phase2(args):
     pass
 
-def phase3(args,line,level,path,tag,value,f):
-    parts = path.split(".")
+def phase3(args,gedline,f):
+    parts = gedline.path.split(".")
     id = parts[0]
     if id in ids:
         if tag == "BIRT": tag = "CHR"
-        if tag == "PLAC" and value.startswith("(kastettu)"): value = " ".join(value.split()[1:])
-        line = "{} {} {}".format(level, tag, value)
+        if tag == "PLAC" and gedline.value.startswith("(kastettu)"): newvalue = " ".join(gedline.value.split()[1:])
+        line = "{} {} {}".format(gedline.level, gedline.tag, newvalue)
     f.emit(line)
 
 
