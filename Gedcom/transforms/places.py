@@ -73,20 +73,18 @@ def initialize(args):
 def phase2(args):
     pass
 
-def phase3(args,line,level,path,tag,value,f):
+def phase3(args,gedline,f):
     if tag == "PLAC":
-        if not value: return
-        tkns = line.split(None,2)
-        place = value
+        if not gedline.value: return
+        place = gedline.value
         newplace = process_place(args,place)
         if newplace != place: 
             if args.display_changes: print("'{}' -> '{}'".format(place,newplace))
-            tkns[2] = newplace  
-            if args.mark_changes: tkns[1] = "PLAC-X"
-            line = " ".join(tkns)
+            gedline.value = newplace  
+            if args.mark_changes: gedline.tag = "PLAC-X"
         else:
             if args.display_nonchanges: print("Not changed: '{}'".format(place))
-    f.emit(line)
+    gedline.emit(f)
             
 ignored = [name.strip() for name in ignored_text.splitlines() if name.strip() != ""]
 
