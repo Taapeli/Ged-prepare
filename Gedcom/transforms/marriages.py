@@ -126,7 +126,7 @@ def phase3(args,gedline,f):
         fam = parts[0]
         if fam in fixedfams:
             gedline.tag = "PLAC"
-            gedline.value = fixedfams[fam])
+            gedline.value = fixedfams[fam]
         gedline.emit(f)
         return
     gedline.emit(f)
