@@ -101,13 +101,15 @@ class Output:
         self.f.write(s+"\n")
         if self.log:
             self.log = False
-            self.emit("1 _TRANSFORM " + " ".join(sys.argv))
-            datestring = time.strftime("%d %b %Y %H:%M:%S", time.localtime(time.time()))
-            self.emit("2 _TIME " + datestring)
-            #user = os.environ.get('USER',"")
+            args = sys.argv[1:]
+            self.emit("1 NOTE _TRANSFORM v.{} {}".format(_VERSION, sys.argv[0]))
+            self.emit("2 CONT _COMMAND {} {}".format(os.path.basename(sys.argv[0]), " ".join(args)))
             user = getpass.getuser()
-            if user: self.emit("2 _USER " + user)
-            self.emit("2 _SAVEDFILE " + self.newname)
+            if not user:
+                user = "Unnamed"
+            datestring = time.strftime("%d %b %Y %H:%M:%S", time.localtime(time.time()))
+            self.emit("2 CONT _DATE {} {}".format(user, datestring))
+            self.emit("2 CONT _SAVEDFILE " + self.newname)
     def save(self):
         input_gedcom = self.args.input_gedcom
         os.rename(input_gedcom,self.newname)
