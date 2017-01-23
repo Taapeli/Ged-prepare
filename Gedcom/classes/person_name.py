@@ -94,11 +94,8 @@ class PersonName(object):
         else:
             print ("{} missing /SURNAME/ in {!r}".format(gedline.path, gedline.value))         
 
-    def add_line(self, gedline): # NEW #
-        pass
- 
-    def add(self, gedline):      # OLD #
-        ''' Adds a new, higher level row
+    def add_line(self, gedline):
+        ''' Adds a new, higher level row to person name structure
 
         Arguments example:
             path='@I0001@.NAME'
@@ -109,34 +106,36 @@ class PersonName(object):
         if not type(gedline) is GedcomLine:
             raise RuntimeError("GedcomLine argument expected")
 
-        if gedline.tag == 'GIVN' and hasattr(self, 'givn'): 
-            self._append_row(gedline.level, gedline.tag, self.givn)
-            # If call name has been stored, put it here
-            if hasattr(self, 'call'):
-                print ("# _CALL {!r} for {!r}".format(self.call, self.name))
-                self._append_row(gedline.level, '_CALL', self.call)
+        self.rows.append(gedline)
         
-        elif gedline.tag == 'SURN' and hasattr(self, 'surn'):
-            self._append_row(gedline.level, gedline.tag, self.surn)
-
-        elif gedline.tag == 'NSFX' and hasattr(self, 'nsfx'): 
-            if self.nsfx != gedline.value:
-                if self.nsfx == '':
-                    self._append_row(gedline.level, gedline.tag, gedline.value)
-                else:
-                    if hasattr(self, 'new_nsfx_row') == False:
-                        self._append_row(gedline.level, gedline.tag, self.nsfx)
-                        print ("{} {!r} changed to {!r}".format(gedline.path, gedline.value, self.nsfx))           
-                        self._append_row(gedline.level, 
-                                         "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
-
-        elif gedline.tag == '_CALL':    # So called call name
-            self.call = value
-            self._append_row(gedline.level, gedline.tag, self.call)
-
-        else: # all others like 'TYPE', 'NOTE', 'SOUR', ...
-            #print ("{} # '{} {}'".format(path, tag, value))           
-            self._append_row(gedline.level, gedline.tag, gedline.value)
+#         if gedline.tag == 'GIVN' and hasattr(self, 'givn'): 
+#             self._append_row(gedline.level, gedline.tag, self.givn)
+#             # If call name has been stored, put it here
+#             if hasattr(self, 'call'):
+#                 print ("# _CALL {!r} for {!r}".format(self.call, self.name))
+#                 self._append_row(gedline.level, '_CALL', self.call)
+#         
+#         elif gedline.tag == 'SURN' and hasattr(self, 'surn'):
+#             self._append_row(gedline.level, gedline.tag, self.surn)
+# 
+#         elif gedline.tag == 'NSFX' and hasattr(self, 'nsfx'): 
+#             if self.nsfx != gedline.value:
+#                 if self.nsfx == '':
+#                     self._append_row(gedline.level, gedline.tag, gedline.value)
+#                 else:
+#                     if hasattr(self, 'new_nsfx_row') == False:
+#                         self._append_row(gedline.level, gedline.tag, self.nsfx)
+#                         print ("{} {!r} changed to {!r}".format(gedline.path, gedline.value, self.nsfx))           
+#                         self._append_row(gedline.level, 
+#                                          "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
+# 
+#         elif gedline.tag == '_CALL':    # So called call name
+#             self.call = value
+#             self._append_row(gedline.level, gedline.tag, self.call)
+# 
+#         else: # all others like 'TYPE', 'NOTE', 'SOUR', ...
+#             #print ("{} # '{} {}'".format(path, tag, value))           
+#             self._append_row(gedline.level, gedline.tag, gedline.value)
 
 
     def get_lines(self):

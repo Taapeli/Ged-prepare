@@ -30,17 +30,24 @@ Created on 26.11.2016
 @author: JMä
 '''
 
-from classes.person_name import PersonName
+#from classes.person_name import PersonName
 from classes.gedcom_line import GedcomLine
+from classes.gedcom_record import GedcomRecord
+
+# Active Indi logical record GedcomRecord, 
+# where all gedcom lines are strored when processing a person
+indi_record = None
+# state 0 = started, 1 = indi processing, 2 = name processing, 3 = birth processing
+state = 0
+
+def initialize(args):
+    global indi_record
+    global state            
+    state = 0
+    indi_record = None
 
 def add_args(parser):
     pass
-
-def initialize(args):
-    global pname        # Active Name object
-    global state        # 0 = start, 1 = indi processing, 2 = name processing
-    state = 0
-    pname = None
 
 
 def phase3(args, gedline, f):
@@ -62,17 +69,18 @@ def phase3(args, gedline, f):
             value='Antti /Puuhaara/'
         )
         f=<__main__.Output object at 0x101960fd0>
-    
-    TODO: Store Names and other level +1 lines as members of Indi GedcomLine 
     '''
 
-    global pname
+    global logical_record
     global state
     #print("# Phase3: args={!r}, line={!r}, path={!r}, tag={!r}, value={!r}, f={!r}".\
     #      format(args,line,path,tag,value,f))
 
-    # ---- INDI automation engine for processing person data ----
-
+    ''' 
+    ---- INDI automation engine for processing person data ----
+         See automation rules below
+    '''
+    
     # For all states
     if gedline.level == 0:
         if gedline.value == 'INDI':  # Start new INDI
@@ -128,7 +136,7 @@ def phase3(args, gedline, f):
 
     if state == 3:       # BIRT processing (to find birth date) active in INDI
         if gedline.level == 2 and gedline.tag == 'DATE':
-            _T5_save_date(gedline)
+            _T5_save_date(gedline,'BIRT')
             state = 1
             return
         if gedline.level == 1:
@@ -144,34 +152,56 @@ def phase3(args, gedline, f):
         _T6_store_member(gedline)
         return
 
-    # ---- Automation operations ----
+'''# ---- Automation rules ----
+
+# !state \ input !! 0 INDI!!0 . . .!! 1 NAME !! 1 BIRT !! 2 DATE !! 2,3,4,...!!1 . . .!! end
+# |--------------++-------++-------++--------++--------++--------++----------++-------++-----
+# | 0  "Started" || 1,T1  || 0,T3  || 0,T3   || 0,T3   || 0,T3   || 0,T3     || 0,T3  || 0,T2
+# | 1  "INDI"    || 1,T1  || 0,T2  || 2,T4   || 3,T6   || 1,T6   || 1,T6     || 1,T6  || 0,T2
+# | 2  "NAME"    || 1,T1  || 0,T2  || 2,T4   || 3,T6   || 2,T7   || 2,T7     || 1,T6  || 0,T2
+# | 3  "BIRT"    || 1,T1  || 0,T2  || 2,T4   || 1,T6   || 1,T5   || 3,T6     || 1,T6  || 0,T2
+ For example rule "2,T4" means operation T4 and new state 2.
+'''
 
 def _T1_emit_and_start_record(gedline, f):
     ''' Emit previous logical person record (if any) and create a new one '''
-    pass
+    global indi_record
+    if not indi_record == None:
+        indi_record.emit(f)
+    # Create new logical record
+    indi_record = GedcomRecord(gedline)
 
 def _T2_emit_record_and_gedline(gedline, f):
     ''' Emit previous logical person record (if any) and emit line '''
-    pass
+    global indi_record
+    if not indi_record == None:
+        indi_record.emit(f)
+    # Emit current line to output file
+    gedline.emit(f)
 
 def _T3_emit_gedline(gedline, f): 
     ''' Emit current line '''
-    f.emit(gedline.get_line())
+    gedline.emit(f)
 
 def _T4_store_name(gedline):
-    ''' Save gedline as a new PersonName in the logical person record '''
-    global pname
-    pname = PersonName(gedline)
+    ''' Save gedline as a new PersonName to the logical person record '''
+    global indi_record
+    nm = PersonName(gedline)
+    indi_record.add_member(nm)
 
-def _T5_save_date(gedline):
+def _T5_save_date(gedline, tag):
     ''' Pick year from gedline '''
-    return gedline.get_year()
-
+    global indi_record
+    indi_record.save_date(gedline.get_year(),tag)
+    # Save current line to indi logical record
+    indi_record.add_member(gedline)
+    
 def _T6_store_member(gedline):
-    ''' Save a new gedline member in the logical record '''
-    pass
+    ''' Save a new gedline member to the logical record '''
+    global indi_record
+    indi_record.add_member(gedline)
 
 def _T7_store_name_member(gedline):
-    ''' Save current line in pname '''
-    global pname
-    pname.add(gedline)
+    ''' Save current line to the current name object '''
+    global indi_record
+    indi_record.get_nameobject().add_line(gedline)

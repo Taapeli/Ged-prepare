@@ -10,7 +10,8 @@ from classes.gedcom_line import GedcomLine
 
 class GedcomRecord(object):
     '''
-    Stores a Gedcom logical record (level 0 record) with higher level lines included.
+    Stores a Gedcom logical record.
+    Includes level 0 record (0 INDI) with all higher level lines below
 
     Methods:
     __init__(...)    An object instance is created using the level 0 line
@@ -21,60 +22,36 @@ class GedcomRecord(object):
     If NAME has significant changes, the original value is also written to 'NOTE orig_'
     
     '''
-    global _surn_lines
-    
+    global currname
 
     def __str__(self):
         return "GedcomRecord({})".format(self.id)
 
 
-    def __init__(self):
+    def __init__(self, gedline):
         ''' Creates a new instance of gedcom logical record
             which includes a group of gredcom lines starting with a level0 record.
         '''
         self.rows = []
+        # date contains tuples like {'BIRT':1820}
+        self.date = []
+        # Latest PersonName index in self.rows
+        self.currname = -1
+        # Store level 0 line
+        if not type(gedline) is GedcomLine:
+            raise RuntimeError("GedcomLine argument expected")
+        self.add_member(gedline)
 
     
-    def add_line(self, gedline):
-        ''' Adds a gedcom line to set
+    def add_member(self, gedline):
+        ''' Adds a gedcom line to record set.
+            "2 NAME" line is added as a PersonName object, others as GedcomLine objects
         '''
-
-        if gedline.tag == 'NAME':
-            rows.append(PersonName(gedline))
-           
-        # 1) Full name processing
-        #    The parts like 'givn/surn/nsfx' will be isolated and analyzed
-    
-        self.name = value
-        s1 = value.find('/')
-        s2 = value.rfind('/')
-        if s1 >= 0 and s2 >= 0 and s1 != s2:     
-            # Contains '/Surname/' or '/Surname1/Surname2/' etc
-            self.givn = value[:s1]
-            self.surn = value[s1+1:s2]
-            self.nsfx = value[s2+1:]
-            
-            # 1.1) GIVN given name part
-            self._proc_givn(path, level, value)
-            # 1.2) SURN Surname part
-            self._proc_surn(path, level, value)
-            # 1.3) nsfx Suffix part: nothing to do?
-            pass
-
-            # Write NAME line
-            self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
-            self._append_row(level, tag, self.name)
-            # Write new SURN lines, if any
-            for ln in self._surn_lines:
-                self.rows.append(ln)
-
-           
-            # Compare the name parts from NAME tag to this got here
-            if re.sub(r' ', '', value) != re.sub(r' ', '', self.name):
-                print ("{} {!r} changed to {!r}".format(path, value, self.name))           
-                self._append_row(level + 1, "{}{}".format(_CHGTAG, tag), value)
+        if gedline.level == 2 and gedline.tag == 'NAME':
+            self.currname = len(self.rows)
+            self.rows.append(PersonName(gedline))
         else:
-            print ("{} missing /SURNAME/ in {!r}".format(path, value))         
+            self.rows.append(gedline)
 
  
     def add(self, path, level, tag, value):
@@ -115,6 +92,20 @@ class GedcomRecord(object):
             self._append_row(level, tag, value)
 
 
+    def emit(self, f):
+        ''' Writes the stored data associated to this person as new gedcom lines to file f
+          #TODO Tagien yhdistely ja tietojen muokkaus: 
+                patronyymit vuosiluvun mukaan, ristiriitaiset tiedot
+        '''
+        for obj in self.rows:
+            if type(obj) == "PersonName":
+                for line in obj.get_lines():
+                    f.emit(line)
+            else:
+                # a GedcomLine
+                f.emit(obj.get_line())
+
+
     def lines(self):
         ''' Returns the stored rows associated to this person name
         '''
@@ -122,6 +113,17 @@ class GedcomRecord(object):
             self.rows.append(self.new_nsfx_row)
         return self.rows
 
+    def store_date(self, year, tag):
+        if type(year) == 'int':
+            self.date.append = {tag:year}
+        else:
+            print ("{} no year in {!r}".format(path, value))
+
+    def get_nameobject(self):
+        ''' Returns the latest object of type PersonName '''
+        global currname
+        if currname >= 0:
+            return self.rows[currname]
 
     # Local functions
     

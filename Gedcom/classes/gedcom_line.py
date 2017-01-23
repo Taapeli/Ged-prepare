@@ -47,10 +47,6 @@ class GedcomLine(object):
         self.path = ".".join(curpath)
 
 
-    def add_name(self, gedline):
-        pass
-
-
     def add_member(self, gedline):
         ''' Store a next level gedcom line
             Line "2 GIVN Johan" is stored the path as key: {'@I0001@.NAME.GIVN':GedcomLine()}
@@ -74,3 +70,17 @@ class GedcomLine(object):
 
     def get_line(self):
         return "{} {} {}".format(self.level, self.tag, self.value)
+    
+    def get_year(self):
+        '''If value has a for digit last part, the numeric value of it is returned '''
+        p = split(self.value)
+        try:
+            if len(p) > 0 and len(p[:-1]) == 4:
+                return int(p[:-1])
+        except:
+            return None
+    
+    def emit(self, f):
+        # Print out current line to file f
+        f.emit(self.get_line())
+
