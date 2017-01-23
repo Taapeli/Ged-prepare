@@ -68,10 +68,11 @@ def add_args(parser):
 def initialize(args):
     pass
 
-def phase1(args,line,level,path,tag,value):
+def phase1(args,gedline):
     '''
 		1st traverse: finding all families
     '''
+    path = gedline.path
     if path.endswith(".HUSB"):  # @fam@.HUSB @husb@
         parts = path.split(".")
         fam = parts[0]
@@ -106,27 +107,28 @@ def phase2(args):
             resi[faminfo.wife].append((wife_place,faminfo.date))
             fixedfams[fam] = m.group(1)
 
-def phase3(args,line,level,path,tag,value,f):
+def phase3(args,gedline,f):
     '''
         2nd traverse: creating the new GEDCOM file
     '''
-    if value == "INDI":
-        key = line.split()[1]
+    if gedline.value == "INDI":  # 0 @Ixxx@ INDI
+        key = gedline.tag
         if key in resi:
-            f.emit(line)
+            gedline.emit(f)
             for place,date in resi[key]:
                 f.emit("1 RESI")
                 f.emit("2 TYPE marriage")
                 if date: f.emit("2 DATE " + date)
                 f.emit("2 PLAC " + place)
             return
-    if path.endswith(".MARR.PLAC"):  # @fam@.MARR.PLAC place
-        parts = path.split(".")
+    if gedline.path.endswith(".MARR.PLAC"):  # @fam@.MARR.PLAC place
+        parts = gedline.path.split(".")
         fam = parts[0]
         if fam in fixedfams:
-            line = "{} {} {}".format(level,"PLAC", fixedfams[fam])
-        f.emit(line)
+            gedline.tag = "PLAC"
+            gedline.value = fixedfams[fam])
+        gedline.emit(f)
         return
-    f.emit(line)
+    gedline.emit(f)
                        
 
