@@ -69,7 +69,7 @@ class GedcomLine(object):
         return (line, self.level, self.path, self.tag, self.value)
 
     def get_line(self):
-        return "{} {} {}".format(self.level, self.tag, self.value)
+        return "{} {} {}".format(self.level, self.tag, self.value).strip()
     
     def get_year(self):
         '''If value has a for digit last part, the numeric value of it is returned '''
