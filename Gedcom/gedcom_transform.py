@@ -86,11 +86,16 @@ class Output:
         self.args = args
         self.log = True
     def __enter__(self):
-        input_gedcom = self.args.input_gedcom
-        tempfile.tempdir = os.path.dirname(input_gedcom) # create tempfile in the same directory so you can rename it later
-        self.tempname = tempfile.mktemp()
-        self.newname = self.generate_name(input_gedcom)
-        self.f = open(self.tempname,"w",encoding=self.args.encoding)
+        args = self.args
+        input_gedcom = args.input_gedcom
+        if args.output_gedcom:
+            self.output_filename = args.output_gedcom
+        else:
+            tempfile.tempdir = os.path.dirname(input_gedcom) # create tempfile in the same directory so you can rename it later
+            self.tempname = tempfile.mktemp()
+            self.newname = self.generate_name(input_gedcom)
+            self.output_filename = self.tempname
+        self.f = open(self.output_filename,"w",encoding=args.encoding)
         return self
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.f.close()
@@ -109,13 +114,17 @@ class Output:
                 user = "Unnamed"
             datestring = time.strftime("%d %b %Y %H:%M:%S", time.localtime(time.time()))
             self.emit("2 CONT _DATE {} {}".format(user, datestring))
-            self.emit("2 CONT _SAVEDFILE " + self.newname)
+            if self.newname:
+                self.emit("2 CONT _SAVEDFILE " + self.newname)
     def save(self):
         input_gedcom = self.args.input_gedcom
-        os.rename(input_gedcom,self.newname)
-        os.rename(self.tempname,input_gedcom)
-        print("Input file renamed to '{}'".format(self.newname))
-        print("New version saved as '{}'".format(input_gedcom))
+        if not self.args.output_gedcom:
+            os.rename(input_gedcom,self.newname)
+            os.rename(self.tempname,input_gedcom)
+            print("Input file renamed to '{}'".format(self.newname))
+            print("New version saved as '{}'".format(input_gedcom))
+        else:
+            print("Output saved as '{}'".format(self.args.output_gedcom))
     def generate_name(self,name):
         i = 0
         while True:
@@ -197,7 +206,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
-    #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
+    parser.add_argument('--output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
     parser.add_argument('--display-changes', action='store_true',
                         help='Display changed rows')
     parser.add_argument('--dryrun', action='store_true',
