@@ -74,7 +74,7 @@ def phase2(args):
     pass
 
 def phase3(args,gedline,f):
-    if tag == "PLAC":
+    if gedline.tag == "PLAC":
         if not gedline.value: return
         place = gedline.value
         newplace = process_place(args,place)

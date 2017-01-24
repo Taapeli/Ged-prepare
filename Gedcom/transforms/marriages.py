@@ -73,6 +73,8 @@ def phase1(args,gedline):
 		1st traverse: finding all families
     '''
     path = gedline.path
+    value = gedline.value
+    
     if path.endswith(".HUSB"):  # @fam@.HUSB @husb@
         parts = path.split(".")
         fam = parts[0]

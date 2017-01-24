@@ -38,7 +38,7 @@ def initialize(args):
     pass
 
 def phase1(args,gedline):
-    if path.endswith(".BIRT.PLAC") and value.startswith("(kastettu)"):  # @id@.BIRT.PLACE (kastettu) xxx
+    if gedline.path.endswith(".BIRT.PLAC") and gedline.value.startswith("(kastettu)"):  # @id@.BIRT.PLACE (kastettu) xxx
         parts = gedline.path.split(".")
         id = parts[0]
         ids.add(id)
