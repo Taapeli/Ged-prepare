@@ -85,6 +85,7 @@ class Output:
     def __init__(self,args):
         self.args = args
         self.log = True
+        if args.nolog: self.log = False
         self.newname = None
     def __enter__(self):
         args = self.args
@@ -212,6 +213,8 @@ def main():
                         help='Display changed rows')
     parser.add_argument('--dryrun', action='store_true',
                         help='Do not produce an output file')
+    parser.add_argument('--nolog', action='store_true',
+                        help='Do not produce a log in the output file')
     #parser.add_argument('--display-nonchanges', action='store_true',
     #                    help='Display unchanged places')
     parser.add_argument('--encoding', type=str, default="utf-8",
