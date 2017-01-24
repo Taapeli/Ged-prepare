@@ -85,6 +85,7 @@ class Output:
     def __init__(self,args):
         self.args = args
         self.log = True
+        self.newname = None
     def __enter__(self):
         args = self.args
         input_gedcom = args.input_gedcom
