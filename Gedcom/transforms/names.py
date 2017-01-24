@@ -78,7 +78,7 @@ def phase3(args, gedline, f):
 
     ''' 
     ---- INDI automation engine for processing person data ----
-         See automation rules below
+         See automation rules below Hei vaan
     '''
     
     # For all states
