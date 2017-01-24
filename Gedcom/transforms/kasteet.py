@@ -50,8 +50,8 @@ def phase3(args,gedline,f):
     parts = gedline.path.split(".")
     id = parts[0]
     if id in ids:
-        if tag == "BIRT": tag = "CHR"
-        if tag == "PLAC" and gedline.value.startswith("(kastettu)"): gedline.value = " ".join(gedline.value.split()[1:])
+        if gedline.tag == "BIRT": gedline.tag = "CHR"
+        if gedline.tag == "PLAC" and gedline.value.startswith("(kastettu)"): gedline.value = " ".join(gedline.value.split()[1:])
     gedline.emit(f)
 
 
