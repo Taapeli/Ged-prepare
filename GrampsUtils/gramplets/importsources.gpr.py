@@ -36,6 +36,6 @@ register(IMPORT,
     gramps_target_version = "4.2",
     status = STABLE,
     fname = 'importsources.py',
-    import_function = 'importSources'
-#extension = 'csv
+    import_function = 'importSources',
+    extension = 'scsv'
 )
