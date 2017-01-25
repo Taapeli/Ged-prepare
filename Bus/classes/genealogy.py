@@ -108,7 +108,7 @@ class Citation:
                 query = """
                     MATCH (n:Citation) WHERE n.gramps_handle='{}'
                     MATCH (m:Note) WHERE m.gramps_handle='{}'
-                    MERGE (n)-[r:SOURCE]->(m)
+                    MERGE (n)-[r:NOTE]->(m)
                      """.format(self.handle, self.noteref_hlink)
                                  
                 session.run(query)
@@ -688,6 +688,32 @@ class Person:
             MATCH (person:Person)-[r:EVENT]->(event:Event) 
                 WHERE person.gramps_handle='{}'
                 RETURN r.role AS eventref_role, event.gramps_handle AS eventref_hlink
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_her_families(self):
+        """ Luetaan naisen perheiden handlet """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)<-[r:MOTHER]-(family:Family) 
+                WHERE person.gramps_handle='{}'
+                RETURN family.gramps_handle AS handle
+            """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_his_families(self):
+        """ Luetaan miehen perheiden handlet """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)<-[r:FATHER]-(family:Family) 
+                WHERE person.gramps_handle='{}'
+                RETURN family.gramps_handle AS handle
             """.format(self.handle)
         return  session.run(query)
 

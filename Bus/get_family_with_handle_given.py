@@ -14,31 +14,16 @@ from classes.genealogy import connect_db, Event, Family, Person, Place
 connect_db()
     
 
-def get_family_data(handle):
+def get_family_data(mp, family_handle):
 
     # Get Family data
     
     try:
         f = Family()
-        f.handle = handle
+        f.handle = family_handle
         
         f.get_family_data()
-        f.print_data()
-                                    
-        # This is the event(s) of the family
-        for event_link in f.eventref_hlink:            
-            event = Event()
-            event.handle = event_link
-        
-            event.get_event_data()
-            event.print_data()
-        
-            if event.place_hlink != '':
-                place = Place()
-                place.handle = event.place_hlink
-                    
-                place.get_place_data()
-                place.print_data()
+#        f.print_data()
             
         print("\nFATHER: \n")
         father = Person()
@@ -84,17 +69,66 @@ def get_family_data(handle):
                 place.get_place_data()
                 place.print_data()
                             
-        print("\nCHILDREN: ")
-        for child_link in f.childref_hlink:            
-            child = Person()
-            child.handle = child_link
+        print("\nMAIN PERSON: \n")
 
-            child.get_person_and_name_data()                
-            child.get_hlinks()
-            print("\n")
-            child.print_data()
+        mp.get_person_and_name_data()                
+        mp.get_hlinks()
+        mp.print_data()
+        
+        for event_link in mp.eventref_hlink:
+            event = Event()
+            event.handle = event_link
+    
+            event.get_event_data()
+            event.print_data()
+        
+            if event.place_hlink != '':
+                place = Place()
+                place.handle = event.place_hlink
+                
+                place.get_place_data()
+                place.print_data()
+                                    
+        print("\nSPOUCE(S): \n")
+        if mp.gender == 'M':
+            result = mp.get_his_families()
+        else:
+            result = mp.get_her_families()
             
-            for event_link in child.eventref_hlink:
+        for record in result:
+            mf = Family()
+            mf.handle = record["handle"]
+            
+            mf.get_family_data()
+            mf.print_data()
+                      
+            # This is the event(s) of the family
+            for event_link in mf.eventref_hlink:            
+                event = Event()
+                event.handle = event_link
+            
+                event.get_event_data()
+                event.print_data()
+            
+                if event.place_hlink != '':
+                    place = Place()
+                    place.handle = event.place_hlink
+                        
+                    place.get_place_data()
+                    place.print_data()
+
+            print("\n")
+            spouce = Person()
+            if mp.gender == 'M':
+                spouce.handle = mf.mother
+            else:
+                spouce.handle = mf.father
+                
+            spouce.get_person_and_name_data()                
+            spouce.get_hlinks()
+            spouce.print_data()
+                
+            for event_link in spouce.eventref_hlink:
                 event = Event()
                 event.handle = event_link
         
@@ -107,6 +141,30 @@ def get_family_data(handle):
                     
                     place.get_place_data()
                     place.print_data()
+                           
+            print("\nCHILDREN: ")
+            for child_link in mf.childref_hlink:            
+                child = Person()
+                child.handle = child_link
+    
+                child.get_person_and_name_data()                
+                child.get_hlinks()
+                print("\n")
+                child.print_data()
+                
+                for event_link in child.eventref_hlink:
+                    event = Event()
+                    event.handle = event_link
+            
+                    event.get_event_data()
+                    event.print_data()
+                
+                    if event.place_hlink != '':
+                        place = Place()
+                        place.handle = event.place_hlink
+                        
+                        place.get_place_data()
+                        place.print_data()
                                                     
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
@@ -117,11 +175,11 @@ def process_neo4j(args):
     # Get family data of the person
     try:
     
-        p = Person()
-        p.handle = args.handle
-        result = p.get_parentin_handle()
+        main_person = Person()
+        main_person.handle = args.handle
+        result = main_person.get_parentin_handle()            
         for record in result:
-            get_family_data(record["parentin_hlink"])
+            get_family_data(main_person, record["parentin_hlink"])
 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
