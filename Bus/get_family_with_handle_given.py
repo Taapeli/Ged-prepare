@@ -89,7 +89,7 @@ def get_family_data(mp, family_handle):
                 place.get_place_data()
                 place.print_data()
                                     
-        print("\nSPOUCE(S): \n")
+        print("\nSPOUSE(S): \n")
         if mp.gender == 'M':
             result = mp.get_his_families()
         else:
@@ -118,17 +118,17 @@ def get_family_data(mp, family_handle):
                     place.print_data()
 
             print("\n")
-            spouce = Person()
+            spouse = Person()
             if mp.gender == 'M':
-                spouce.handle = mf.mother
+                spouse.handle = mf.mother
             else:
-                spouce.handle = mf.father
+                spouse.handle = mf.father
                 
-            spouce.get_person_and_name_data()                
-            spouce.get_hlinks()
-            spouce.print_data()
+            spouse.get_person_and_name_data()                
+            spouse.get_hlinks()
+            spouse.print_data()
                 
-            for event_link in spouce.eventref_hlink:
+            for event_link in spouse.eventref_hlink:
                 event = Event()
                 event.handle = event_link
         
