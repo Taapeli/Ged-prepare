@@ -14,13 +14,13 @@ from classes.genealogy import connect_db, Event, Family, Person, Place
 connect_db()
     
 
-def get_family_data(mp, family_handle):
+def get_parents_data(handle):
 
-    # Get Family data
+    # Get main person's parents data
     
     try:
         f = Family()
-        f.handle = family_handle
+        f.handle = handle
         
         f.get_family_data()
 #        f.print_data()
@@ -68,6 +68,16 @@ def get_family_data(mp, family_handle):
                     
                 place.get_place_data()
                 place.print_data()
+                                                    
+    except Exception as err:
+        print("Virhe: {0}".format(err), file=stderr)
+    
+
+def get_family_data(mp):
+
+    # Get main person's Family data
+    
+    try:
                             
         print("\nMAIN PERSON: \n")
 
@@ -177,9 +187,19 @@ def process_neo4j(args):
     
         main_person = Person()
         main_person.handle = args.handle
+        
+        # The fetching of the family and parents data of the main person is
+        # split to two operations:
+        #
+        # If there are no parents in the db the result of 
+        # get_parentin_handle() operation is empty,
+        # but the get_family_data operation prints out
+        # the family of the main person.
         result = main_person.get_parentin_handle()            
         for record in result:
-            get_family_data(main_person, record["parentin_hlink"])
+            get_parents_data(record["parentin_hlink"])
+
+        get_family_data(main_person)
 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
