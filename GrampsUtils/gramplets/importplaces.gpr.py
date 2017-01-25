@@ -24,18 +24,18 @@ Gramps registration file
 
 #------------------------------------------------------------------------
 #
-# Import repositories and sources from csv
+#  Import / Database Processing / Import place hierarchies from cvs file 
 #
 #------------------------------------------------------------------------
 
 register(IMPORT, 
-    id    = 'importsources',
-    name  = _("Reference Source hierarchies with optional tags from a csv file"),
-    description =  _("Import repositories and sources with optional tags from a csv file"),
+    id    = 'Import Places',
+    name  = _("Reference Place hierarchies with optional tags from a csv file"),
+    description =  _("Import Reference Place hierarchies with optional tags from a csv file"),
     version = '0.1',
     gramps_target_version = "4.2",
     status = STABLE,
-    fname = 'importsources.py',
-    import_function = 'importSources',
-    extension = 'scsv'
+    fname = 'importplaces.py',
+    import_function = 'importPlaceHierarchy',
+    extension = 'pcsv'
 )
