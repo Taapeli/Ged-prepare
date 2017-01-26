@@ -14,91 +14,29 @@ from classes.genealogy import connect_db, Event, Family, Person, Place
 connect_db()
     
 
-def get_parents_data(handle):
+def get_event_and_place_data(event_link):
+    event = Event()
+    event.handle = event_link
 
-    # Get main person's parents data
+    event.get_event_data()
+    event.print_data()
+
+    if event.place_hlink != '':
+        place = Place()
+        place.handle = event.place_hlink
+        
+        place.get_place_data()
+        place.print_data()
     
-    try:
-        f = Family()
-        f.handle = handle
-        
-        f.get_family_data()
-#        f.print_data()
-            
-        print("\nFATHER: \n")
-        father = Person()
-        father.handle = f.father
-        
-        father.get_person_and_name_data()
-        father.get_hlinks()
-        father.print_data()
-                
-        for event_link in father.eventref_hlink:
-            event = Event()
-            event.handle = event_link
-        
-            event.get_event_data()
-            event.print_data()
-
-            if event.place_hlink != '':
-                place = Place()
-                place.handle = event.place_hlink
-                    
-                place.get_place_data()
-                place.print_data()
-                      
-        print("\nMOTHER: \n")
-        mother = Person()
-        mother.handle = f.mother
-        
-        mother.get_person_and_name_data()                
-        mother.get_hlinks()
-        mother.print_data()
-
-        for event_link in mother.eventref_hlink:
-            event = Event()
-            event.handle = event_link
-        
-            event.get_event_data()
-            event.print_data()
-        
-            if event.place_hlink != '':
-                place = Place()
-                place.handle = event.place_hlink
-                    
-                place.get_place_data()
-                place.print_data()
-                                                    
-    except Exception as err:
-        print("Virhe: {0}".format(err), file=stderr)
     
-
 def get_family_data(mp):
 
     # Get main person's Family data
     
     try:
-                            
         print("\nMAIN PERSON: \n")
-
-        mp.get_person_and_name_data()                
-        mp.get_hlinks()
-        mp.print_data()
-        
-        for event_link in mp.eventref_hlink:
-            event = Event()
-            event.handle = event_link
-    
-            event.get_event_data()
-            event.print_data()
-        
-            if event.place_hlink != '':
-                place = Place()
-                place.handle = event.place_hlink
-                
-                place.get_place_data()
-                place.print_data()
-                                    
+        get_person_data(mp)
+                         
         print("\nSPOUSE(S): \n")
         if mp.gender == 'M':
             result = mp.get_his_families()
@@ -114,18 +52,7 @@ def get_family_data(mp):
                       
             # This is the event(s) of the family
             for event_link in mf.eventref_hlink:            
-                event = Event()
-                event.handle = event_link
-            
-                event.get_event_data()
-                event.print_data()
-            
-                if event.place_hlink != '':
-                    place = Place()
-                    place.handle = event.place_hlink
-                        
-                    place.get_place_data()
-                    place.print_data()
+                get_event_and_place_data(event_link)        
 
             print("\n")
             spouse = Person()
@@ -133,51 +60,52 @@ def get_family_data(mp):
                 spouse.handle = mf.mother
             else:
                 spouse.handle = mf.father
-                
-            spouse.get_person_and_name_data()                
-            spouse.get_hlinks()
-            spouse.print_data()
-                
-            for event_link in spouse.eventref_hlink:
-                event = Event()
-                event.handle = event_link
-        
-                event.get_event_data()
-                event.print_data()
-            
-                if event.place_hlink != '':
-                    place = Place()
-                    place.handle = event.place_hlink
-                    
-                    place.get_place_data()
-                    place.print_data()
+            get_person_data(spouse)
                            
             print("\nCHILDREN: ")
             for child_link in mf.childref_hlink:            
                 child = Person()
                 child.handle = child_link
-    
-                child.get_person_and_name_data()                
-                child.get_hlinks()
                 print("\n")
-                child.print_data()
-                
-                for event_link in child.eventref_hlink:
-                    event = Event()
-                    event.handle = event_link
-            
-                    event.get_event_data()
-                    event.print_data()
-                
-                    if event.place_hlink != '':
-                        place = Place()
-                        place.handle = event.place_hlink
-                        
-                        place.get_place_data()
-                        place.print_data()
+                get_person_data(child)
                                                     
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
+    
+
+def get_parents_data(handle):
+
+    # Get main person's parents data
+    
+    try:
+        f = Family()
+        f.handle = handle
+        
+        f.get_family_data()
+#        f.print_data()
+            
+        print("\nFATHER: \n")
+        father = Person()
+        father.handle = f.father
+        get_person_data(father)
+                      
+        print("\nMOTHER: \n")
+        mother = Person()
+        mother.handle = f.mother
+        get_person_data(mother)
+                                                    
+    except Exception as err:
+        print("Virhe: {0}".format(err), file=stderr)
+        
+        
+def get_person_data(individ):
+        
+    individ.get_person_and_name_data()                
+    individ.get_hlinks()
+    individ.print_data()
+
+    for event_link in individ.eventref_hlink:
+        get_event_and_place_data(event_link)        
 
 
 def process_neo4j(args):
