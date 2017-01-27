@@ -29,8 +29,8 @@ def connect_db():
         driver = GraphDatabase.driver("bolt://localhost", auth=basic_auth("neo4j", "localTaapeli"))
         session = driver.session()
 
-    # Palautetaan tietokannan sijainnin hostname
-    return driver.url
+#     # Palautetaan tietokannan sijainnin hostname
+#     return driver.url
 
 
 class Citation:
@@ -631,7 +631,8 @@ class Note:
                 
             return session.run(query)
         except Exception as err:
-            print("Virhe: {0}".format(err), file=stderr)
+            print("Virhe {}: {}".format(err.__class__.__name__, str(err), file=stderr))
+            raise SystemExit("Stopped due to errors")    # Stop processing
 
 
 class Person:
