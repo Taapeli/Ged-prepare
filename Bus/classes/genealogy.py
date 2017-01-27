@@ -4,7 +4,7 @@ from neo4j.v1 import GraphDatabase, basic_auth
 #from flask import flash
 #import logging
 from sys import stderr
-import config as dbconf      # Tietokannan tiedot
+import instance.config as dbconf      # Tietokannan tiedot
 #from flask.globals import session
 
 def connect_db():
