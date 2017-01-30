@@ -33,6 +33,7 @@ Created on 26.11.2016
 #from classes.person_name import PersonName
 from classes.gedcom_line import GedcomLine
 from classes.gedcom_record import GedcomRecord
+from classes.person_name import PersonName
 
 # Active Indi logical record GedcomRecord, 
 # where all gedcom lines are strored when processing a person
@@ -103,13 +104,13 @@ def phase3(args, gedline, f):
 
     if state == 1:      # INDI processing active
         if gedline.level == 1:
-            if gedline.value == 'NAME':
+            if gedline.tag == 'NAME':
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
                 return
 
-            if gedline.value == 'BIRT':
+            if gedline.tag == 'BIRT':
                 state = 3
 
         # Higher level lines are stored as a new members in the INDI logical record
@@ -119,13 +120,13 @@ def phase3(args, gedline, f):
     if state == 2:      # NAME processing active in INDI
         if gedline.level == 1:
             # Level 1 lines terminate current NAME group
-            if gedline.value == 'NAME':
+            if gedline.tag == 'NAME':
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
                 return
             # Other level 1 lines terminate NAME and are stored as INDI members
-            if gedline.value == 'BIRT':
+            if gedline.tag == 'BIRT':
                 state = 3
             else:
                 state = 1
@@ -141,7 +142,7 @@ def phase3(args, gedline, f):
             state = 1
             return
         if gedline.level == 1:
-            if gedline.value == 'NAME':
+            if gedline.tag == 'NAME':
                 # Start a new PersonName in GedcomRecord
                 _T4_store_name(gedline)
                 state = 2
@@ -193,7 +194,7 @@ def _T4_store_name(gedline):
 def _T5_save_date(gedline, tag):
     ''' Pick year from gedline '''
     global indi_record
-    indi_record.save_date(gedline.get_year(),tag)
+    indi_record.store_date(gedline.get_year(),tag)
     # Save current line to indi logical record
     indi_record.add_member(gedline)
     
