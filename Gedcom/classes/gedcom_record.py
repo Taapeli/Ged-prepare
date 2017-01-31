@@ -5,8 +5,9 @@ Created on 16.1.2017
 '''
 
 import re
+from sys import stderr
 from classes.gedcom_line import GedcomLine
-
+from classes.person_name import PersonName
 
 class GedcomRecord(object):
     '''
@@ -22,8 +23,6 @@ class GedcomRecord(object):
     If NAME has significant changes, the original value is also written to 'NOTE orig_'
     
     '''
-    global currname
-
     def __str__(self):
         return "GedcomRecord({})".format(self.id)
 
@@ -40,6 +39,9 @@ class GedcomRecord(object):
         # Store level 0 line
         if not type(gedline) is GedcomLine:
             raise RuntimeError("GedcomLine argument expected")
+        self.level = gedline.level
+        self.path = gedline.path
+        self.value = gedline.value
         self.add_member(gedline)
 
     
@@ -47,7 +49,7 @@ class GedcomRecord(object):
         ''' Adds a gedcom line to record set.
             "2 NAME" line is added as a PersonName object, others as GedcomLine objects
         '''
-        if gedline.level == 2 and gedline.tag == 'NAME':
+        if gedline.level == 1 and gedline.tag == 'NAME':
             self.currname = len(self.rows)
             self.rows.append(PersonName(gedline))
         else:
@@ -98,12 +100,12 @@ class GedcomRecord(object):
                 patronyymit vuosiluvun mukaan, ristiriitaiset tiedot
         '''
         for obj in self.rows:
-            if type(obj) == "PersonName":
+            if type(obj) == PersonName:
                 for line in obj.get_lines():
                     f.emit(line)
             else:
                 # a GedcomLine
-                f.emit(obj.get_line())
+                f.emit(str(obj))
 
 
     def lines(self):
@@ -114,16 +116,15 @@ class GedcomRecord(object):
         return self.rows
 
     def store_date(self, year, tag):
-        if type(year) == 'int':
-            self.date.append = {tag:year}
+        if type(year) == int:
+            self.date.append({tag:year})
         else:
-            print ("{} no year in {!r}".format(path, value))
+            print ("{} ERROR: Invalid {} year".format(self.path, tag), file=stderr)
 
     def get_nameobject(self):
         ''' Returns the latest object of type PersonName '''
-        global currname
-        if currname >= 0:
-            return self.rows[currname]
+        if self.currname >= 0:
+            return self.rows[self.currname]
 
     # Local functions
     
@@ -227,7 +228,6 @@ class GedcomRecord(object):
         #if _note != '':
         #    print ("#{} {!r} surnames{}".format(path, value, _note))                           
 
-    
     def _format_row(self, level, tag, value):
         ''' Builds a gedcom row '''
         return("{} {} {}".format(level, tag, str.strip(value)))

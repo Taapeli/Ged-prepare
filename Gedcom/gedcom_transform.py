@@ -73,7 +73,6 @@ import getpass
 import time
 import argparse
 import tempfile
-from sys import stderr
 import importlib
 
 from classes.gedcom_line import GedcomLine

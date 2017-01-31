@@ -4,6 +4,9 @@ Created on 16.1.2017
 @author: jm
 '''
 
+from sys import stderr
+
+# Current path from previous line
 curpath = []
 
 class GedcomLine(object):
@@ -34,7 +37,7 @@ class GedcomLine(object):
         self.level = int(tkns[0])
         self.tag = tkns[1]
         if self.level > len(curpath):
-            raise RuntimeError("Invalid level {}: {}".format(linenum, line))
+            raise RuntimeError("Invalid level at {}: {}".format(linenum, line))
         if self.level == len(curpath):
             curpath.append(self.tag)
         else:
@@ -52,7 +55,7 @@ class GedcomLine(object):
         try:
             ret = "{} {} {}".format(self.level, self.tag, self.value).strip()
         except:
-            print("Missing GedcomLine data", sys.stderr)
+            print("Missing GedcomLine data", file=stderr)
             ret = "** Error **"
         return ret
     
