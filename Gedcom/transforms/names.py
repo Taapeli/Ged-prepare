@@ -1,42 +1,41 @@
 '''
     Processes gedcom lines trying to fix problems of individual name tags
 
-    Input example (originally no indent):
-        0 @I0149@ INDI
-          1 NAME Johan Johanpoika /Sihvola/
-            2 TYPE aka
-            2 GIVN Johan Johanpoika
-            2 SURN Sihvola
-          1 NAME Johan /Johansson/
-            2 GIVN Johan
-            2 SURN Johansson
-            2 SOUR @S0015@
-              3 PAGE Aukeama 451, Kuva 289 Sihvola
-              3 DATA
-                4 DATE 28 JAN 2015
-            3 NOTE @N0175@
-          1 SEX M
-            ...
-
-    Processing:
-        - When a "1 NAME" line is found, a new PersonName object is created
-        - The components of "1 NAME" line are stored in that object and
-          modified NAME line is written to output file
-        - The following name data rows are replaced with the stored values if available
-        - a new "2 _CALL" or '2 NSFX' lines may be added
+    The input flow of GedcomLine objects have the following process:
+      1. When an INDI line is found, a new GedcomRecord is created
+        - The following lines associated to this person are stored in a list in the GedcomRecord:
+          - When a "1 NAME" line is found, a new PersonName object is created and the following
+            lines associated to this name are stored as a list in the PersonName
+          - When all lines of current INDI record (0 INDI and all lower level rows)
+            the transformed lines are written to output using GedcomRecord.emit() method.
+      2. The other input records (HEAD, FAM etc.) are written out immediately line by line
 
 Created on 26.11.2016
 
 @author: JMä
 '''
+#     Input example (originally no indent):
+#         0 @I0149@ INDI
+#           1 NAME Johan Johanpoika /Sihvola/
+#             2 TYPE aka
+#             2 GIVN Johan Johanpoika
+#             2 SURN Sihvola
+#           1 NAME Johan /Johansson/
+#             2 GIVN Johan
+#             2 SURN Johansson
+#             2 SOUR @S0015@
+#               3 PAGE Aukeama 451, Kuva 289 Sihvola
+#               3 DATA
+#                 4 DATE 28 JAN 2015
+#             3 NOTE @N0175@
+#           1 SEX M
+#             ...
 
-#from classes.person_name import PersonName
 from classes.gedcom_line import GedcomLine
 from classes.gedcom_record import GedcomRecord
 from classes.person_name import PersonName
 
-# Active Indi logical record GedcomRecord, 
-# where all gedcom lines are strored when processing a person
+# Active Indi logical record GedcomRecord
 indi_record = None
 # state 0 = started, 1 = indi processing, 2 = name processing, 3 = birth processing
 state = 0
@@ -54,10 +53,8 @@ def add_args(parser):
 def phase3(args, gedline, f):
     '''
     Function phase3 is called once for each line in the input GEDCOM file.
-    This function should produce the output GEDCOM by calling output_file.emit
-    for each line in the output file.
-    If an input line is not modified then emit should
-    be called with the original line as the parameter.
+    This function produce the output GEDCOM by calling output_file.emit() for each line.
+    If an input line is not modified then the original lines are emitted as is.
 
     Arguments example:
         args=Namespace(display_changes=False, dryrun=True, encoding='utf-8', \

@@ -56,7 +56,6 @@ class PersonName(object):
 
         # GedcomLines associated to this PersonName
         self.rows = []
-        self._surn_lines = []    # Surname GedLines after NAME line
         if gedline.tag != 'NAME':
             raise AttributeError('Needs a NAME row for PersonName.init()')
 
@@ -89,7 +88,7 @@ class PersonName(object):
            
             # Compare the name parts from NAME tag to this got here
             if re.sub(r' ', '', gedline.value) != re.sub(r' ', '', self.name):
-                print ("{} {!r} ––> {!r}".format(gedline.path, gedline.value, self.name))           
+                print ("{} {!r:>30} ––> {!r}".format(gedline.path, gedline.value, self.name))           
                 self._append_gedline(gedline.level, "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
         else:
             print ("{} missing /SURNAME/ in {!r}".format(gedline.path, gedline.value))         
@@ -142,7 +141,6 @@ class PersonName(object):
             for gl in find_w_path(self, tag):
                 # TODO: pitäisi huomioida NAME-riville tehdyt muutokset 
                 orows.append(str(gl))
-        
         return orows
 
 
@@ -168,7 +166,7 @@ class PersonName(object):
                     self.nsfx = nm
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
-                    self.new_nsfx_row = self._format_row(gedline.level+1, 'NSFX', nm)
+                    self._append_gedline(gedline.level+1, 'NSFX', nm)
             
             # 1.1b) Set call name, if one of given names are marked with '*'
     
@@ -187,6 +185,8 @@ class PersonName(object):
                     self.givn = re.sub(r"\(.*\) *", "", self.givn).rstrip()
         else:
             self.givn = _NONAME
+        self._append_gedline(gedline.level+1, 'GIVN', self.givn)
+
 
     def _proc_surn(self, gedline):
         ''' Process surname part of NAME record
@@ -203,7 +203,6 @@ class PersonName(object):
         TODO: Pitäisi käsitellä pilkuin erotetut sukunimet Gedcom 5.5:n mukaisesti (kuten '/')
         TODO: Pikutetuista nimistä ensimmäinen on virallinen, muuta AKA
         '''
-        #global _note
         
         def _put(name, name_type):
             ''' Store rows SURN with TYPE, if defined '''
@@ -212,7 +211,6 @@ class PersonName(object):
                 if name_type != '':
                     self._append_gedline(gedline.level + 2, 'TYPE', name_type)
                     #_note = "{} {}({})".format(_note, name, name_type)
-
 
         if not (type(gedline) is PersonName or type(gedline) is GedcomLine):
             raise RuntimeError("GedcomLine or PersonName argument expected")
@@ -252,8 +250,6 @@ class PersonName(object):
         _put(name, oper)
         # The last name is the one used
         self.surn = name
-        #if _note != '':
-        #    print ("#{} {!r} surnames{}".format(path, value, _note))                           
 
     
     def _format_row(self, level, tag, value):
