@@ -47,6 +47,16 @@ class GedcomLine(object):
         self.path = ".".join(curpath)
 
 
+    def __str__(self):
+        ''' Get the original line '''
+        try:
+            ret = "{} {} {}".format(self.level, self.tag, self.value).strip()
+        except:
+            print("Missing GedcomLine data", sys.stderr)
+            ret = "** Error **"
+        return ret
+    
+
     def add_member(self, gedline):
         ''' Store a next level gedcom line
             Line "2 GIVN Johan" is stored the path as key: {'@I0001@.NAME.GIVN':GedcomLine()}
@@ -68,15 +78,7 @@ class GedcomLine(object):
     def get_parts(self):
         return (line, self.level, self.path, self.tag, self.value)
 
-    def __str__(self):
-        ''' Get the original line '''
-        try:
-            ret = "{} {} {}".format(self.level, self.tag, self.value).strip()
-        except:
-            print("Missing GedcomLine data", sys.stderr)
-            ret = "** Error **"
-        return ret
-    
+
     def get_year(self):
         '''If value has a four digit last part, the numeric value of it is returned
         '''
