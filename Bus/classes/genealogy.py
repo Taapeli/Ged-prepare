@@ -1135,7 +1135,7 @@ class Refname:
             query="""
                 MERGE (a:Refname {})
                 MERGE (b:Refname {})
-                CREATE UNIQUE (a)-[:REFFIRST]->(b)
+                CREATE (a)-[:REFFIRST]->(b)
                 RETURN a.id AS aid, a.name AS aname, b.id AS bid, b.name AS bname;""".format(a_attr, b_attr)
                 
             try:
@@ -1149,29 +1149,31 @@ class Refname:
                     
                     logging.debug('Luotiin (a {}:{})'.format(a_oid, a_name))
                     logging.debug('Luotiin (b {}:{})'.format(b_oid, b_name))
-                    logging.debug('Luotiin ({}:{})-->({}:{})'.format(a_name, b_name))
+                    logging.debug('Luotiin ({}:{})-->({}:{})'.format(a_oid, a_name, b_oid, b_name))
                     
-            except Exception as e:
-                logging.warning('Lisääminen (a)-->(b) ei onnistunut: {}'.format(e))
+            except Exception as err:
+                print("Virhe1: {0}".format(err), file=stderr)
+                logging.warning('Lisääminen (a)-->(b) ei onnistunut: {}'.format(err))
 
         else:
             # Luodaan (A:{name=name}) ilman viittausta B:hen
             # Jos A puuttuu kannasta, se luodaan
             query="""
                  MERGE (a:Refname {})
-                 RETURN a.id, a.name;""".format(a_attr)
+                 RETURN a.id AS aid, a.name AS aname;""".format(a_attr)
             try:
                 result = session.run(query)
         
                 for record in result:
-                    a_oid = record["a"]['id']
-                    a_name = record["a"]['name']
+                    a_oid = record["aid"]
+                    a_name = record["aname"]
                     
-                    logging.debug('Luotiin{} ({}:{})'.format(a_oid, a_name))
+                    logging.debug('Luotiin{} ({}:{})'.format(a_attr,  a_oid, a_name))
                     
-            except Exception as e:
+            except Exception as err:
                 # Ei ole kovin fataali, ehkä jokin attribuutti hukkuu?
-                logging.warning('Lisääminen (a) ei onnistunut: {}'.format(e))
+                print("Virhe2: {0}".format(err), file=stderr)
+                logging.warning('Lisääminen (a) ei onnistunut: {}'.format(err))
 
 
     def get_typed_refnames(reftype=""):
