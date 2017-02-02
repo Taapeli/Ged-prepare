@@ -1135,7 +1135,7 @@ class Refname:
             query="""
                 MERGE (a:Refname {})
                 MERGE (b:Refname {})
-                CREATE (a)-[:REFFIRST]->(b)
+                CREATE UNIQUE (a)-[:REFFIRST]->(b)
                 RETURN a.id AS aid, a.name AS aname, b.id AS bid, b.name AS bname;""".format(a_attr, b_attr)
                 
             try:
@@ -1152,7 +1152,7 @@ class Refname:
                     logging.debug('Luotiin ({}:{})-->({}:{})'.format(a_oid, a_name, b_oid, b_name))
                     
             except Exception as err:
-                print("Virhe1: {0}".format(err), file=stderr)
+                print("Virhe: {0}".format(err), file=stderr)
                 logging.warning('Lisääminen (a)-->(b) ei onnistunut: {}'.format(err))
 
         else:
@@ -1172,7 +1172,7 @@ class Refname:
                     
             except Exception as err:
                 # Ei ole kovin fataali, ehkä jokin attribuutti hukkuu?
-                print("Virhe2: {0}".format(err), file=stderr)
+                print("Virhe: {0}".format(err), file=stderr)
                 logging.warning('Lisääminen (a) ei onnistunut: {}'.format(err))
 
 

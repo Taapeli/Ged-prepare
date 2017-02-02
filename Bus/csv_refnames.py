@@ -69,7 +69,7 @@ def referenssinimet(pathname, colA=None, colB=None, max=0):
                     r.reftype = reftype
                     logging.debug("cvs_refnames: {0} --> {1}".format(nimi, ref_name))
                 else:
-                    logging.warning('cvs_refnames: Referenssinimen viittaus {} hylätty. '.format(reftype, self))
+                    logging.warning('cvs_refnames: Referenssinimen viittaus {} hylätty. '.format(reftype))
             if sp != '':
                 r.gender = sp
             if source != '':
