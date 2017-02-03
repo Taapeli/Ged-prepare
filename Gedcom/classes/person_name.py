@@ -25,10 +25,10 @@ class PersonName(object):
 
     Methods:
     __init__(...)    An object instance is greated using '1 NAME' tag row
-    add(...)         Other, higher level rows are added
-    get_lines()        Returns the list of Gedgom get_lines fixed
+    add_line(...)    Other, higher level rows are added
+    get_lines()      Returns the list of Gedgom get_lines fixed
     
-    The fixes are don mostly from '1 NAME givn/surn/nsfx' row.
+    The fixes are done mostly from '1 NAME givn/surn/nsfx' row.
     If NAME has significant changes, the original value is also written to 'NOTE orig_'
     
     1. A patronyme in givn part is moved to nsfx part and a new NSFX row is created, if needed
@@ -38,67 +38,67 @@ class PersonName(object):
     3. ...
     
     '''
-    global _surn_lines
 
     def __str__(self):
-        return "PersonName({})".format(self.name)
+        return "{} NAME {}".format(self.level, self.name)
 
 
     def __init__(self, gedline):
         ''' Creates a new instance on person name definition.
             The arguments must be from a NAME gedcom line.
 
-        Arguments example:
+        Example: GedLine{
             path='@I0001@.NAME'
             level=2
             tag='NAME'
-            value='Antti /Puuhaara/'
+            value='Antti /Puuhaara/' }
         '''
 
+        # GedcomLines associated to this PersonName
         self.rows = []
-        self._surn_lines = []    # Surname get_lines after NAME line
         if gedline.tag != 'NAME':
             raise AttributeError('Needs a NAME row for PersonName.init()')
-           
-        # 1) Full name processing
-        #    The parts like 'givn/surn/nsfx' will be isolated and analyzed
-    
+
+        ''' 1) Full name processing
+               The parts like 'givn/surn/nsfx' will be isolated and analyzed
+        '''
+        self.level = gedline.level
+        self.path = gedline.path
+        self.tag = gedline.tag
         self.name = gedline.value
         s1 = gedline.value.find('/')
         s2 = gedline.value.rfind('/')
         if s1 >= 0 and s2 >= 0 and s1 != s2:     
-            # Contains '/Surname/' or '/Surname1/Surname2/' etc
+            # Contains '.../Surname/...' or '.../Surname1/Surname2/...' etc
             self.givn = gedline.value[:s1]
             self.surn = gedline.value[s1+1:s2]
             self.nsfx = gedline.value[s2+1:]
             
-            # 1.1) GIVN given name part
+            ''' 1.1) GIVN given name part'''
             self._proc_givn(gedline)
-            # 1.2) SURN Surname part
+            ''' 1.2) SURN Surname part'''
             self._proc_surn(gedline)
-            # 1.3) nsfx Suffix part: nothing to do?
+            ''' 1.3) nsfx Suffix part: nothing to do?'''
             pass
 
             # Write NAME line
             self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
-            self._append_row(gedline.level, gedline.tag, self.name)
-            # Write new SURN get_lines, if any
-            for ln in self._surn_lines:
-                self.rows.append(ln)
-
+            self._append_gedline(gedline.level, gedline.tag, self.name)
+            self.value = self.name
            
             # Compare the name parts from NAME tag to this got here
             if re.sub(r' ', '', gedline.value) != re.sub(r' ', '', self.name):
-                print ("{} {!r} changed to {!r}".format(gedline.path, gedline.value, self.name))           
-                self._append_row(gedline.level, "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
+                print ("{} {!r:>30} ––> {!r}".format(gedline.path, gedline.value, self.name))           
+                self._append_gedline(gedline.level, "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
         else:
             print ("{} missing /SURNAME/ in {!r}".format(gedline.path, gedline.value))         
+
 
     def add_line(self, gedline):
         ''' Adds a new, higher level row to person name structure
 
         Arguments example:
-            path='@I0001@.NAME'
+            path='@I0002@.NAME'
             level=2
             tag='GIVN'
             value='GIVN Brita Kristiina/'
@@ -106,44 +106,42 @@ class PersonName(object):
         if not type(gedline) is GedcomLine:
             raise RuntimeError("GedcomLine argument expected")
 
+        # A ready made GedcomLine
         self.rows.append(gedline)
         
-#         if gedline.tag == 'GIVN' and hasattr(self, 'givn'): 
-#             self._append_row(gedline.level, gedline.tag, self.givn)
-#             # If call name has been stored, put it here
-#             if hasattr(self, 'call'):
-#                 print ("# _CALL {!r} for {!r}".format(self.call, self.name))
-#                 self._append_row(gedline.level, '_CALL', self.call)
-#         
-#         elif gedline.tag == 'SURN' and hasattr(self, 'surn'):
-#             self._append_row(gedline.level, gedline.tag, self.surn)
-# 
-#         elif gedline.tag == 'NSFX' and hasattr(self, 'nsfx'): 
-#             if self.nsfx != gedline.value:
-#                 if self.nsfx == '':
-#                     self._append_row(gedline.level, gedline.tag, gedline.value)
-#                 else:
-#                     if hasattr(self, 'new_nsfx_row') == False:
-#                         self._append_row(gedline.level, gedline.tag, self.nsfx)
-#                         print ("{} {!r} changed to {!r}".format(gedline.path, gedline.value, self.nsfx))           
-#                         self._append_row(gedline.level, 
-#                                          "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
-# 
-#         elif gedline.tag == '_CALL':    # So called call name
-#             self.call = value
-#             self._append_row(gedline.level, gedline.tag, self.call)
-# 
-#         else: # all others like 'TYPE', 'NOTE', 'SOUR', ...
-#             #print ("{} # '{} {}'".format(path, tag, value))           
-#             self._append_row(gedline.level, gedline.tag, gedline.value)
-
 
     def get_lines(self):
-        ''' Returns the stored rows associated to this person name
+        ''' Returns the stored rows associated to this person name in this order (if exists)
+        
+            n NAME <NAME_PERSONAL>
+            +1 NPFX <NAME_PIECE_PREFIX>
+            +1 GIVN <NAME_PIECE_GIVEN>
+            +1 NICK <NAME_PIECE_NICKNAME>
+            +1 SPFX <NAME_PIECE_SURNAME_PREFIX
+            +1 SURN <NAME_PIECE_SURNAME>
+            +1 NSFX <NAME_PIECE_SUFFIX>
+            +1 _CALL <the call name defined by ourserlves>
+            +1 <<SOURCE_CITATION>>
+            +1 <<NOTE_STRUCTURE>>
         '''
-        if hasattr(self, 'new_nsfx_row'):
-            self.rows.append(self.new_nsfx_row)
-        return self.rows
+        def find_w_path(self, tag):
+            '''Returns those gedcom lines in NAME structure, witch have with given <path>.<tag> .
+               For example path "@I0002@.NAME.GIVN" should return both "2 GIVN" and "3 SOUR"
+            '''
+            ret = []
+            search_path = self.path + '.' + tag
+            for i in self.rows:
+                if i.path.startswith(search_path):
+                    ret.append(i)
+            return ret
+
+        # First NAME line
+        orows = [str(self)]
+        for tag in [ "NPFX", "GIVN", "NICK", "SPFX", "SURN", "NSFX", "_CALL" ]:
+            for gl in find_w_path(self, tag):
+                # TODO: pitäisi huomioida NAME-riville tehdyt muutokset 
+                orows.append(str(gl))
+        return orows
 
 
     # Local functions
@@ -151,8 +149,8 @@ class PersonName(object):
     def _proc_givn(self, gedline):
         ''' Process given name part of NAME record
         '''
-        if not type(gedline) is GedcomLine:
-            raise RuntimeError("GedcomLine argument expected, got {!r}".format(type(gedline)))
+        if not (type(gedline) is PersonName or type(gedline) is GedcomLine):
+            raise RuntimeError("GedcomLine or PersonName argument expected, got {!r}".format(type(gedline)))
 
         if (self.givn):
             self.givn = self.givn.rstrip()
@@ -168,7 +166,7 @@ class PersonName(object):
                     self.nsfx = nm
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
-                    self.new_nsfx_row = self._format_row(gedline.level+1, 'NSFX', nm)
+                    self._append_gedline(gedline.level+1, 'NSFX', nm)
             
             # 1.1b) Set call name, if one of given names are marked with '*'
     
@@ -187,6 +185,8 @@ class PersonName(object):
                     self.givn = re.sub(r"\(.*\) *", "", self.givn).rstrip()
         else:
             self.givn = _NONAME
+        self._append_gedline(gedline.level+1, 'GIVN', self.givn)
+
 
     def _proc_surn(self, gedline):
         ''' Process surname part of NAME record
@@ -203,19 +203,17 @@ class PersonName(object):
         TODO: Pitäisi käsitellä pilkuin erotetut sukunimet Gedcom 5.5:n mukaisesti (kuten '/')
         TODO: Pikutetuista nimistä ensimmäinen on virallinen, muuta AKA
         '''
-        #global _note
         
         def _put(name, name_type):
-            ''' Store ouput rows: SURN with TYPE, if defined '''
+            ''' Store rows SURN with TYPE, if defined '''
             if name != '':
-                self._surn_lines.append(self._format_row(gedline.level+1, 'SURN', name))
+                self._append_gedline(gedline.level+1, 'SURN', name)
                 if name_type != '':
-                    self._surn_lines.append(self._format_row(gedline.level + 2, 'TYPE', name_type))
+                    self._append_gedline(gedline.level + 2, 'TYPE', name_type)
                     #_note = "{} {}({})".format(_note, name, name_type)
 
-
-        if not type(gedline) is GedcomLine:
-            raise RuntimeError("GedcomLine argument expected")
+        if not (type(gedline) is PersonName or type(gedline) is GedcomLine):
+            raise RuntimeError("GedcomLine or PersonName argument expected")
 
         if gedline.value == '': #op_2 No surname
             return
@@ -252,8 +250,6 @@ class PersonName(object):
         _put(name, oper)
         # The last name is the one used
         self.surn = name
-        #if _note != '':
-        #    print ("#{} {!r} surnames{}".format(path, value, _note))                           
 
     
     def _format_row(self, level, tag, value):
@@ -261,9 +257,9 @@ class PersonName(object):
         return("{} {} {}".format(level, tag, str.strip(value)))
 
 
-    def _append_row(self, level, tag, value):
-        ''' Stores the row to name group '''
-        self.rows.append(self._format_row(level, tag, value))
+    def _append_gedline(self, level, tag, value):
+        ''' Stores the row as a GedcomLine '''
+        self.rows.append(GedcomLine(self._format_row(level, tag, value)))
 
 
     def _match_patronyme(self, nm):

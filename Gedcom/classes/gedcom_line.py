@@ -4,6 +4,9 @@ Created on 16.1.2017
 @author: jm
 '''
 
+from sys import stderr
+
+# Current path from previous line
 curpath = []
 
 class GedcomLine(object):
@@ -19,7 +22,7 @@ class GedcomLine(object):
     TODO: Tarkasta rivijoukon muodostus
     '''
 
-    def __init__(self, line, linenum):
+    def __init__(self, line, linenum=0):
         '''
         Constructor: Parses and stores the next gedcom line
         '''
@@ -34,7 +37,7 @@ class GedcomLine(object):
         self.level = int(tkns[0])
         self.tag = tkns[1]
         if self.level > len(curpath):
-            raise RuntimeError("Invalid level {}: {}".format(linenum, line))
+            raise RuntimeError("Invalid level at {}: {}".format(linenum, line))
         if self.level == len(curpath):
             curpath.append(self.tag)
         else:
@@ -46,6 +49,16 @@ class GedcomLine(object):
             self.value = ""
         self.path = ".".join(curpath)
 
+
+    def __str__(self):
+        ''' Get the original line '''
+        try:
+            ret = "{} {} {}".format(self.level, self.tag, self.value).strip()
+        except:
+            print("Missing GedcomLine data", file=stderr)
+            ret = "** Error **"
+        return ret
+    
 
     def add_member(self, gedline):
         ''' Store a next level gedcom line
@@ -68,19 +81,18 @@ class GedcomLine(object):
     def get_parts(self):
         return (line, self.level, self.path, self.tag, self.value)
 
-    def get_line(self):
-        return "{} {} {}".format(self.level, self.tag, self.value).strip()
-    
+
     def get_year(self):
-        '''If value has a for digit last part, the numeric value of it is returned '''
-        p = split(self.value)
+        '''If value has a four digit last part, the numeric value of it is returned
+        '''
+        p = self.value.split()
         try:
-            if len(p) > 0 and len(p[:-1]) == 4:
-                return int(p[:-1])
+            if len(p) > 0 and len(p[-1]) == 4:
+                return int(p[-1])
         except:
             return None
     
     def emit(self, f):
         # Print out current line to file f
-        f.emit(self.get_line())
+        f.emit(str(self))
 
