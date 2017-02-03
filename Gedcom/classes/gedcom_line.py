@@ -29,7 +29,7 @@ class GedcomLine(object):
 #         self.tag = tag
 #         self.value = value
         self.members = {}
-        
+        self.line = line
         tkns = line.split(None,2)
         self.level = int(tkns[0])
         self.tag = tkns[1]

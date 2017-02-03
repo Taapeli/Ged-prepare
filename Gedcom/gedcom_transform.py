@@ -105,6 +105,9 @@ class Output:
             self.save()
 
     def emit(self,s):
+        if self.display_changes and s.strip() != self.original_line:
+            print(self.original_line,"->",s)
+            self.original_line = ""
         self.f.write(s+"\n")
         if self.log:
             self.log = False
@@ -169,9 +172,16 @@ def process_gedcom(args,transformer):
     if hasattr(transformer,"phase2"):
         transformer.phase2(args)
 
+    do_phase4 = hasattr(transformer,"phase4")
+
     # 2nd traverse "phase3"
     with Output(args) as f:
+        f.display_changes = args.display_changes
         for gedline in read_gedcom(args):
+            if do_phase4 and gedline.tag == "TRLR":
+                f.original_line = ""
+                transformer.phase4(args, f)
+            f.original_line = gedline.line.strip()
             transformer.phase3(args, gedline, f)
 
 
