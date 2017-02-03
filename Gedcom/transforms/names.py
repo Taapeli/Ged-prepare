@@ -165,7 +165,7 @@ def phase3(args, gedline, f):
 def _T1_emit_and_start_record(gedline, f):
     ''' Emit previous logical person record (if any) and create a new one '''
     global indi_record
-    if not indi_record == None:
+    if indi_record != None:
         indi_record.emit(f)
     # Create new logical record
     indi_record = GedcomRecord(gedline)
@@ -173,7 +173,7 @@ def _T1_emit_and_start_record(gedline, f):
 def _T2_emit_record_and_gedline(gedline, f):
     ''' Emit previous logical person record (if any) and emit line '''
     global indi_record
-    if not indi_record == None:
+    if indi_record != None:
         indi_record.emit(f)
     # Emit current line to output file
     gedline.emit(f)
@@ -189,10 +189,9 @@ def _T4_store_name(gedline):
     indi_record.add_member(nm)
 
 def _T5_save_date(gedline, tag):
-    ''' Pick year from gedline '''
+    ''' Pick year from gedline and store current gedline '''
     global indi_record
     indi_record.store_date(gedline.get_year(),tag)
-    # Save current line to indi logical record
     indi_record.add_member(gedline)
     
 def _T6_store_member(gedline):

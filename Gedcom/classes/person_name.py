@@ -24,8 +24,8 @@ class PersonName(object):
     Stores and fixes Gedcom individual name information.
 
     Methods:
-    __init__(...)    An object instance is greated using '1 NAME' tag row
-    add_line(...)    Other, higher level rows are added
+    __init__(...)    Create an object instance from a '1 NAME' tag row
+    add_line(...)    Add an associated row (with higher level number)
     get_lines()      Returns the list of Gedgom get_lines fixed
     
     The fixes are done mostly from '1 NAME givn/surn/nsfx' row.
@@ -45,23 +45,21 @@ class PersonName(object):
 
     def __init__(self, gedline):
         ''' Creates a new instance on person name definition.
-            The arguments must be from a NAME gedcom line.
-
-        Example: GedLine{
-            path='@I0001@.NAME'
-            level=2
-            tag='NAME'
-            value='Antti /Puuhaara/' }
+            The arguments must be a NAME gedcom line.
         '''
+#       Example: GedLine{
+#         path='@I0001@.NAME'
+#         level=2
+#         tag='NAME'
+#         value='Antti /Puuhaara/' }
 
-        # GedcomLines associated to this PersonName
-        self.rows = []
         if gedline.tag != 'NAME':
             raise AttributeError('Needs a NAME row for PersonName.init()')
 
         ''' 1) Full name processing
                The parts like 'givn/surn/nsfx' will be isolated and analyzed
         '''
+        self.rows = []    # GedcomLines associated to this PersonName
         self.level = gedline.level
         self.path = gedline.path
         self.tag = gedline.tag
@@ -88,8 +86,8 @@ class PersonName(object):
            
             # Compare the name parts from NAME tag to this got here
             if re.sub(r' ', '', gedline.value) != re.sub(r' ', '', self.name):
-                print ("{} {!r:>30} ––> {!r}".format(gedline.path, gedline.value, self.name))           
-                self._append_gedline(gedline.level, "{}{}".format(_CHGTAG, gedline.tag), gedline.value)
+                print ("{} {!r:>36} ––> {!r}".format(gedline.path, gedline.value, self.name))           
+                self._append_gedline(gedline.level, "NOTE", "{}{} {}".format(_CHGTAG, gedline.tag, gedline.value))
         else:
             print ("{} missing /SURNAME/ in {!r}".format(gedline.path, gedline.value))         
 
@@ -135,11 +133,18 @@ class PersonName(object):
                     ret.append(i)
             return ret
 
+        #DEBUG
+        if self.path.startswith("@I173@"):
+            print("DEBUG {} {} self".format(self.path, str(self)))
+            for i in self.rows:
+                print("DEBUG {} {}".format(i.path, str(i)))
+
         # First NAME line
         orows = [str(self)]
         for tag in [ "NPFX", "GIVN", "NICK", "SPFX", "SURN", "NSFX", "_CALL" ]:
             for gl in find_w_path(self, tag):
-                # TODO: pitäisi huomioida NAME-riville tehdyt muutokset 
+                #TODO: pitäisi huomioida NAME-riville tehdyt muutokset
+                #TODO: toistuvat tagin yhdistettävä: tyhjä tai samanlainen hylätään, muuten huomautus
                 orows.append(str(gl))
         return orows
 
@@ -152,7 +157,7 @@ class PersonName(object):
         if not (type(gedline) is PersonName or type(gedline) is GedcomLine):
             raise RuntimeError("GedcomLine or PersonName argument expected, got {!r}".format(type(gedline)))
 
-        if (self.givn):
+        if self.givn:
             self.givn = self.givn.rstrip()
             gnames = self.givn.split()
             #print('# {}: {!r} TÄSSÄ'.format(path, gnames))
@@ -176,16 +181,18 @@ class PersonName(object):
                     # Remove star
                     nm = nm[:-1]
                     self.givn = ''.join(self.givn.split(sep='*', maxsplit=1))
-                    self.call = nm
+                    self.call_name = nm
                 # Name in parentehsins "(Jussi)"
                 elif re.match(r"\(.*\)", nm) != None:
                     # Remove parenthesis
-                    self.call = nm[1:-1]
+                    self.call_name = nm[1:-1]
                     # Given names without call name
                     self.givn = re.sub(r"\(.*\) *", "", self.givn).rstrip()
         else:
             self.givn = _NONAME
         self._append_gedline(gedline.level+1, 'GIVN', self.givn)
+        if hasattr(self, 'call_name'):
+            self._append_gedline(gedline.level+1, '_CALL', self.call_name)
 
 
     def _proc_surn(self, gedline):
@@ -250,7 +257,7 @@ class PersonName(object):
         _put(name, oper)
         # The last name is the one used
         self.surn = name
-
+        
     
     def _format_row(self, level, tag, value):
         ''' Builds a gedcom row '''
@@ -258,8 +265,37 @@ class PersonName(object):
 
 
     def _append_gedline(self, level, tag, value):
-        ''' Stores the row as a GedcomLine '''
-        self.rows.append(GedcomLine(self._format_row(level, tag, value)))
+        ''' Stores the row as a GedcomLine so that previous values are replaces and 
+            right order is preserved.
+            1. Inset NAME row on the top
+            2. Is the same path is found in self.rows[x]?
+               2.1 If found, replace the row with given data
+               2.2 Else append row to the end
+        '''
+        gl = GedcomLine(self._format_row(level, tag, value))
+        gl.set_path(level, tag) # Turha???
+        if tag == "NAME":
+            # 1. Add NAME row to the top
+            self.rows = [gl] + self.rows
+            return
+
+        for x in range(len(self.rows)):
+            if self.rows[x].path == gl.path:
+                # 2.1 The same path found
+                v = self.rows[x].value
+                self.rows[x] = gl
+                if v != "":
+                    if v != value:
+                        # Previous value is different to new value: add a NOTE and print a msg
+                        msg = " orig_{} value {} replaced with {}".format(tag, v, value)
+                        self.rows.insert(x+1, GedcomLine(self._format_row(level+1, "NOTE", msg)))
+                        print(self.rows[x].path + msg)
+                    self.rows[x] = gl
+                self.rows[x] = gl
+                return
+
+        # 2.2 Path not found            
+        self.rows.append(gl)
 
 
     def _match_patronyme(self, nm):
