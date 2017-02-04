@@ -13,8 +13,7 @@ class GedcomLine(object):
     Example
     - level     2
     - tag       'GIVN'
-    - value     'Johan'
-    - members[] {path:gedline, ...}
+    - value     'Johan' ...}
     
     TODO: Tarkasta rivijoukon muodostus
     '''
@@ -26,9 +25,8 @@ class GedcomLine(object):
         '''
         Constructor: Parses and stores the next gedcom line
         '''
-        self.members = {}
-        self.line = line
         self.path = ""
+        self.line = line
 
         tkns = line.split(None,2)
         self.level = int(tkns[0])
@@ -48,26 +46,6 @@ class GedcomLine(object):
             ret = "* Not complete *"
         return ret
     
-
-    def add_member(self, gedline):
-        ''' Store a next level gedcom line
-            Line "2 GIVN Johan" is stored the path as key: {'@I0001@.NAME.GIVN':GedcomLine()}
-        '''
-        if not type(gedline) is GedcomLine:
-            raise RuntimeError("GedcomLine argument expected")
-        self.members.append({gedline.path:gedline})
-
-
-    def get_member(self):
-        ''' Iterator for members of this '''
-        for gedline in self.members:
-            yield(gedline)
-
-
-    def find_member(self, path):
-        #TODO: Onko tarpeeton?
-        pass
-
 
     def set_path(self, level, tag):
         ''' Update self.path with given tag and level '''

@@ -79,7 +79,8 @@ def phase3(args, gedline, f):
          See automation rules below 
          Hei vaan!
     '''
-    
+
+    print("    {}:{}".format(gedline.path, str(gedline)))
     # For all states
     if gedline.level == 0:
         if gedline.value == 'INDI':  # Start new INDI
@@ -183,10 +184,10 @@ def _T3_emit_gedline(gedline, f):
     gedline.emit(f)
 
 def _T4_store_name(gedline):
-    ''' Save gedline as a new PersonName to the logical person record '''
+    ''' Save the new PersonNames created form this gedline to the logical person record '''
     global indi_record
-    nm = PersonName(gedline)
-    indi_record.add_member(nm)
+    for nm in PersonName(gedline).get_person():
+        indi_record.add_member(nm)
 
 def _T5_save_date(gedline, tag):
     ''' Pick year from gedline and store current gedline '''

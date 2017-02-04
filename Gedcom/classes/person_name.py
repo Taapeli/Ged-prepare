@@ -5,6 +5,7 @@ Created on 22.11.2016
 '''
 
 import re
+from sys import stderr
 from classes.gedcom_line import GedcomLine
 
 _NONAME = 'N'            # Marker for missing name part
@@ -59,7 +60,10 @@ class PersonName(object):
         ''' 1) Full name processing
                The parts like 'givn/surn/nsfx' will be isolated and analyzed
         '''
-        self.rows = []    # GedcomLines associated to this PersonName
+        # GedcomLines associated to this PersonName
+        self.rows = []
+        # All surnames got from surn part of NAME line
+        self.surns = []
         self.level = gedline.level
         self.path = gedline.path
         self.tag = gedline.tag
@@ -79,6 +83,9 @@ class PersonName(object):
             ''' 1.3) nsfx Suffix part: nothing to do?'''
             pass
 
+#TODO: Tämä osa on siirrettävä proc_surn -funktioon. Siellä jokaista sukunimeä vastaten
+#TODO: on palautettava PersonName-objekti yield-käskyllä
+
             # Write NAME line
             self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
             self._append_gedline(gedline.level, gedline.tag, self.name)
@@ -91,7 +98,9 @@ class PersonName(object):
         else:
             print ("{} missing /SURNAME/ in {!r}".format(gedline.path, gedline.value))         
 
-
+    def get_person(self):
+        return [self]
+    
     def add_line(self, gedline):
         ''' Adds a new, higher level row to person name structure
 
@@ -132,12 +141,6 @@ class PersonName(object):
                 if i.path.startswith(search_path):
                     ret.append(i)
             return ret
-
-        #DEBUG
-        if self.path.startswith("@I173@"):
-            print("DEBUG {} {} self".format(self.path, str(self)))
-            for i in self.rows:
-                print("DEBUG {} {}".format(i.path, str(i)))
 
         # First NAME line
         orows = [str(self)]
@@ -231,7 +234,18 @@ class PersonName(object):
         
         surnames = re.sub(r' *[/,] *', ' , ', self.surn)   # pick "/" or "," as separator symbol
         
-        # Names processor automate
+        ''' Surnames processor automation rules
+        
+        # !state \ input !! delim !! name  !! end
+        # |--------------++-------++-------++--------
+        # | 0  "Started" || -     || 1,op1 || 3,op3
+        # | 1  "name"    || 2,op3 || 1,op4 || 3,op5
+        # | 2  "delim"   || -     || 1,op6 || -
+        # | 3  "end"     || -     || -     || -
+        # | -  "error"   || 
+        #TODO: Error tests are missing!
+         For example rule "2,op3" means operation op3 and new state 2.
+        '''
         for nm in surnames.split():
             if state == 0:          # Start state
                 #op_1 Only name expected.
@@ -269,32 +283,44 @@ class PersonName(object):
             right order is preserved.
             1. Inset NAME row on the top
             2. Is the same path is found in self.rows[x]?
-               2.1 If found, replace the row with given data
-               2.2 Else append row to the end
+               2.1 Yes: if self.rows(x) has an empty value
+                   3.1 Replace the row with given data
+                   3.2 Else if there is a different self.rows(x).value: append a new row 
+               2.2 No: append the row
         '''
         gl = GedcomLine(self._format_row(level, tag, value))
         gl.set_path(level, tag) # Turha???
         if tag == "NAME":
             # 1. Add NAME row to the top
+            print("#1.  row(0) <– {} ({!r})".format(gl.path, gl.value), 
+                  file=stderr)
             self.rows = [gl] + self.rows
             return
 
         for x in range(len(self.rows)):
             if self.rows[x].path == gl.path:
-                # 2.1 The same path found
+                # 2.1 The same path found in rows(x)
                 v = self.rows[x].value
+                print("#2.1 row({}) ({!r}) <– {} ({!r})".format(x, v, gl.path, gl.value), 
+                      file=stderr)
                 self.rows[x] = gl
                 if v != "":
-                    if v != value:
-                        # Previous value is different to new value: add a NOTE and print a msg
-                        msg = " orig_{} value {} replaced with {}".format(tag, v, value)
-                        self.rows.insert(x+1, GedcomLine(self._format_row(level+1, "NOTE", msg)))
-                        print(self.rows[x].path + msg)
+                    # 3.1 Replace curent row
+                    print("#3.1 row({}) ({!r}) <– {} ({!r})".format(x, v, gl.path, gl.value), 
+                          file=stderr)
                     self.rows[x] = gl
-                self.rows[x] = gl
-                return
+                    return
+                else:
+                    if v != value:
+                        # 3.2 Previous value is different: f.ex. there are multiple SURN tags for a name
+                        print("#3.2 row({}) ({!r}) <= {} ({!r})".format(len(self.rows), 
+                                    v, gl.path, gl.value), file=stderr)
+                        self.rows.append(gl)
+                        return
 
         # 2.2 Path not found            
+        print("#2.2 row({}) <= {} ({!r})".format(len(self.rows), gl.path, gl.value), 
+              file=stderr)
         self.rows.append(gl)
 
 
