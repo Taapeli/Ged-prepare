@@ -27,6 +27,7 @@ class GedcomLine(object):
         Constructor: Parses and stores the next gedcom line
         '''
         self.members = {}
+        self.line = line
         self.path = ""
 
         tkns = line.split(None,2)
