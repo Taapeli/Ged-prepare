@@ -49,13 +49,15 @@ class GedcomRecord(object):
         ''' Adds a gedcom line to record set.
             "2 NAME" line is added as a PersonName object, others as GedcomLine objects
         '''
-        print("#record row({}) <= {} ({!r})".format(len(self.rows), gedline.path, gedline.value), 
-              file=stderr)
         if gedline.level == 1 and gedline.tag == 'NAME':
             # gedline is a PersonName
+            print("#record row({}) <= {} (name {!r})".format(len(self.rows), gedline.path, gedline.name), 
+                  file=stderr)
             self.currname = len(self.rows)
             self.rows.append(gedline)
         else:
+            print("#record row({}) <= {} ({!r})".format(len(self.rows), gedline.path, gedline.value), 
+                  file=stderr)
             self.rows.append(gedline)
 
  

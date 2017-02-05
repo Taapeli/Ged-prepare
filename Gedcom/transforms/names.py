@@ -184,10 +184,10 @@ def _T3_emit_gedline(gedline, f):
     gedline.emit(f)
 
 def _T4_store_name(gedline):
-    ''' Save the new PersonNames created form this gedline to the logical person record '''
+    ''' Save gedline as a new PersonName to the logical person record '''
     global indi_record
-    for nm in PersonName(gedline).get_person():
-        indi_record.add_member(nm)
+    nm = PersonName(gedline)
+    indi_record.add_member(nm)
 
 def _T5_save_date(gedline, tag):
     ''' Pick year from gedline and store current gedline '''

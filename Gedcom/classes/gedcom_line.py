@@ -27,6 +27,7 @@ class GedcomLine(object):
         '''
         self.path = ""
         self.line = line
+        self.attributes = []
 
         tkns = line.split(None,2)
         self.level = int(tkns[0])
@@ -58,6 +59,11 @@ class GedcomLine(object):
             GedcomLine.path_elem = GedcomLine.path_elem[:self.level+1]
         self.path = ".".join(GedcomLine.path_elem)
         return self.path
+
+
+    def set_attr(self, attr):
+        ''' Optional attributes like name TYPE as a tuple {'TYPE':'marriage'} '''
+        self.attributes.append(attr)
 
     
     def get_year(self):
