@@ -62,16 +62,17 @@ class GedcomRecord(object):
 
  
     def emit(self, f):
-        ''' Writes the stored data associated to this person as new gedcom lines to file f
-          #TODO Tagien yhdistely ja tietojen muokkaus: 
-                patronyymit vuosiluvun mukaan, ristiriitaiset tiedot
+        ''' Find the stored data associated to this person and
+            writes them as new gedcom lines to file f
         '''
-        for obj in self.rows:
+        for obj in self.rows: #range(len(self.rows)-1, 0, -1):
             if type(obj) == PersonName:
-                for line in obj.get_lines():
-                    f.emit(line)
+                for x in obj.get_person_rows():
+                    print("p> " + str(x))
+                    f.emit(str(x))
             else:
                 # type GedcomLine
+                print("g> " + str(obj))
                 f.emit(str(obj))
 
 

@@ -100,70 +100,17 @@ class PersonName(object):
         ''' Returns the stored rows associated to this person name in this order 
             (if exists)
         
-            n NAME <NAME_PERSONAL>
-            +1 NPFX <NAME_PIECE_PREFIX>
-            +1 GIVN <NAME_PIECE_GIVEN>
-            +1 NICK <NAME_PIECE_NICKNAME>
-            +1 SPFX <NAME_PIECE_SURNAME_PREFIX
-            +1 SURN <NAME_PIECE_SURNAME>
-            +1 NSFX <NAME_PIECE_SUFFIX>
-            +1 _CALL <the call name defined by ourserlves>
-            +1 <<SOURCE_CITATION>>
-            +1 <<NOTE_STRUCTURE>>
+#             n NAME <NAME_PERSONAL>
+#             +1 NPFX <NAME_PIECE_PREFIX>
+#             +1 GIVN <NAME_PIECE_GIVEN>
+#             +1 NICK <NAME_PIECE_NICKNAME>
+#             +1 SPFX <NAME_PIECE_SURNAME_PREFIX
+#             +1 SURN <NAME_PIECE_SURNAME>
+#             +1 NSFX <NAME_PIECE_SUFFIX>
+#             +1 _CALL <the call name defined by ourserlves>
+#             +1 <<SOURCE_CITATION>>
+#             +1 <<NOTE_STRUCTURE>>
         '''
-        def _fetch_person_name(gedline): 
-            ''' Analyze the given PersonName and return NAME and TYPE rows.
-                The rules about patronymes should be applied here
-            '''
-            ret = []
-            ''' 1.1) GIVN given name part'''
-            self._process_givn(gedline)
-            ''' 1.2) nsfx Suffix part: nothing to do?'''
-            pass
-            ''' 1.3) SURN Surname part: pick each surname'''
-            self._process_surn(gedline)
-    
-            # Write NAME line 
-            self.name = "{}/{}/{}".format(gedline.givn, gedline.surn, gedline.nsfx).rstrip()
-            gl = GedcomLine(gedline.level, gedline.tag, self.name)
-            gl.value = self.name
-            ret.append(gl) 
-            
-            # Compare the name parts from NAME tag to this got here 
-            if re.sub(r' ', '', gl.value) != re.sub(r' ', '', self.name): 
-                print ("{} {!r:>36} ––> {!r}".format(gedline.path, 
-                       gl.value, self.name))
-                nt = GedcomLine(gedline.level, 
-                                "NOTE", 
-                                "{}{} {}".format(_CHGTAG, gedline.tag, gedline.value))          
-                ret.append(nt)
-
-            return ret
-
-
-#         def _put(gedline):
-#             ''' Store rows SURN with TYPE, if defined '''
-#             # TODO: Nimen tyyppi puuttuu
-#             if gedline.surn != '':
-#                 self._append_gedline(gedline.level, 'SURN', gedline.surn)
-#                 
-#                 if name_type != '':
-#                     self._append_gedline(gedline.level + 2, 'TYPE', name_type)
-#                     #_note = "{} {}({})".format(_note, name, name_type)
-
-#         def find_w_path(self, tag):
-#             '''Returns those gedcom lines in NAME structure, witch have with 
-#                given <path>.<tag> .
-#                For example path "@I0002@.NAME.GIVN" should return 
-#                both "2 GIVN" and "3 SOUR"
-#             '''
-#             ret = []
-#             search_path = self.path + '.' + tag
-#             for i in self.rows:
-#                 if i.path.startswith(search_path):
-#                     ret.append(i)
-#             return ret
-
         ''' The original NAME line is not written out but the NAMEs which
             are picked out by surn part of NAME
         '''
@@ -172,22 +119,44 @@ class PersonName(object):
             if type(self.rows[i]) == PersonName:
                 # Pick NAME, NOTEn TYPE from this PersonName
                 #TODO: TYPE ei ole talletettu
-                if x in _fetch_person_name(gedline):
+                if x in _get_person_rows(gedline):
                     orows.append(x)
                 # The associated rows line SURN, GIVN ...
-                for j in range(len(self.rows)):
-                    if type(self.rows[j]) == GedcomLine:
-                       orows.append(self.rows[j])
-
-#         # First NAME line
-#         orows = [str(self)]
-#         for tag in [ "NPFX", "GIVN", "NICK", "SPFX", "SURN", "NSFX", "_CALL" ]:
-#             for gl in find_w_path(self, tag):
-#                 #TODO: pitäisi huomioida NAME-riville tehdyt muutokset
-#                 #TODO: toistuvat tagin yhdistettävä: tyhjä tai samanlainen hylätään,
-#                 #      muuten huomautus
-#                 orows.append(str(gl))
+                for obj in self.rows:
+                    if type(obj) == GedcomLine:
+                       orows.append(obj)
         return orows
+
+
+    def get_person_rows(self): 
+        ''' Analyze the given PersonName and return NAME and associated rows.
+            The rules about patronymes should be applied here
+        '''
+        ret = []
+        ''' 1.1) GIVN given name part'''
+        self._process_givn(self)
+        ''' 1.2) nsfx Suffix part: nothing to do?'''
+        pass
+        ''' 1.3) SURN Surname part: pick each surname'''
+        self._process_surn(self)
+
+        # Write NAME line 
+        self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
+        gl = GedcomLine(self._format_row(self.level, self.tag, self.name))
+        gl.value = self.name
+        print("#person  row <– {} ({!r})".format(gl.path, gl.value), 
+              file=stderr)
+        ret.append(gl) 
+        
+        # Compare the name parts from NAME tag to this got here 
+        if re.sub(r' ', '', gl.value) != re.sub(r' ', '', self.name): 
+            print ("{} {!r:>36} ––> {!r}".format(self.path, 
+                                                 gl.value, self.name))
+            nt = GedcomLine(self._format_row(self.level, 
+                            "NOTE", 
+                            "{}{} {}".format(_CHGTAG, self.tag, self.value)))    
+            ret.append(nt)
+        return ret
 
 
     # ---- Local functions ----
@@ -195,7 +164,7 @@ class PersonName(object):
     def _process_givn(self, gedline):
         ''' Process given name part of NAME record '''
 
-        def _match_patronyme(self, nm):
+        def _match_patronyme(nm):
             '''Returns patronyme suffix, if matches, else None'''
             for suff in _PATRONYME:
                 if nm.endswith(suff):
@@ -209,14 +178,12 @@ class PersonName(object):
         if self.givn:
             self.givn = self.givn.rstrip()
             gnames = self.givn.split()
-            #print('# {}: {!r} TÄSSÄ'.format(path, gnames))
             
             # 1.1a) Find if last givn is actually a patronyme; move it to nsfx 
             
             if (len(gnames) > 0):
                 nm = gnames[-1]
-                if self._match_patronyme(nm) != None:
-                    # print('# {}: {} | {!r} | {!r}'.format(path, gnames, self.surn, self.nsfx))
+                if _match_patronyme(nm) != None:
                     self.nsfx = nm
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
@@ -239,9 +206,6 @@ class PersonName(object):
                     self.givn = re.sub(r"\(.*\) *", "", self.givn).rstrip()
         else:
             self.givn = _NONAME
-        self._append_gedline(gedline.level+1, 'GIVN', self.givn)
-        if hasattr(self, 'call_name'):
-            self._append_gedline(gedline.level+1, '_CALL', self.call_name)
 
 
     def _process_surn(self, gedline):
@@ -249,46 +213,91 @@ class PersonName(object):
             which are generated from each surname mentioned
 
         Examples:
-            "Aho os. Mattila"          => PersonName[0]="Aho"
-                                          PersonName[1]="Mattila" TYPE="MARR"
+            "Mattila"                  => PersonName[0]="Mattila"
+            "Frisk os. Mattila"        => PersonName[0]="Mattila"
+                                          PersonName[1]="Frisk" TYPE="MARR"
             "Surname1/Surname2"        => PersonName[0]="Surname1"
                                           PersonName[1]="Surname2" TYPE="AKA"
-            "Aho e. Mattila os. Laine" => PersonName[0]="Aho"
-                                          PersonName[1]="Mattila" TYPE="PREV"
-                                          PersonName[2]="Laine" TYP="MARR"
-
-        TODO: Pitäisi käsitellä pilkuin erotetut sukunimet Gedcom 5.5:n mukaisesti
-              (kuten '/')
-        TODO: Pikutetuista nimistä ensimmäinen on virallinen, muuta AKA
+            "Reipas e. Frisk os. Laine"=> PersonName[0]="Laine"
+                                          PersonName[1]="Frisk" TYP="MARR"
+                                          PersonName[2]="Reipas" TYPE="CHANGED"
+            "Lehti os. Lampi e. Damm"  => PersonName[0]="Damm"
+                                          PersonName[1]="Lampi" TYP="CHANGED"
+                                          PersonName[2]="Lehti" TYPE="MARR"
         '''
-
-        #     start of _process_surn():
+        def put_person(name, name_type):
+            ''' Return each PersonName instance '''
+            # Store rows SURN with TYPE, if defined
+            if name != '':
+                self._append_gedline(gedline.level+1, 'SURN', name)
+                if name_type != '':
+                    self._append_gedline(gedline.level + 2, 'TYPE', name_type)
+                    #_note = "{} {}({})".format(_note, name, name_type)
+            ''' Generate GIVN, _CALL and SURN lines '''
+            #TODO: Nämä rivit yhdistettävä olemassa oleviin
+            gl = GedcomLine(self._format_row(self.level+1, 'GIVN', self.givn))
+            self.rows.append(gl)
+            if hasattr(self, 'call_name'):
+                gl = GedcomLine(self._format_row(self.level+1, '_CALL', self.call_name))
+                self.rows.append(gl)
+            # Get associated rows
+            for gl in self.rows:
+                print("#person+ row <– {} ({!r})".format(gl.path, gl.value), 
+                      file=stderr)
+                ret.append(gl)
+            return ret
+       
+# #TODO Nyt pitäisi tapahtua niin, että kun sukunimi talletetaan, 
+# #     palautetaan kaikki nimirivit yield-lauseella 
+#  
+#         def _store_person_name(): 
+#             # Write NAME line 
+#             self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip() 
+#             self._append_gedline(gedline.level, gedline.tag, self.name) 
+#             self.value = self.name 
+#             
+#             # Compare the name parts from NAME tag to this got here 
+#             if re.sub(r' ', '', gedline.value) != re.sub(r' ', '', self.name): 
+#                 print ("{} {!r:>36} ––> {!r}".format(gedline.path, 
+#                        gedline.value, self.name))            
+#                 self._append_gedline(gedline.level, "NOTE", "{}{} {}".format(_CHGTAG,
+#                                      gedline.tag, gedline.value)) 
+        # --- end of local procedures ---
+        #     start of _proc_surn():
 
         if not (type(gedline) is PersonName or type(gedline) is GedcomLine):
             raise RuntimeError("GedcomLine or PersonName argument expected")
 
-        if gedline.value == '': #op_2 No surname
+        if gedline.name == '': #op_2 No surname
             return
         state = 0
         oper = ''
         name = ''
-
-        # pick "/" or "," as separator symbol
-        surnames = re.sub(r' *[/,] *', ' , ', self.surn)   
+        # The PersonName, where other attributes will be applied
+        current = self
+        start_level = current.level
+        # convert "/" and "," to separator symbol ","
+        surnames = re.sub(r' *[/,] *', ' , ', self.surn).split()
         
-        ''' Surnames processor automation rules
+        ''' This surnames automate reads surnames and separators from right to left
+            and writes PersonNames to self.rows(?)
         
-        # !state \ input !! delim !! name  !! end
-        # |--------------++-------++-------++--------
-        # | 0  "Started" || -     || 1,op1 || 3,op3
-        # | 1  "name"    || 2,op3 || 1,op4 || 3,op5
-        # | 2  "delim"   || -     || 1,op6 || -
-        # | 3  "end"     || -     || -     || -
-        # | -  "error"   || 
+            !state \ input !! delim ! name  ! end
+            |--------------++-------+-------+--------
+            | 0 "Started"  || -     | 1,op1 | 3,op3
+            | 1 "name"     || 2,op3 | 1,op2 | 3,op4
+            | 2 "delim"    || -     | 1,op1 | -
+            | 3 "end"      || -     | -     | -
+            | - "error"    || 
         #TODO: Each '-' should cause an error!
          For example rule "2,op3" means operation op3 and new state 2.
+             op1: save name=nm
+             op2: concatenate a two part name
+             op3: write PersonName(name), TYPE=oper[delim]
+             op4: write last PersonName(name), TYPE=oper[delim]
         '''
-        for nm in surnames.split():
+
+        for nm in reversed(surnames):
             if state == 0:          # Start state
                 #op_1 Only name expected.
                 name = nm
@@ -299,24 +308,20 @@ class PersonName(object):
                 # If name, concatenate to the left side name, else store the
                 # separator type
                 if nm in _SURN:
-                    #op_3: A separator found: output the previous name and it's type
-                    _put(name, oper)
+                    #op_3: A separator 'os.', ... found: 
+                    #      Create PersonName rows with the left side name and it's type
+                    put_person(name, oper)
                     oper = _SURN[nm]
                     state = 2
                 else:
-                    #op_4: Another name found
+                    #op_2: Another name found
                     name = name + ' ' + nm
                     #_note = "{} {!r}".format(_note, name)
-            else: # State = 2         Delimiter passed
-                #op_6: A name expected
-                name = nm
 
-        #op_5: End: output the previous name and it's type
-        _put(name, oper)
+        #op_4: End: output the previous name and it's type
+        put_person(name, oper)
         # The last name is the one used
         self.surn = name
-
-
 
 
     def _format_row(self, level, tag, value):
@@ -324,49 +329,49 @@ class PersonName(object):
         return("{} {} {}".format(level, tag, str.strip(value)))
 
 
-#     def _append_gedline(self, level, tag, value):
-#         ''' Stores the row as a GedcomLine so that previous values are replaces and 
-#             right order is preserved.
-#             1. Inset NAME row on the top
-#             2. Is the same path is found in self.rows[x]?
-#                2.1 Yes: if self.rows(x) has an empty value
-#                    3.1 Replace the row with given data
-#                    3.2 Else if there is a different self.rows(x).value: 
-#                        append a new row 
-#                2.2 No: append the row
-#         '''
-#         gl = GedcomLine(self._format_row(level, tag, value))
-#         gl.set_path(level, tag) # Turha???
-#         if tag == "NAME":
-#             # 1. Add NAME row to the top
-#             print("#1.  row(0) <– {} ({!r})".format(gl.path, gl.value), 
-#                   file=stderr)
-#             self.rows = [gl] + self.rows
-#             return
-# 
-#         for x in range(len(self.rows)):
-#             if self.rows[x].path == gl.path:
-#                 # 2.1 The same path found in rows(x)
-#                 v = self.rows[x].value
-#                 print("#2.1 row({}) ({!r}) <– {} ({!r})".format(x, v, 
-#                       gl.path, gl.value), file=stderr)
-#                 self.rows[x] = gl
-#                 if v != "":
-#                     # 3.1 Replace curent row
-#                     print("#3.1 row({}) ({!r}) <– {} ({!r})".format(x, v, gl.path,
-#                           gl.value), file=stderr)
-#                     self.rows[x] = gl
-#                     return
-#                 else:
-#                     if v != value:
-#                         # 3.2 Previous value is different: 
-#                         #     f.ex. there are multiple SURN tags for a name
-#                         print("#3.2 row({}) ({!r}) <= {} ({!r})".format(len(self.rows), 
-#                                     v, gl.path, gl.value), file=stderr)
-#                         self.rows.append(gl)
-#                         return
-# 
-#         # 2.2 Path not found            
-#         print("#2.2 row({}) <= {} ({!r})".format(len(self.rows), gl.path, gl.value), 
-#               file=stderr)
-#         self.rows.append(gl)
+    def _append_gedline(self, level, tag, value):
+        ''' Stores the row as a GedcomLine so that previous values are replaced and 
+            right order is preserved.
+            1. Inset NAME row on the top
+            2. Is the same path is found in self.rows[x]?
+               2.1 Yes: if self.rows(x) has an empty value
+                   3.1 Replace the row with given data
+                   3.2 Else if there is a different self.rows(x).value: 
+                       append a new row 
+               2.2 No: append the row
+        '''
+        gl = GedcomLine(self._format_row(level, tag, value))
+        gl.set_path(level, tag) # Turha???
+        if tag == "NAME":
+            # 1. Add NAME row to the top
+            print("#person 1.  row(0) <– {} ({!r})".format(gl.path, gl.value), 
+                  file=stderr)
+            self.rows = [gl] + self.rows
+            return
+ 
+        for x in range(len(self.rows)):
+            if self.rows[x].path == gl.path:
+                # 2.1 The same path found in rows(x)
+                v = self.rows[x].value
+                print("#person 2.1 row({}) ({!r}) <– {} ({!r})".format(x, v, 
+                      gl.path, gl.value), file=stderr)
+                self.rows[x] = gl
+                if v != "":
+                    # 3.1 Replace curent row
+                    print("#person 3.1 row({}) ({!r}) <– {} ({!r})".format(x, v, gl.path,
+                          gl.value), file=stderr)
+                    self.rows[x] = gl
+                    return
+                else:
+                    if v != value:
+                        # 3.2 Previous value is different: 
+                        #     f.ex. there are multiple SURN tags for a name
+                        print("#person 3.2 row({}) ({!r}) <= {} ({!r})".format(len(self.rows), 
+                                    v, gl.path, gl.value), file=stderr)
+                        self.rows.append(gl)
+                        return
+ 
+        # 2.2 Path not found            
+        print("#person 2.2 row({}) <= {} ({!r})".format(len(self.rows), gl.path, gl.value), 
+              file=stderr)
+        self.rows.append(gl)

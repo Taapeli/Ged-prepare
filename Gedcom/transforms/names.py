@@ -80,7 +80,7 @@ def phase3(args, gedline, f):
          Hei vaan!
     '''
 
-    print("    {}:{}".format(gedline.path, str(gedline)))
+    print("    {:>20}: {}".format(gedline.path, str(gedline)[:70]))
     # For all states
     if gedline.level == 0:
         if gedline.value == 'INDI':  # Start new INDI
