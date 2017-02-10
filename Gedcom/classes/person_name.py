@@ -96,57 +96,53 @@ class PersonName(object):
         self.rows.append(gedline)
         
 
-    def get_lines(self):
-        ''' Returns the stored rows associated to this person name in this order 
-            (if exists)
-        
-#             n NAME <NAME_PERSONAL>
-#             +1 NPFX <NAME_PIECE_PREFIX>
-#             +1 GIVN <NAME_PIECE_GIVEN>
-#             +1 NICK <NAME_PIECE_NICKNAME>
-#             +1 SPFX <NAME_PIECE_SURNAME_PREFIX
-#             +1 SURN <NAME_PIECE_SURNAME>
-#             +1 NSFX <NAME_PIECE_SUFFIX>
-#             +1 _CALL <the call name defined by ourserlves>
-#             +1 <<SOURCE_CITATION>>
-#             +1 <<NOTE_STRUCTURE>>
-        '''
-        ''' The original NAME line is not written out but the NAMEs which
-            are picked out by surn part of NAME
-        '''
-        orows = []
-        for i in range(len(self.rows)-1, 0, -1):
-            if type(self.rows[i]) == PersonName:
-                # Pick NAME, NOTEn TYPE from this PersonName
-                #TODO: TYPE ei ole talletettu
-                if x in _get_person_rows(gedline):
-                    orows.append(x)
-                # The associated rows line SURN, GIVN ...
-                for obj in self.rows:
-                    if type(obj) == GedcomLine:
-                       orows.append(obj)
-        return orows
+#     def get_lines(self):
+#         ''' Returns the stored rows associated to this person name in this order 
+#             (if exists)
+#         
+# #             n NAME <NAME_PERSONAL>
+# #             +1 NPFX <NAME_PIECE_PREFIX>
+# #             +1 GIVN <NAME_PIECE_GIVEN>
+# #             +1 NICK <NAME_PIECE_NICKNAME>
+# #             +1 SPFX <NAME_PIECE_SURNAME_PREFIX
+# #             +1 SURN <NAME_PIECE_SURNAME>
+# #             +1 NSFX <NAME_PIECE_SUFFIX>
+# #             +1 _CALL <the call name defined by ourserlves>
+# #             +1 <<SOURCE_CITATION>>
+# #             +1 <<NOTE_STRUCTURE>>
+#         '''
+#         ''' The original NAME line is not written out but the NAMEs which
+#             are picked out by surn part of NAME
+#         '''
+#         orows = []
+#         for i in range(len(self.rows)-1, 0, -1):
+#             if type(self.rows[i]) == PersonName:
+#                 # Pick NAME, NOTEn TYPE from this PersonName
+#                 #TODO: TYPE ei ole talletettu
+#                 for x in self.get_person_rows(self):
+#                     orows.append(x)
+#                 # The associated rows line SURN, GIVN ...
+#                 for obj in self.rows:
+#                     if type(obj) == GedcomLine:
+#                         orows.append(obj)
+#         return orows
 
 
     def get_person_rows(self): 
-        ''' Analyze the given PersonName and return NAME and associated rows.
-            The rules about patronymes should be applied here
+        ''' Analyze the given PersonName and return GedcomLines:
+            first NAME and then associated rows.
+            The rules about patronymes and merging original and generated values should be applied here
         '''
-        ret = []
-        ''' 1.1) GIVN given name part'''
-        self._process_givn(self)
-        ''' 1.2) nsfx Suffix part: nothing to do?'''
+        ''' 1.1) GIVN given name part '''
+        self._evaluate_givn(self)
+        ''' 1.2) nsfx Suffix part: nothing to do? '''
         pass
-        ''' 1.3) SURN Surname part: pick each surname'''
-        self._process_surn(self)
+        ''' 1.3) SURN Surname part: pick each surname
+                 Returns NAME, GIVN, SURN, NSFX rows and their associated lines (like SOUR)
+        '''
+        ret = self._evaluate_surn(self)
 
-        # Write NAME line 
-        self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
-        gl = GedcomLine(self._format_row(self.level, self.tag, self.name))
-        gl.value = self.name
-        print("#person  row <– {} ({!r})".format(gl.path, gl.value), 
-              file=stderr)
-        ret.append(gl) 
+
         
         # Compare the name parts from NAME tag to this got here 
         if re.sub(r' ', '', gl.value) != re.sub(r' ', '', self.name): 
@@ -161,7 +157,7 @@ class PersonName(object):
 
     # ---- Local functions ----
     
-    def _process_givn(self, gedline):
+    def _evaluate_givn(self, gedline):
         ''' Process given name part of NAME record '''
 
         def _match_patronyme(nm):
@@ -179,15 +175,14 @@ class PersonName(object):
             self.givn = self.givn.rstrip()
             gnames = self.givn.split()
             
-            # 1.1a) Find if last givn is actually a patronyme; move it to nsfx 
+            # 1.1a) Find if last givn is actually a patronyme; mark it as new nsfx 
             
             if (len(gnames) > 0):
                 nm = gnames[-1]
                 if _match_patronyme(nm) != None:
-                    self.nsfx = nm
+                    self.nsfx_new = nm
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
-                    self._append_gedline(gedline.level+1, 'NSFX', nm)
             
             # 1.1b) Set call name, if one of given names are marked with '*'
     
@@ -208,7 +203,7 @@ class PersonName(object):
             self.givn = _NONAME
 
 
-    def _process_surn(self, gedline):
+    def _evaluate_surn(self, gedline):
         ''' Process surname part of NAME record and return a list of PersonNames,
             which are generated from each surname mentioned
 
@@ -228,7 +223,12 @@ class PersonName(object):
         def put_person(name, name_type):
             ''' Return each PersonName instance '''
             # Store rows SURN with TYPE, if defined
+            ret = []
             if name != '':
+                # Write NAME line 
+                self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip() 
+                self._append_gedline(gedline.level, gedline.tag, self.name) 
+                self.value = self.name
                 self._append_gedline(gedline.level+1, 'SURN', name)
                 if name_type != '':
                     self._append_gedline(gedline.level + 2, 'TYPE', name_type)
@@ -247,24 +247,6 @@ class PersonName(object):
                 ret.append(gl)
             return ret
        
-# #TODO Nyt pitäisi tapahtua niin, että kun sukunimi talletetaan, 
-# #     palautetaan kaikki nimirivit yield-lauseella 
-#  
-#         def _store_person_name(): 
-#             # Write NAME line 
-#             self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip() 
-#             self._append_gedline(gedline.level, gedline.tag, self.name) 
-#             self.value = self.name 
-#             
-#             # Compare the name parts from NAME tag to this got here 
-#             if re.sub(r' ', '', gedline.value) != re.sub(r' ', '', self.name): 
-#                 print ("{} {!r:>36} ––> {!r}".format(gedline.path, 
-#                        gedline.value, self.name))            
-#                 self._append_gedline(gedline.level, "NOTE", "{}{} {}".format(_CHGTAG,
-#                                      gedline.tag, gedline.value)) 
-        # --- end of local procedures ---
-        #     start of _proc_surn():
-
         if not (type(gedline) is PersonName or type(gedline) is GedcomLine):
             raise RuntimeError("GedcomLine or PersonName argument expected")
 
@@ -275,7 +257,6 @@ class PersonName(object):
         name = ''
         # The PersonName, where other attributes will be applied
         current = self
-        start_level = current.level
         # convert "/" and "," to separator symbol ","
         surnames = re.sub(r' *[/,] *', ' , ', self.surn).split()
         
@@ -343,10 +324,16 @@ class PersonName(object):
         gl = GedcomLine(self._format_row(level, tag, value))
         gl.set_path(level, tag) # Turha???
         if tag == "NAME":
-            # 1. Add NAME row to the top
-            print("#person 1.  row(0) <– {} ({!r})".format(gl.path, gl.value), 
+            # Write NAME line 
+            self.name = "{}/{}/{}".format(self.givn, self.surn, self.nsfx).rstrip()
+            gl = GedcomLine(self._format_row(level, tag, value))
+            gl.value = self.name
+            print("#person  row <– {} ({!r})".format(gl.path, gl.value), 
                   file=stderr)
-            self.rows = [gl] + self.rows
+            self.rows.append(gl)
+            # A new patronyme?
+            if hasattr(self, 'nsfx_new'):
+                self._append_gedline(self.level+1, 'NSFX', self.nsfx_new)
             return
  
         for x in range(len(self.rows)):

@@ -4,8 +4,6 @@ Created on 16.1.2017
 @author: jm
 '''
 
-from sys import stderr
-
 class GedcomLine(object):
     '''
     Gedcom line container, which can also carry the lower level gedcom lines.

@@ -4,7 +4,6 @@ Created on 16.1.2017
 @author: jm
 '''
 
-import re
 from sys import stderr
 from classes.gedcom_line import GedcomLine
 from classes.person_name import PersonName
@@ -19,7 +18,7 @@ class GedcomRecord(object):
     add(...)         Other, higher level rows are added
     get_lines()      Returns an iterable containing the lines
     
-    The fixes are don mostly from '1 NAME givn/surn/nsfx' row.
+    The fixes are done mostly from '1 NAME givn/surn/nsfx' row.
     If NAME has significant changes, the original value is also written to 'NOTE orig_'
     
     '''
@@ -87,3 +86,18 @@ class GedcomRecord(object):
         ''' Returns the latest object of type PersonName '''
         if self.currname >= 0:
             return self.rows[self.currname]
+
+
+if __name__ == '__main__':
+    # Test set
+    from classes.ged_output import Output
+     
+    indi_record = GedcomRecord(GedcomLine('0 @I2@ INDI'))
+    nm = PersonName(GedcomLine('1 NAME Saima/Raitala os. Krats'))
+    indi_record.add_member(nm)
+    indi_record.add_member(GedcomLine('2 GIVN Saimi'))
+#     indi_record.add_member('3 SOUR Äidiltä')
+#     indi_record.add_member('2 SURN Raitala')
+#     indi_record.add_member('3 SOUR tiedetty')
+    f = open("myfile.txt", "w")
+    indi_record.emit(f)
