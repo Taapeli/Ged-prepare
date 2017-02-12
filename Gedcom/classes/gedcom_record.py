@@ -8,7 +8,7 @@ from sys import stderr
 from classes.gedcom_line import GedcomLine
 from classes.person_name import PersonName
 
-class GedcomRecord(object):
+class GedcomRecord(GedcomLine):
     '''
     Stores a Gedcom logical record, which includes level 0 record (0 INDI) 
     with all it's lines (with level > 0)
@@ -22,10 +22,6 @@ class GedcomRecord(object):
     If NAME has significant changes, the original value is also written to 'NOTE orig_'
     
     '''
-    def __str__(self):
-        return "GedcomRecord({})".format(self.id)
-
-
     def __init__(self, gedline):
         ''' Creates a new instance of gedcom logical record
             which includes a group of gredcom lines starting with a level0 record.
@@ -44,6 +40,10 @@ class GedcomRecord(object):
         self.add_member(gedline)
 
     
+    def __str__(self):
+        return "GedcomRecord({})".format(self.id)
+
+
     def add_member(self, gedline):
         ''' Adds a gedcom line to record set.
             "2 NAME" line is added as a PersonName object, others as GedcomLine objects
@@ -65,7 +65,7 @@ class GedcomRecord(object):
             writes them as new gedcom lines to file f
         '''
         for obj in self.rows: #range(len(self.rows)-1, 0, -1):
-            if type(obj) == PersonName:
+            if isinstance(obj, PersonName):     # Tässä puretaan PersonName:sta SURN, GIVN
                 for x in obj.get_person_rows():
                     print("p> " + str(x))
                     f.emit(str(x))
@@ -92,12 +92,13 @@ if __name__ == '__main__':
     # Test set
     from classes.ged_output import Output
      
-    indi_record = GedcomRecord(GedcomLine('0 @I2@ INDI'))
-    nm = PersonName(GedcomLine('1 NAME Saima/Raitala os. Krats'))
-    indi_record.add_member(nm)
-    indi_record.add_member(GedcomLine('2 GIVN Saimi'))
-#     indi_record.add_member('3 SOUR Äidiltä')
-#     indi_record.add_member('2 SURN Raitala')
-#     indi_record.add_member('3 SOUR tiedetty')
-    f = open("myfile.txt", "w")
-    indi_record.emit(f)
+    my_record = GedcomRecord(GedcomLine('0 @I2@ INDI'))
+    nm = PersonName(GedcomLine('1 NAME Saima/Raitala os. Krats/'))
+    my_record.add_member(nm)
+    my_record.add_member(GedcomLine('2 GIVN Saimi'))
+#     my_record.add_member('3 SOUR Äidiltä')
+#     my_record.add_member('2 SURN Raitala')
+#     my_record.add_member('3 SOUR tiedetty')
+    args = {'nolog':True, 'output_gedcom':'out.txt', 'encoding':'UTF-8', 'dryrun':False}
+    with Output(args) as f:
+        my_record.emit(f)
