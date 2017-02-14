@@ -50,13 +50,11 @@ class GedcomRecord(GedcomLine):
         '''
         if gedline.level == 1 and gedline.tag == 'NAME':
             # gedline is a PersonName
-            print("#record row({}) <= {} (name {!r})".format(len(self.rows), gedline.path, gedline.name), 
-                  file=stderr)
+#             print("#record row({}) <= {} (name {!r})".format(len(self.rows), gedline.path, gedline.name), file=stderr)
             self.currname = len(self.rows)
             self.rows.append(gedline)
         else:
-            print("#record row({}) <= {} ({!r})".format(len(self.rows), gedline.path, gedline.value), 
-                  file=stderr)
+#             print("#record row({}) <= {} ({!r})".format(len(self.rows), gedline.path, gedline.value), file=stderr)
             self.rows.append(gedline)
 
  
@@ -64,14 +62,17 @@ class GedcomRecord(GedcomLine):
         ''' Find the stored data associated to this person and
             writes them as new gedcom lines to file f
         '''
-        for obj in self.rows: #range(len(self.rows)-1, 0, -1):
-            if isinstance(obj, PersonName):     # Tässä puretaan PersonName:sta SURN, GIVN
-                for x in obj.get_person_rows():
-                    print("p> " + str(x))
+        # Each original NAME row
+        for obj in self.rows: 
+            if isinstance(obj, PersonName):
+                # Each NAME row generated from /surname1, surname2/
+                for x in obj.get_person_rows(): 
+                    # Get output rows NAME, SURN, GIVN etc. from PersonName
+#                     print("p> " + str(x))
                     f.emit(str(x))
             else:
-                # type GedcomLine
-                print("g> " + str(obj))
+                # A GedcomLine outside NAME and its descendants
+#                 print("g> " + str(obj))
                 f.emit(str(obj))
 
 
@@ -93,12 +94,12 @@ if __name__ == '__main__':
     from classes.ged_output import Output
      
     my_record = GedcomRecord(GedcomLine('0 @I2@ INDI'))
-    nm = PersonName(GedcomLine('1 NAME Saima/Raitala os. Krats/'))
-    my_record.add_member(nm)
-    my_record.add_member(GedcomLine('2 GIVN Saimi'))
-#     my_record.add_member('3 SOUR Äidiltä')
-#     my_record.add_member('2 SURN Raitala')
-#     my_record.add_member('3 SOUR tiedetty')
+    my_name = PersonName(GedcomLine('1 NAME Saima/Raitala os. Krats/'))
+    my_record.add_member(my_name)
+    my_name.add_line(GedcomLine('2 GIVN Saimi'))
+    my_name.add_line(GedcomLine('3 SOUR Äidiltä'))
+    my_name.add_line(GedcomLine('2 SURN Raitala'))
+    my_name.add_line(GedcomLine('3 SOUR tiedetty'))
     args = {'nolog':True, 'output_gedcom':'out.txt', 'encoding':'UTF-8', 'dryrun':False}
     with Output(args) as f:
         my_record.emit(f)

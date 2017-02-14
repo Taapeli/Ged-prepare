@@ -31,7 +31,7 @@ Created on 26.11.2016
 #           1 SEX M
 #             ...
 
-from classes.gedcom_line import GedcomLine
+#from classes.gedcom_line import GedcomLine
 from classes.gedcom_record import GedcomRecord
 from classes.person_name import PersonName
 
@@ -80,7 +80,8 @@ def phase3(args, gedline, f):
          Hei vaan!
     '''
 
-    print("    {:>20}: {}".format(gedline.path, str(gedline)[:70]))
+#     if gedline.level == 0:  print('')
+#     print("{:>24}: {}".format(gedline.path, str(gedline)[:70]))
     # For all states
     if gedline.level == 0:
         if gedline.value == 'INDI':  # Start new INDI
