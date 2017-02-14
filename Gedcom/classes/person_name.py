@@ -57,15 +57,12 @@ class PersonName(GedcomLine):
 #         tag='NAME'
 #         value='Anders (Antti)/Puuhaara e. Träskalle/' }
 
-        if gedline.tag != 'NAME':
-            raise AttributeError('Needs a NAME row for PersonName.init()')
-        # GedcomLines associated to this PersonName
         self.rows = []
-
-        self.level = gedline.level
-        self.path = gedline.path
-        self.tag = gedline.tag
-        self.value = gedline.value
+        if type(gedline) == GedcomLine:
+            tup = (gedline.level, gedline.tag, gedline.value)
+        else:
+            tup = gedline
+        GedcomLine.__init__(self, tup)
 
 
     def add_line(self, gedline):
@@ -183,10 +180,9 @@ class PersonName(GedcomLine):
         ret = []
         for nm, name_type in self._get_surname_list():
             print('# {}:{}'.format(nm, name_type))
-            gl = GedcomLine(self._format_row(self.level, 'NAME', nm))
-            pn = PersonName(gl)
+            pn = PersonName((self.level, 'NAME', nm))
             if name_type:
-                pn.ntype = name_type
+                pn.set_attr({'TYPE':name_type})
 #             self._put_person(nm, name_type)
             ret.append(pn)
         return ret
@@ -246,26 +242,26 @@ class PersonName(GedcomLine):
         return("{} {} {}".format(level, tag, str.strip(value)))
 
 
-    def _put_person(self, sname, name_type):
-        ''' Stores each PersonName instance with all its GedcomLines '''
-        if sname != '':
-            # First store the NAME line 
-            value = "{}/{}/{}".format(self.givn, sname, self.nsfx).rstrip() 
-            self._create_gedcom_rows(self.level, 'NAME', value)
-            # Then store rows SURN with TYPE, if defined
-            self._create_gedcom_rows(self.level+1, 'SURN', sname)
-            if name_type != '':
-                self._create_gedcom_rows(self.level+1, 'TYPE', name_type)
-                #_note = "{} {}({})".format(_note, sname, name_type)
-        '''
-            Generate GIVN, SURN, NSFX and _CALL lines and 
-            merge them with the values got from original gedcom
-        '''
-        self._create_gedcom_rows(self.level+1, 'GIVN', self.givn)
-        if hasattr(self, 'nsfx_new'): # a new patronyme
-            self._create_gedcom_rows(self.level+1, 'NSFX', self.nsfx_new)
-        if hasattr(self, 'call_name'):
-            self._create_gedcom_rows(self.level+1, '_CALL', self.call_name)
+#     def _put_person(self, sname, name_type):
+#         ''' Stores each PersonName instance with all its GedcomLines '''
+#         if sname != '':
+#             # First store the NAME line 
+#             value = "{}/{}/{}".format(self.givn, sname, self.nsfx).rstrip() 
+#             self._create_gedcom_rows(self.level, 'NAME', value)
+#             # Then store rows SURN with TYPE, if defined
+#             self._create_gedcom_rows(self.level+1, 'SURN', sname)
+#             if name_type != '':
+#                 self._create_gedcom_rows(self.level+1, 'TYPE', name_type)
+#                 #_note = "{} {}({})".format(_note, sname, name_type)
+#         '''
+#             Generate GIVN, SURN, NSFX and _CALL lines and 
+#             merge them with the values got from original gedcom
+#         '''
+#         self._create_gedcom_rows(self.level+1, 'GIVN', self.givn)
+#         if hasattr(self, 'nsfx_new'): # a new patronyme
+#             self._create_gedcom_rows(self.level+1, 'NSFX', self.nsfx_new)
+#         if hasattr(self, 'call_name'):
+#             self._create_gedcom_rows(self.level+1, '_CALL', self.call_name)
             
 
     def _create_gedcom_rows(self, pn):
@@ -283,7 +279,6 @@ class PersonName(GedcomLine):
                 if my_tags[i][0] == r.tag:
                     # Remove used tag and return it's value
                     ret = my_tags[i][1]
-                    print("# {!r} my_tags {}".format(tag, my_tags))
                     del my_tags[i]
                     return ret
             return None
@@ -292,22 +287,23 @@ class PersonName(GedcomLine):
         
         # 1. The first row is the PersonName (inherited class from GedcomLine)
         self.rows.insert(0, pn)
+        name_type = self.get_attr('TYPE')
+        if name_type:
+            pn.set_attr('TYPE', name_type)
 
         # 2. For each self.row 
         for r in self.rows:
             # 2.1 Is this tag in my_tags
             a_value = i_tag(r.tag)
             if a_value:
-                print("#{} 2.1 row[{}] {} {!r}".\
+                print("#{:>36} 2.1 row[{}] {} {!r}".\
                       format(r.path, len(pn.rows), r.tag, a_value), file=stderr)
-                gl = GedcomLine(self._format_row(r.level, r.tag, a_value))
-                pn.rows.append(gl)
+                pn.rows.append((r.level, r.tag, a_value))
                 continue
             # 2.2 Only append to pn.row
-            print("#{} 2.2 row[{}] {} {!r}".\
+            print("#{:>36} 2.2 row[{}] {} {!r}".\
                   format(r.path, len(pn.rows), r.tag, r.value), file=stderr)
-            gl = GedcomLine(self._format_row(r.level, r.tag, r.value))
-            pn.rows.append(gl)
+            pn.rows.append((r.level, r.tag, r.value))
 #             if v != "":
 #                 # 3.1 Replace current row
 #                 print("#person 3.1 row({}) ({!r}) <= {} ({!r})".format(i, v, r.path, r.value), file=stderr)

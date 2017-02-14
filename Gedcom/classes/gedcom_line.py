@@ -21,26 +21,37 @@ class GedcomLine(object):
 
     def __init__(self, line, linenum=0):
         '''
-        Constructor: Parses and stores the next gedcom line
+        Constructor: Parses and stores a gedcom line
+        
+        Different usages:
+            GedcomLine("1 GIVN Ville")
+            GedcomLine("1 GIVN Ville", 20)
+            GedcomLine((1, "GIVN", "Ville"))
+            GedcomLine((1, "GIVN", "Ville"), 20)
         '''
         self.path = ""
-        self.line = line
         self.attributes = []
 
-        tkns = line.split(None,2)
+        if type(line) == str:
+            # Parse line
+            tkns = line.split(None,2)
+            self.line = line
+        else:
+            tkns = tuple(line)
         self.level = int(tkns[0])
         self.tag = tkns[1]
-        self.set_path(self.level, self.tag)
         if len(tkns) > 2:
             self.value = tkns[2]
         else:
             self.value = ""
-
+            self.line = str(self)
+        self.set_path(self.level, self.tag)
+            
 
     def __str__(self):
         ''' Get the original line '''
         try:
-            ret = "{} {} {}".format(self.level, self.tag, self.value).strip()
+            ret = "{} {} {}".format(self.level, self.tag, self.value).rstrip()
         except:
             ret = "* Not complete *"
         return ret
@@ -62,6 +73,14 @@ class GedcomLine(object):
     def set_attr(self, attr):
         ''' Optional attributes like name TYPE as a tuple {'TYPE':'marriage'} '''
         self.attributes.append(attr)
+
+    
+    def get_attr(self, key):
+        ''' Get optional attribute value '''
+        if key in self.attributes:
+            return self.attributes[key]
+        else:
+            return None
 
     
     def get_year(self):
