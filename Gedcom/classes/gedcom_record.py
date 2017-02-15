@@ -92,6 +92,7 @@ class GedcomRecord(GedcomLine):
 if __name__ == '__main__':
     # Test set
     from classes.ged_output import Output
+    from argparse import Namespace
      
     my_record = GedcomRecord(GedcomLine('0 @I2@ INDI'))
     my_name = PersonName(GedcomLine('1 NAME Saima/Raitala os. Krats/'))
@@ -100,6 +101,6 @@ if __name__ == '__main__':
     my_name.add_line(GedcomLine('3 SOUR Äidiltä'))
     my_name.add_line(GedcomLine('2 SURN Raitala'))
     my_name.add_line(GedcomLine('3 SOUR tiedetty'))
-    args = {'nolog':True, 'output_gedcom':'out.txt', 'encoding':'UTF-8', 'dryrun':False}
+    args = Namespace(nolog=True, output_gedcom='out.txt', encoding='UTF-8', dryrun=False)
     with Output(args) as f:
         my_record.emit(f)
