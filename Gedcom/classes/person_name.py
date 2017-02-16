@@ -90,7 +90,7 @@ class PersonName(GedcomLine):
         s1 = self.value.find('/')
         s2 = self.value.rfind('/')
         if s1 >= 0 and s2 >= 0 and s1 != s2:     
-            # Contains '.../Surname/...' or '.../Surname1/Surname2/...' etc
+            # Contains '.../Surname/...' or even '.../Surname1/Surname2/...' etc
             self.givn = self.value[:s1].rstrip()
             self.surn = self.value[s1+1:s2]
             self.nsfx = self.value[s2+1:]
@@ -102,17 +102,14 @@ class PersonName(GedcomLine):
         ''' 1.3) SURN Surname part: pick each surname as a new PersonName
                  Creates NAME, GIVN, SURN, NSFX rows and their associated lines into self.rows
         '''
+        ret = []    # List of merged lines
         for pn in self._extract_surnames():
             print('#', pn)
+            # Merge original and new rows
             self._create_gedcom_rows(pn)
-#             # Compare the name parts from NAME tag to this got here 
-#             if re.sub(r' ', '', gl.value) != re.sub(r' ', '', self.value): 
-#                 print ("{} {!r:>36} ––> {!r}".format(self.path, 
-#                                                      gl.value, self.value))
-#                 self._create_gedcom_rows(self._format_row(self.level, 
-#                                 "NOTE", 
-#                                 "{}{} {}".format(_CHGTAG, self.tag, self.value))
-        return self.rows
+            # Collect merged rows
+            ret.extend(pn.rows)
+        return ret
 
     # ---- Local functions ----
     
@@ -179,10 +176,14 @@ class PersonName(GedcomLine):
             return None
         ret = []
         for nm, name_type in self._get_surname_list():
-            print('# {}:{}'.format(nm, name_type))
-            pn = PersonName((self.level, 'NAME', nm))
+            #TODO: nsfx_new käsittelemättä
+            name = '{}/{}/{}'.format(self.givn, nm, self.nsfx)
+            pn = PersonName((self.level, 'NAME', name))
+            pn.surn = nm
+            pn.givn = self.givn
+            pn.nsfx = self.nsfx
             if name_type:
-                pn.set_attr({'TYPE':name_type})
+                pn.set_attr('TYPE', name_type)
 #             self._put_person(nm, name_type)
             ret.append(pn)
         return ret
@@ -266,9 +267,11 @@ class PersonName(GedcomLine):
 
     def _create_gedcom_rows(self, pn):
         ''' Stores the given PersonName as GedcomLines so that previous values of pn.rows are merged.
+            This is important, as original lines may have descentants like SOUR, which must be kept
+            in place.
             1. Inset NAME row on the top
-            2. Loop trough GedcomLines self.rows 
-               2.1 If tag GIVN, SURN or NSFX is found, update the pn.row
+            2. Loop trough original GedcomLines self.rows 
+               2.1 If tag GIVN, SURN or NSFX is found, update/report the pn.row
                2.2 Else copy self.row the to pn.rows
             3. Create new pn.rows, if any of GIVN, SURN or NSFX is not used
         '''
@@ -283,37 +286,46 @@ class PersonName(GedcomLine):
                     return ret
             return None
             
-        my_tags = [['GIVN', self.givn], ['SURN', self.surn], ['NSFX', self.nsfx]]
-        
-        # 1. The first row is the PersonName (inherited class from GedcomLine)
-        self.rows.insert(0, pn)
-        name_type = self.get_attr('TYPE')
-        if name_type:
-            pn.set_attr('TYPE', name_type)
+        my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], \
+                   ['NSFX', pn.nsfx], ['TYPE', pn.get_attr('TYPE')]]
 
-        # 2. For each self.row 
-        for r in self.rows:
-            # 2.1 Is this tag in my_tags
-            a_value = i_tag(r.tag)
-            if a_value:
-                print("#{:>36} 2.1 row[{}] {} {!r}".\
-                      format(r.path, len(pn.rows), r.tag, a_value), file=stderr)
-                pn.rows.append((r.level, r.tag, a_value))
+        # 1. The first row is the PersonName (inherited class from GedcomLine)
+        orig_rows = [self]
+        orig_rows.extend(self.rows)
+#         self.rows.insert(0, pn)
+
+        # 2. r = original onput gedcom self.row 
+        for r in orig_rows:
+            # 2.1 Is there a new value for this line
+            new_value = i_tag(r.tag)
+            if new_value:
+                if r.value != new_value:
+                    print("#{:>36} repl row[{}] {} {!r}<–{!r}".\
+                          format(r.path, len(pn.rows), r.tag, r.value, new_value), file=stderr)
+#                     # Compare the name parts from NAME tag to this got here 
+#                     if re.sub(r' ', '', gl.value) != re.sub(r' ', '', self.value): 
+#                         print ("{} {!r:>36} ––> {!r}".format(self.path, 
+#                                                              new_value, r.value))
+#                         pn.rows.append(GedcomLine(self.level, "NOTE", 
+#                                         "{}{} {}".format(_CHGTAG, self.tag, r.value))
+                else:
+                    print("#{:>36} keep row[{}] {} {!r}".\
+                          format(r.path, len(pn.rows), r.tag, new_value), file=stderr)
+                pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 continue
             # 2.2 Only append to pn.row
-            print("#{:>36} 2.2 row[{}] {} {!r}".\
+            print("#{:>36} add  row[{}] {} {!r}".\
                   format(r.path, len(pn.rows), r.tag, r.value), file=stderr)
-            pn.rows.append((r.level, r.tag, r.value))
-#             if v != "":
-#                 # 3.1 Replace current row
-#                 print("#person 3.1 row({}) ({!r}) <= {} ({!r})".format(i, v, r.path, r.value), file=stderr)
-#                 self.rows[i] = pn
-#                 return
-#             else:
-#                 if v != value:
-#                     # 3.2 Previous value is different: 
-#                     #     f.ex. there are multiple SURN tags for a name
-#                     print("#person 3.2 row({}) ({!r}) <+ {} ({!r})".format(len(self.rows), v, pn.path, pn.value), file=stderr)
-#                     self.rows.append(pn)
-#                     return
+            pn.rows.append(GedcomLine((r.level, r.tag, r.value)))
+
+        # 3 Create new rows for unused tags
+        for tag, value in my_tags:
+            if value:
+                displ_path = "{}+{}".format(self.path, tag)
+                print("#{:>36} new  row[{}] {} {!r}".\
+                      format(displ_path, len(pn.rows), tag, value), file=stderr)
+                pn.rows.append(GedcomLine((pn.level + 1, tag, value)))
+                   
+            
+            
 

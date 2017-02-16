@@ -30,7 +30,7 @@ class GedcomLine(object):
             GedcomLine((1, "GIVN", "Ville"), 20)
         '''
         self.path = ""
-        self.attributes = []
+        self.attributes = {}
 
         if type(line) == str:
             # Parse line
@@ -70,17 +70,16 @@ class GedcomLine(object):
         return self.path
 
 
-    def set_attr(self, attr):
+    def set_attr(self, key, value):
         ''' Optional attributes like name TYPE as a tuple {'TYPE':'marriage'} '''
-        self.attributes.append(attr)
+        self.attributes[key] = value
 
     
     def get_attr(self, key):
         ''' Get optional attribute value '''
         if key in self.attributes:
             return self.attributes[key]
-        else:
-            return None
+        return None
 
     
     def get_year(self):

@@ -12,27 +12,36 @@ import tempfile
 class Output:
     def __init__(self, args):
         self.args = args
-        self.log = True
         if 'nolog' in self.args and args.nolog: 
             self.log = False
-        self.newname = None
+        else:
+            self.log = True
+        if 'display_changes' in self.args: 
+            self.display_changes = args.display_changes
+        else:
+            self.display_changes = False
+        if 'encoding' in self.args:
+            self.encoding = self.args.encoding
+        else:
+            self.encoding = 'UTF-8'
+        if 'input_gedcom' in self.args:
+            self.in_name = self.args.input_gedcom
+        else:
+            self.in_name = None
+        if 'output_gedcom' in self.args:
+            self.out_name = self.args.output_gedcom
+        else:
+            self.out_name = None
+        self.new_name = None
 
     def __enter__(self):
-        if 'input_gedcom' in self.args and self.args.input_gedcom:
-            self.input_gedcom = self.args.input_gedcom
-        if 'output_gedcom' in self.args and self.args.output_gedcom:
-            self.output_filename = self.args.output_gedcom
-        else:
+        if not self.out_name:
             # create tempfile in the same directory so you can rename it later
-            tempfile.tempdir = os.path.dirname(self.input_gedcom) 
-            self.tempname = tempfile.mktemp()
-            self.newname = self.generate_name(self.input_gedcom)
-            self.output_filename = self.tempname
-        if 'encoding' in self.args:
-            enc = self.args.encoding
-        else:
-            enc = 'UTF-8'
-        self.f = open(self.output_filename, "w", encoding=enc)
+            tempfile.tempdir = os.path.dirname(self.in_name) 
+            self.temp_name = tempfile.mktemp()
+            self.new_name = self.generate_name(self.in_name)
+            self.out_name = self.temp_name
+        self.f = open(self.out_name, "w", encoding=self.encoding)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -41,12 +50,13 @@ class Output:
             return
         self.save()
 
-    def emit(self, s):
-        if 'display_changes' in self.args and self.display_changes:
-            if s.strip() != self.original_line:
-                print(self.original_line,"->",s)
-                self.original_line = ""
-        self.f.write(s+"\n")
+    def emit(self, line):
+        ''' Process an input line '''
+        if self.display_changes and line.strip() != self.original_line:
+            print('{:>36} –> {}'.format(self.original_line, line))
+            self.original_line = ""
+        self.f.write(line+"\n")
+
         if self.log:
             self.log = False
             args = sys.argv[1:]
@@ -63,22 +73,20 @@ class Output:
             datestring = time.strftime("%d %b %Y %H:%M:%S", 
                                        time.localtime(time.time()))
             self.emit("2 CONT _DATE {} {}".format(user, datestring))
-            if self.newname:
-                self.emit("2 CONT _SAVEDFILE " + self.newname)
+            if self.new_name:
+                self.emit("2 CONT _SAVEDFILE " + self.new_name)
 
     def save(self):
-        if 'output_gedcom' in self.args:
-            out_name = self.args.output_gedcom
-            print("Output saved as '{}'".format(out_name))
-        else: # No out_name
-            if 'input_gedcom' in self.args:
-                in_name = self.args.input_gedcom
-                if not self.args.output_gedcom:
+        if self.out_name:
+            print("Output saved as '{}'".format(self.out_name))
+        else:
+            if self.in_name:
+                if self.out_name == None:
                     # Only input given
-                    os.rename(in_name, self.newname)
-                    os.rename(self.tempname, in_name)
-                    print("Input file renamed to '{}'".format(self.newname))
-                    print("New version saved as '{}'".format(in_name))
+                    os.rename(self.in_name, self.new_name)
+                    os.rename(self.temp_name, self.in_name)
+                    print("Input file renamed to '{}'".format(self.new_name))
+                    print("New version saved as '{}'".format(self.in_name))
 
     def generate_name(self,name):
         i = 0
