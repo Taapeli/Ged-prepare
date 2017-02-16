@@ -40,8 +40,7 @@ class Output:
             tempfile.tempdir = os.path.dirname(self.in_name) 
             self.temp_name = tempfile.mktemp()
             self.new_name = self.generate_name(self.in_name)
-            self.out_name = self.temp_name
-        self.f = open(self.out_name, "w", encoding=self.encoding)
+        self.f = open(self.temp_name, "w", encoding=self.encoding)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -78,15 +77,15 @@ class Output:
 
     def save(self):
         if self.out_name:
-            print("Output saved as '{}'".format(self.out_name))
+            print("Tulostiedosto '{}'".format(self.out_name))
         else:
             if self.in_name:
                 if self.out_name == None:
                     # Only input given
                     os.rename(self.in_name, self.new_name)
                     os.rename(self.temp_name, self.in_name)
-                    print("Input file renamed to '{}'".format(self.new_name))
-                    print("New version saved as '{}'".format(self.in_name))
+                    print("Edellinen versio talletettu nimellä '{}'".format(self.new_name))
+                    print("Uusi tiedosto '{}'".format(self.in_name))
 
     def generate_name(self,name):
         i = 0
@@ -95,3 +94,5 @@ class Output:
             if not os.path.exists(newname): 
                 return newname
             i += 1
+
+

@@ -80,8 +80,6 @@ def phase3(args, gedline, f):
          Hei vaan!
     '''
 
-#     if gedline.level == 0:  print('')
-#     print("{:>24}: {}".format(gedline.path, str(gedline)[:70]))
     # For all states
     if gedline.level == 0:
         if gedline.value == 'INDI':  # Start new INDI
@@ -177,6 +175,7 @@ def _T2_emit_record_and_gedline(gedline, f):
     global indi_record
     if indi_record != None:
         indi_record.emit(f)
+        indi_record = None
     # Emit current line to output file
     gedline.emit(f)
 

@@ -8,6 +8,12 @@ from sys import stderr
 from classes.gedcom_line import GedcomLine
 from classes.person_name import PersonName
 
+DEBUG=True
+class dbug():
+    def __init(self, s):
+        if DEBUG:
+            print(s, file=stderr)
+
 class GedcomRecord(GedcomLine):
     '''
     Stores a Gedcom logical record, which includes level 0 record (0 INDI) 
@@ -27,8 +33,8 @@ class GedcomRecord(GedcomLine):
             which includes a group of gredcom lines starting with a level0 record.
         '''
         self.rows = []
-        # date contains tuples like {'BIRT':1820}
-        self.date = []
+        # optional attributes {'BIRT':1820}
+        self.attributes = {}
         # Latest PersonName index in self.rows
         self.currname = -1
         # Store level 0 line
@@ -67,18 +73,15 @@ class GedcomRecord(GedcomLine):
             if isinstance(obj, PersonName):
                 # Each NAME row generated from /surname1, surname2/
                 for x in obj.get_person_rows(): 
-                    # Get output rows NAME, SURN, GIVN etc. from PersonName
-#                     print("p> " + str(x))
                     f.emit(str(x))
             else:
                 # A GedcomLine outside NAME and its descendants
-#                 print("g> " + str(obj))
                 f.emit(str(obj))
 
 
     def store_date(self, year, tag):
         if type(year) == int:
-            self.date.append({tag:year})
+            self.set_attr(tag, year)
         else:
             print ("{} ERROR: Invalid {} year".format(self.path, tag), file=stderr)
 

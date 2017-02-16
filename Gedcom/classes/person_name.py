@@ -20,6 +20,11 @@ _BABY = {"vauva":"U", "poikavauva":"M", "tyttövauva":"F",
          "poikalapsi":"M", "tyttölapsi":"F", "lapsi":"U"}
 #TODO: Lyhenteet myös ruotsiksi
 
+DEBUG=False
+def debug(s):
+    if DEBUG:
+        print (s, file=stderr)
+
 
 class PersonName(GedcomLine):
     '''
@@ -94,6 +99,10 @@ class PersonName(GedcomLine):
             self.givn = self.value[:s1].rstrip()
             self.surn = self.value[s1+1:s2]
             self.nsfx = self.value[s2+1:]
+        else:
+            self.givn = ''
+            self.surn = self.value
+            self.nsfx = ''
             
         ''' 1.1) GIVN given name part rules '''
         self._evaluate_givn()
@@ -104,7 +113,7 @@ class PersonName(GedcomLine):
         '''
         ret = []    # List of merged lines
         for pn in self._extract_surnames():
-            print('#', pn)
+            debug('#' + str(pn))
             # Merge original and new rows
             self._create_gedcom_rows(pn)
             # Collect merged rows
@@ -195,7 +204,7 @@ class PersonName(GedcomLine):
         # convert "/" and "," to a single separator symbol " , "
         surnames = re.sub(r' *[/,] *', ' , ', self.surn).split()
         ret = []
-        # This surnames automate reads surnames and separators from right to left
+        # Following surnames automate reads surnames and separators from right to left
         # and writes PersonNames to self.rows(?) '''
         #
         #    !state \ input !! delim ! name  ! end
@@ -243,28 +252,6 @@ class PersonName(GedcomLine):
         return("{} {} {}".format(level, tag, str.strip(value)))
 
 
-#     def _put_person(self, sname, name_type):
-#         ''' Stores each PersonName instance with all its GedcomLines '''
-#         if sname != '':
-#             # First store the NAME line 
-#             value = "{}/{}/{}".format(self.givn, sname, self.nsfx).rstrip() 
-#             self._create_gedcom_rows(self.level, 'NAME', value)
-#             # Then store rows SURN with TYPE, if defined
-#             self._create_gedcom_rows(self.level+1, 'SURN', sname)
-#             if name_type != '':
-#                 self._create_gedcom_rows(self.level+1, 'TYPE', name_type)
-#                 #_note = "{} {}({})".format(_note, sname, name_type)
-#         '''
-#             Generate GIVN, SURN, NSFX and _CALL lines and 
-#             merge them with the values got from original gedcom
-#         '''
-#         self._create_gedcom_rows(self.level+1, 'GIVN', self.givn)
-#         if hasattr(self, 'nsfx_new'): # a new patronyme
-#             self._create_gedcom_rows(self.level+1, 'NSFX', self.nsfx_new)
-#         if hasattr(self, 'call_name'):
-#             self._create_gedcom_rows(self.level+1, '_CALL', self.call_name)
-            
-
     def _create_gedcom_rows(self, pn):
         ''' Stores the given PersonName as GedcomLines so that previous values of pn.rows are merged.
             This is important, as original lines may have descentants like SOUR, which must be kept
@@ -292,40 +279,36 @@ class PersonName(GedcomLine):
         # 1. The first row is the PersonName (inherited class from GedcomLine)
         orig_rows = [self]
         orig_rows.extend(self.rows)
-#         self.rows.insert(0, pn)
+        # For name comparison
+        name_self = re.sub(r' ', '', self.value)
 
         # 2. r = original onput gedcom self.row 
         for r in orig_rows:
             # 2.1 Is there a new value for this line
             new_value = i_tag(r.tag)
             if new_value:
-                if r.value != new_value:
-                    print("#{:>36} repl row[{}] {} {!r}<–{!r}".\
-                          format(r.path, len(pn.rows), r.tag, r.value, new_value), file=stderr)
-#                     # Compare the name parts from NAME tag to this got here 
-#                     if re.sub(r' ', '', gl.value) != re.sub(r' ', '', self.value): 
-#                         print ("{} {!r:>36} ––> {!r}".format(self.path, 
-#                                                              new_value, r.value))
-#                         pn.rows.append(GedcomLine(self.level, "NOTE", 
-#                                         "{}{} {}".format(_CHGTAG, self.tag, r.value))
-                else:
-                    print("#{:>36} keep row[{}] {} {!r}".\
-                          format(r.path, len(pn.rows), r.tag, new_value), file=stderr)
+#                 if r.value != new_value:
+#                     debug("#{:>36} repl row[{}] {} {!r}<–{!r}".\
+#                           format(r.path, len(pn.rows), r.tag, r.value, new_value))
+#                 else:
+#                     debug("#{:>36} keep row[{}] {} {!r}".\
+#                           format(r.path, len(pn.rows), r.tag, new_value))
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
+                # Show NAME differences 
+                if r.tag == 'NAME' and pn.value != name_self: 
+                    print ("{} {!r:>36} ––> {!r}".format(self.path, self.value, new_value))
+                    pn.rows.append(GedcomLine((self.level + 1, _CHGTAG + self.tag, self.value)))
                 continue
             # 2.2 Only append to pn.row
-            print("#{:>36} add  row[{}] {} {!r}".\
-                  format(r.path, len(pn.rows), r.tag, r.value), file=stderr)
+            debug("#{:>36} add  row[{}] {} {!r}".\
+                  format(r.path, len(pn.rows), r.tag, r.value))
             pn.rows.append(GedcomLine((r.level, r.tag, r.value)))
 
         # 3 Create new rows for unused tags
         for tag, value in my_tags:
             if value:
                 displ_path = "{}+{}".format(self.path, tag)
-                print("#{:>36} new  row[{}] {} {!r}".\
-                      format(displ_path, len(pn.rows), tag, value), file=stderr)
+                debug("#{:>36} new  row[{}] {} {!r}".\
+                      format(displ_path, len(pn.rows), tag, value))
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))
-                   
-            
-            
 

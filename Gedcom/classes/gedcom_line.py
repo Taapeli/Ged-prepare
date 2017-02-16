@@ -23,7 +23,7 @@ class GedcomLine(object):
         '''
         Constructor: Parses and stores a gedcom line
         
-        Different usages:
+        Different constructors:
             GedcomLine("1 GIVN Ville")
             GedcomLine("1 GIVN Ville", 20)
             GedcomLine((1, "GIVN", "Ville"))
