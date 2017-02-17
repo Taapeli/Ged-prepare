@@ -35,12 +35,14 @@ class Output:
         self.new_name = None
 
     def __enter__(self):
-        if not self.out_name:
+        if self.out_name:
+            self.f = open(self.out_name, "w", encoding=self.encoding)
+        else:
             # create tempfile in the same directory so you can rename it later
             tempfile.tempdir = os.path.dirname(self.in_name) 
             self.temp_name = tempfile.mktemp()
             self.new_name = self.generate_name(self.in_name)
-        self.f = open(self.temp_name, "w", encoding=self.encoding)
+            self.f = open(self.temp_name, "w", encoding=self.encoding)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
