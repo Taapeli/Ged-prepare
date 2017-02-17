@@ -1186,6 +1186,22 @@ class Refname:
             
         try:
             return session.run(query)
+    
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+            logging.warning('Kannan lukeminen ei onnistunut: {}'.format(err))
+            
+            
+    def get_name(self):
+        """ Haetaan referenssinimi
+        """
+        global session
+        query="""
+            MATCH (a:Refname)-[r:REFFIRST]->(b:Refname) WHERE b.name='{}'
+            RETURN a.name AS aname, b.name AS bname;""".format(self.name)
+            
+        try:
+            return session.run(query)
         
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)

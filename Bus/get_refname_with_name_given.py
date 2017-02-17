@@ -21,6 +21,7 @@ def process_neo4j(args):
     
         names = args.first_name.split(" ")
         for name in names:
+            record = None
             r = Refname(name)
             result = r.get_refname()
             for record in result:
@@ -28,6 +29,19 @@ def process_neo4j(args):
                 bname = record["bname"]
                 
                 print("\nName: " + aname + " ---> Refname: " + bname)
+                
+            if not record:
+                first_line = "\nName is self a reference name.\n"
+                result = r.get_name()
+                for record in result:
+                    aname = record["aname"]
+                    bname = record["bname"]
+                
+                    print(first_line + "\nName: " + aname + " ---> Refname: " + bname)
+                    first_line = ''
+                
+            if not record:
+               print("\nName: '" + name + "' is not found")
 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
