@@ -1176,6 +1176,22 @@ class Refname:
                 logging.warning('Lisääminen (a) ei onnistunut: {}'.format(err))
 
 
+    def get_refname(self):
+        """ Haetaan nimeä vastaava referenssinimi
+        """
+        global session
+        query="""
+            MATCH (a:Refname)-[r:REFFIRST]->(b:Refname) WHERE a.name='{}'
+            RETURN a.name AS aname, b.name AS bname;""".format(self.name)
+            
+        try:
+            return session.run(query)
+        
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+            logging.warning('Kannan lukeminen ei onnistunut: {}'.format(err))
+        
+        
     def get_typed_refnames(reftype=""):
         """ Haetaan kannasta kaikki referenssinimet sekä lista nimistä, jotka
             viittaavat ko refnameen. 
