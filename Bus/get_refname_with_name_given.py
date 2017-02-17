@@ -31,7 +31,7 @@ def process_neo4j(args):
                 print("\nName: " + aname + " ---> Refname: " + bname)
                 
             if not record:
-                first_line = "\nName is self a reference name.\n"
+                first_line = "\nName: '" + name + "' is self a reference name.\n"
                 result = r.get_name()
                 for record in result:
                     aname = record["aname"]
