@@ -13,7 +13,7 @@ _CHGTAG = "NOTE orig_"   # Comment: original format
 
 _UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
 _PATRONYME = ['poika', 'p.', 'sson', 'ss.', 's.',
-             'tytär', 'dotter', 'dr.', ]
+             'tytär', 't.', 'dotter', 'dr.', ]
 _SURN = {'os.':'avionimi', 'o.s.':'avionimi', 'ent.':'entinen', 'e.':'entinen', '/':'AKA', ',':'AKA'}
 _VON = ['von', 'af', 'de la', 'de']
 _BABY = {"vauva":"U", "poikavauva":"M", "tyttövauva":"F", 
@@ -141,7 +141,8 @@ class PersonName(GedcomLine):
             if (len(gnames) > 0):
                 nm = gnames[-1]
                 if _match_patronyme(nm) != None:
-                    self.nsfx_new = nm
+                    self.nsfx_orig = self.nsfx
+                    self.nsfx = nm
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
             
@@ -191,6 +192,10 @@ class PersonName(GedcomLine):
             pn.surn = nm
             pn.givn = self.givn
             pn.nsfx = self.nsfx
+            if hasattr(self,'nsfx_org'):
+                pn.nsfx_orig = self.nsfx_orig
+            if hasattr(self,'call_name'):
+                pn.call_name = self.call_name
             if name_type:
                 pn.set_attr('TYPE', name_type)
 #             self._put_person(nm, name_type)
@@ -272,9 +277,21 @@ class PersonName(GedcomLine):
                     del my_tags[i]
                     return ret
             return None
+        
+        def report_change(tag, value, new_value):
+            ''' Report a report_change value for a tag '''
+            pn.rows.append(GedcomLine((self.level+1, _CHGTAG + tag, value)))
+            if self.path.endswith(tag):
+                path = self.path
+            else:
+                path = "{}.{}".format(self.path, tag)
+            print ("{} {!r:>36} ––> {!r}".format(path, value, new_value))
             
         my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], \
                    ['NSFX', pn.nsfx], ['TYPE', pn.get_attr('TYPE')]]
+        if hasattr(pn, 'call_name'):
+            my_tags.append(['_CALL', pn.call_name])
+#             print('{} on {!r}'.format(pn.givn, pn.call_name))
 
         # 1. The first row is the PersonName (inherited class from GedcomLine)
         orig_rows = [self]
@@ -296,8 +313,13 @@ class PersonName(GedcomLine):
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 # Show NAME differences 
                 if r.tag == 'NAME' and pn.value != name_self: 
-                    print ("{} {!r:>36} ––> {!r}".format(self.path, self.value, new_value))
-                    pn.rows.append(GedcomLine((self.level + 1, _CHGTAG + self.tag, self.value)))
+                    report_change(r.tag, self.value, new_value)
+#                     print ("{} {!r:>36} ––> {!r}".format(self.path, self.value, new_value))
+#                     pn.rows.append(GedcomLine((self.level+1, _CHGTAG + self.tag, self.value)))
+                if r.tag == 'NSFX' and hasattr(self, 'nsfx_orig'):
+                    report_change(r.tag, self.value, self.nsfx_orig)
+#                     print ("{} {!r:>36} ––> {!r}".format(self.path, self.nsfx_orig, self.value))
+#                     pn.rows.append(GedcomLine((self.level+1, _CHGTAG + self.tag, self.value)))
                 continue
             # 2.2 Only append to pn.row
             debug("#{:>36} add  row[{}] {} {!r}".\
@@ -307,8 +329,11 @@ class PersonName(GedcomLine):
         # 3 Create new rows for unused tags
         for tag, value in my_tags:
             if value:
-                displ_path = "{}+{}".format(self.path, tag)
+                displ_path = "{},{}".format(self.path, tag)
                 debug("#{:>36} new  row[{}] {} {!r}".\
                       format(displ_path, len(pn.rows), tag, value))
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))
-
+                if tag == 'NSFX' and hasattr(self, 'nsfx_orig'):
+                    report_change(tag, self.nsfx_orig, self.nsfx)
+#                     print ("{} {!r:>36} ––> {!r}".format(self.path, self.nsfx_orig, self.value))
+#                     pn.rows.append(GedcomLine((self.level+1, _CHGTAG + self.tag, self.value)))
