@@ -8,6 +8,7 @@ Jorma Haapasalo, 2017.
 
 import sys
 import argparse
+import time
 from sys import stderr
 from classes.genealogy import connect_db, Refname
 
@@ -19,6 +20,7 @@ def process_neo4j(args):
     # List some data of the people with given surname
     try:
     
+        t = time.perf_counter()
         names = args.first_name.split(" ")
         for name in names:
             record = None
@@ -42,6 +44,9 @@ def process_neo4j(args):
                 
             if not record:
                print("\nName: '" + name + "' is not found")
+               
+        elapsed_time = time.perf_counter() - t
+        print("\nTime needed: " + str(elapsed_time) + " seconds")
 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
