@@ -55,17 +55,17 @@ as it's parameter.
 
 The parameters of each phases:
 - "args" is the object returned by ArgumentParser.parse_args.
-- "line" is the original line in the input GEDCOM (unicode string)
-- "level" is the level number of the line (integer)
-- "path" is the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE representing the DATE tag
-  inside the BIRT tag for the individual @I123@.
-- "tag" is the current tag (last part of path)
-- "value" is the value for the current tag, e.g. a date or a name
+- "gedline", a GedcomLine() object, which includes
+    - "line", the original line in the input GEDCOM (unicode string)
+    - "level", the level number of the line (integer)
+    - "path", the current hierarchy of the GEDCOM tags, e.g @I123@.BIRT.DATE
+      representing the DATE tag inside the BIRT tag for the individual @I123@.
+    - "tag", the current tag (last part of path)
+    - "value", the value for the current tag, e.g. a date or a name
 - "output_file" is a file-like object containing the method emit(string) that is used to produce the output
-- "parser" is the ArgumentParser object of the argparse module
 
 """
-_VERSION="0.1"
+_VERSION="0.2"
 
 import sys
 import os
@@ -73,99 +73,64 @@ import getpass
 import time
 import argparse
 import tempfile
-from sys import stderr
 import importlib
+
+
+from classes.gedcom_line import GedcomLine
+from classes.ged_output import Output
 
 def numeric(s):
     return s.replace(".","").isdigit()
 
-class Output:
-    def __init__(self,args):
-        self.args = args
-        self.log = True
-    def __enter__(self):
-        input_gedcom = self.args.input_gedcom
-        tempfile.tempdir = os.path.dirname(input_gedcom) # create tempfile in the same directory so you can rename it later
-        self.tempname = tempfile.mktemp()
-        self.newname = self.generate_name(input_gedcom)
-        self.f = open(self.tempname,"w",encoding=self.args.encoding)
-        return self
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.f.close()
-        if not self.args.dryrun:
-            self.save()
-
-    def emit(self,s):
-        self.f.write(s+"\n")
-        if self.log:
-            self.log = False
-            self.emit("1 _TRANSFORM " + " ".join(sys.argv))
-            datestring = time.strftime("%d %b %Y %H:%M:%S", time.localtime(time.time()))
-            self.emit("2 _TIME " + datestring)
-            #user = os.environ.get('USER',"")
-            user = getpass.getuser()
-            if user: self.emit("2 _USER " + user)
-            self.emit("2 _SAVEDFILE " + self.newname)
-    def save(self):
-        input_gedcom = self.args.input_gedcom
-        os.rename(input_gedcom,self.newname)
-        os.rename(self.tempname,input_gedcom)
-        print("Input file renamed to '{}'".format(self.newname))
-        print("New version saved as '{}'".format(input_gedcom))
-    def generate_name(self,name):
-        i = 0
-        while True:
-            newname = "{}.{}".format(name,i)
-            if not os.path.exists(newname): return newname
-            i += 1
-
 
 def read_gedcom(args):
-    curpath = [None]
+    
     try:
-        for linenum,line in enumerate(open(args.input_gedcom,encoding=args.encoding)):
-
+        for linenum, line in enumerate(open(args.input_gedcom, encoding=args.encoding)):
+            # Clean the line
             line = line[:-1]
-            if line[0] == "\ufeff": line = line[1:]
-            tkns = line.split(None,2)
-            level = int(tkns[0])
-            tag = tkns[1]
-            if level > len(curpath):
-                raise RuntimeError("Invalid level {}: {}".format(linenum,line))
-            if level == len(curpath):
-                curpath.append(tag)
-            else:
-                curpath[level] = tag
-                curpath = curpath[:level+1]
-            if len(tkns) > 2:
-                value = tkns[2]
-            else:
-                value = ""
-            yield (line,level,".".join(curpath),tag,value)
+            if line[0] == "\ufeff": 
+                line = line[1:]
+            # Return a gedcom line object
+            gedline = GedcomLine(line, linenum)
+            yield gedline
+
     except FileNotFoundError:
-        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=stderr)
+        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=sys.stderr)
         raise
     except Exception as err:
         print(type(err))
-        print("Virhe: {0}".format(err), file=stderr)
+        print("Virhe: {0}".format(err), file=sys.stderr)
+
 
 def process_gedcom(args,transformer):
 
     transformer.initialize(args)
 
-    # 1st traverse
-    if hasattr(transformer,"phase1"):
-        for line,level,path,tag,value in read_gedcom(args):
-            transformer.phase1(args,line,level,path,tag,value)
+    try:
+        # 1st traverse
+        if hasattr(transformer,"phase1"):
+            for gedline in read_gedcom(args):
+                transformer.phase1(args, gedline)
+    
+        # Intermediate processing of collected data
+        if hasattr(transformer,"phase2"):
+            transformer.phase2(args)
+    
+        do_phase4 = hasattr(transformer,"phase4")
+    
+        # 2nd traverse "phase3"
+        with Output(args) as f:
+            f.display_changes = args.display_changes
+            for gedline in read_gedcom(args):
+                if do_phase4 and gedline.tag == "TRLR":
+                    f.original_line = ""
+                    transformer.phase4(args, f)
+                f.original_line = gedline.line.strip()
+                transformer.phase3(args, gedline, f)
+    except Exception as err:
+        print("Ohjelma päättyi virheeseen {}".format(err), file=sys.stderr)
 
-    # Intermediate processing of collected data
-    if hasattr(transformer,"phase2"):
-        transformer.phase2(args)
-
-    # 2nd traverse "phase3"
-    with Output(args) as f:
-        for line,level,path,tag,value in read_gedcom(args):
-            transformer.phase3(args,line,level,path,tag,value,f)
 
 def get_transforms():
     # all transform modules should be .py files in the package/subdirectory "transforms"
@@ -181,6 +146,7 @@ def get_transforms():
             version = getattr(transformer,"version","")
             yield (modname,transformer,docline,version)
 
+
 def find_transform(prefix):
     choices = []
     for modname,transformer,docline,version in get_transforms():
@@ -193,16 +159,19 @@ def find_transform(prefix):
         print("Matching names: {}".format(",".join(name for name,t in choices)))
     return False
 
+
 def main():
     print("\nTaapeli GEDCOM transform program A (version {})\n".format(_VERSION))
     parser = argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
-    #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
+    parser.add_argument('--output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
     parser.add_argument('--display-changes', action='store_true',
                         help='Display changed rows')
     parser.add_argument('--dryrun', action='store_true',
                         help='Do not produce an output file')
+    parser.add_argument('--nolog', action='store_true',
+                        help='Do not produce a log in the output file')
     #parser.add_argument('--display-nonchanges', action='store_true',
     #                    help='Display unchanged places')
     parser.add_argument('--encoding', type=str, default="utf-8",
