@@ -54,8 +54,9 @@ class GedcomRecord(GedcomLine):
         ''' Adds a gedcom line to record set.
             "2 NAME" line is added as a PersonName object, others as GedcomLine objects
         '''
-        if gedline.level == 1 and gedline.tag == 'NAME':
-            # gedline is a PersonName
+        if type(gedline) is PersonName:
+            # gedline is "1 NAME ...". The first one is the preferred name
+            gedline.pref_name = (self.currname < 0)
 #             print("#record row({}) <= {} (name {!r})".format(len(self.rows), gedline.path, gedline.name), file=stderr)
             self.currname = len(self.rows)
             self.rows.append(gedline)

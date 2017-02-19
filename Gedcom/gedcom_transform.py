@@ -69,10 +69,7 @@ _VERSION="0.2"
 
 import sys
 import os
-import getpass
-import time
 import argparse
-import tempfile
 import importlib
 
 
@@ -128,8 +125,8 @@ def process_gedcom(args,transformer):
                     transformer.phase4(args, f)
                 f.original_line = gedline.line.strip()
                 transformer.phase3(args, gedline, f)
-    except Exception as err:
-        print("Ohjelma päättyi virheeseen {}".format(err), file=sys.stderr)
+    except FileNotFoundError as err:
+        print("Ohjelma päättyi virheeseen: {}".format(err), file=sys.stderr)
 
 
 def get_transforms():

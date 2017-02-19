@@ -58,6 +58,9 @@ class PersonName(GedcomLine):
 #         value='Anders (Antti)/Puuhaara e. Träskalle/' }
 
         self.rows = []
+        # pref_name shall carry information, if this NAME row is followed all 
+        # Descendant rows from input file
+        self.pref_name = False
         if type(gedline) == GedcomLine:
             tup = (gedline.level, gedline.tag, gedline.value)
         else:
@@ -74,9 +77,9 @@ class PersonName(GedcomLine):
             tag='GIVN'
             value='GIVN Brita Kristiina/'
         '''
-        if not type(gedline) is GedcomLine:
-            raise RuntimeError("GedcomLine argument expected")
-        # A ready made GedcomLine
+#         if not type(gedline) is GedcomLine:
+#             raise RuntimeError("GedcomLine argument expected")
+#         # A ready made GedcomLine
         self.rows.append(gedline)
 
 
@@ -182,8 +185,8 @@ class PersonName(GedcomLine):
         if self.value == '':
             return None
         ret = []
+        prefn = self.pref_name
         for nm, name_type in self._get_surname_list():
-            #TODO: nsfx_new käsittelemättä
             name = '{}/{}/{}'.format(self.givn, nm, self.nsfx)
             pn = PersonName((self.level, 'NAME', name))
             pn.surn = nm
@@ -195,7 +198,9 @@ class PersonName(GedcomLine):
                 pn.call_name = self.call_name
             if name_type:
                 pn.set_attr('TYPE', name_type)
-#             self._put_person(nm, name_type)
+            # Mark the first generated surname of a person as preferred
+            pn.pref_name = prefn
+            prefn = False
             ret.append(pn)
         return ret
 
@@ -224,7 +229,7 @@ class PersonName(GedcomLine):
         #        op4: return { PersonName(name): oper[delim] }
 
         state = 0
-#         orig_name = ""
+        name = None
         for nm in reversed(surnames):
             if state == 0 or state == 3:        # Start state
                 #op1 Only name expected
@@ -245,7 +250,8 @@ class PersonName(GedcomLine):
                     name = str.rstrip(nm + ' ' + name)
 
         #op4: End: output the last name and it's type
-        ret.append((name, oper))
+        if name:
+            ret.append((name, oper))
         return ret
 
 
@@ -290,33 +296,29 @@ class PersonName(GedcomLine):
             my_tags.append(['_CALL', pn.call_name])
 #             print('{} on {!r}'.format(pn.givn, pn.call_name))
 
+
         # 1. The first row is the PersonName (inherited class from GedcomLine)
         orig_rows = [self]
-        orig_rows.extend(self.rows)
+        if pn.pref_name:
+            # Only the person's first NAME and there the first surname 
+            # carries the gedcom lines inherited from input file
+            orig_rows.extend(self.rows)
         # For name comparison
         name_self = re.sub(r' ', '', self.value)
 
-        # 2. r = original onput gedcom self.row 
+        # 2. r = original input gedcom self.row 
         for r in orig_rows:
             # 2.1 Is there a new value for this line
             new_value = i_tag(r.tag)
             if new_value:
-#                 if r.value != new_value:
-#                     debug("#{:>36} repl row[{}] {} {!r}<–{!r}".\
-#                           format(r.path, len(pn.rows), r.tag, r.value, new_value))
-#                 else:
-#                     debug("#{:>36} keep row[{}] {} {!r}".\
-#                           format(r.path, len(pn.rows), r.tag, new_value))
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 # Show NAME differences 
-                if r.tag == 'NAME' and pn.value != name_self: 
-                    report_change(r.tag, self.value, new_value)
-#                     print ("{} {!r:>36} ––> {!r}".format(self.path, self.value, new_value))
-#                     pn.rows.append(GedcomLine((self.level+1, _CHGTAG + self.tag, self.value)))
-                if r.tag == 'NSFX' and hasattr(self, 'nsfx_orig'):
+                if r.tag == 'NAME':
+                    if re.sub(r' ', '', pn.value) != name_self: 
+                        report_change(r.tag, self.value, new_value)
+                    pn.pref_name = False
+                if r.tag == 'NSFX' and hasattr(self, 'nsfx_orig') and pn.pref_name:
                     report_change(r.tag, self.value, self.nsfx_orig)
-#                     print ("{} {!r:>36} ––> {!r}".format(self.path, self.nsfx_orig, self.value))
-#                     pn.rows.append(GedcomLine((self.level+1, _CHGTAG + self.tag, self.value)))
                 continue
             # 2.2 Only append to pn.row
             debug("#{:>36} add  row[{}] {} {!r}".\
@@ -326,11 +328,6 @@ class PersonName(GedcomLine):
         # 3 Create new rows for unused tags
         for tag, value in my_tags:
             if value:
-                displ_path = "{},{}".format(self.path, tag)
                 debug("#{:>36} new  row[{}] {} {!r}".\
-                      format(displ_path, len(pn.rows), tag, value))
+                      format("{}.{}".format(self.path, tag), len(pn.rows), tag, value))
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))
-                if tag == 'NSFX' and hasattr(self, 'nsfx_orig'):
-                    report_change(tag, self.nsfx_orig, self.nsfx)
-#                     print ("{} {!r:>36} ––> {!r}".format(self.path, self.nsfx_orig, self.value))
-#                     pn.rows.append(GedcomLine((self.level+1, _CHGTAG + self.tag, self.value)))
