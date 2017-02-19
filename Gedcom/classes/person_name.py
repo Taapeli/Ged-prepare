@@ -12,8 +12,8 @@ _NONAME = 'N'            # Marker for missing name part
 _CHGTAG = "NOTE orig_"   # Comment: original format
 
 _UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
-_PATRONYME = ['poika', 'p.', 'sson', 'ss.', 's.',
-             'tytär', 't.', 'dotter', 'dr.', ]
+_PATRONYME = {'poika':'poika', 'p.':'poika', 'sson':'sson', 'ss.':'sson', 's.':'son',
+             'tytär':'tytär', 't.':'tytär', 'dotter':'dotter', 'dr.':'dotter', }
 _SURN = {'os.':'avionimi', 'o.s.':'avionimi', 'ent.':'entinen', 'e.':'entinen', '/':'AKA', ',':'AKA'}
 _VON = ['von', 'af', 'de la', 'de']
 _BABY = {"vauva":"U", "poikavauva":"M", "tyttövauva":"F", 
@@ -30,22 +30,17 @@ class PersonName(GedcomLine):
     '''
     Stores and fixes Gedcom individual name information.
 
-    Methods:
-    __init__(...)    Create an PersonName instance from a '1 NAME' tag row
-    add_line(...)    Add an associated row (with a higher level number)
-    set_attr(...)    Set rule for patronymes
-    get_lines()      Returns the list of Gedgom get_lines fixed
-    
-    The main source of information is the '1 NAME givn/surn/nsfx' row.
+    The preferred source of information is the '1 NAME givn/surn/nsfx' row.
     If NAME has significant changes, the original value is also written to 
-    'NOTE orig_'
+    a 'NOTE orig_' row.
     
     1. A patronyme in givn part is moved to nsfx part and a new NSFX row is created,
        if needed
     
     2. A missing givn or surn is replaced with noname mark 'N'
     
-    3. ...
+    3. If surname part has multiple surnames, a new "1 NAME" group is generated
+       from each of them
     '''
 
 #     def __str__(self):
@@ -53,7 +48,7 @@ class PersonName(GedcomLine):
 
 
     def __init__(self, gedline):
-        ''' Creates a new instance on person name definition.
+        ''' Creates a new instance on person name definition from a '1 NAME' row.
             The arguments must be a NAME gedcom line.
         '''
 #       Example: GedLine{
@@ -120,16 +115,17 @@ class PersonName(GedcomLine):
             ret.extend(pn.rows)
         return ret
 
-    # ---- Local functions ----
     
     def _evaluate_givn(self):
         ''' Process given name part of NAME record '''
 
         def _match_patronyme(nm):
-            '''Returns patronyme suffix, if matches, else None'''
-            for suff in _PATRONYME:
-                if nm.endswith(suff):
-                    return suff
+            ''' Returns full patronyme name, if matches, else None
+            '''
+            for short, full in _PATRONYME.items():
+                if nm.endswith(short):
+                    # 'Matinp.' ––> 'Matinpoika'
+                    return nm[:-len(short)] + full
             return None
 
 
@@ -140,9 +136,10 @@ class PersonName(GedcomLine):
             
             if (len(gnames) > 0):
                 nm = gnames[-1]
-                if _match_patronyme(nm) != None:
+                pn = _match_patronyme(nm)
+                if pn != None:
                     self.nsfx_orig = self.nsfx
-                    self.nsfx = nm
+                    self.nsfx = pn
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
             
