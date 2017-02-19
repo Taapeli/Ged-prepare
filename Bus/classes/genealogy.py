@@ -556,6 +556,19 @@ class Name:
         
     
     @staticmethod
+    def get_all_first_names():
+        """ Listaa kaikki etunimet tietokannassa """
+        
+        global session
+        
+        query = """
+            MATCH (n:Name) RETURN distinct n.first AS first
+                ORDER BY n.first
+            """
+        return session.run(query)
+        
+    
+    @staticmethod
     def get_surnames():
         """ Listaa kaikki sukunimet tietokannassa """
         
@@ -1175,14 +1188,14 @@ class Refname:
                 print("Virhe: {0}".format(err), file=stderr)
                 logging.warning('Lisääminen (a) ei onnistunut: {}'.format(err))
 
-
-    def get_refname(self):
+    @staticmethod   
+    def get_refname(name):
         """ Haetaan nimeä vastaava referenssinimi
         """
         global session
         query="""
             MATCH (a:Refname)-[r:REFFIRST]->(b:Refname) WHERE a.name='{}'
-            RETURN a.name AS aname, b.name AS bname;""".format(self.name)
+            RETURN a.name AS aname, b.name AS bname;""".format(name)
             
         try:
             return session.run(query)
@@ -1192,13 +1205,14 @@ class Refname:
             logging.warning('Kannan lukeminen ei onnistunut: {}'.format(err))
             
             
-    def get_name(self):
+    @staticmethod   
+    def get_name(name):
         """ Haetaan referenssinimi
         """
         global session
         query="""
             MATCH (a:Refname)-[r:REFFIRST]->(b:Refname) WHERE b.name='{}'
-            RETURN a.name AS aname, b.name AS bname;""".format(self.name)
+            RETURN a.name AS aname, b.name AS bname;""".format(name)
             
         try:
             return session.run(query)

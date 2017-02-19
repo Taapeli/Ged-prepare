@@ -24,8 +24,7 @@ def process_neo4j(args):
         names = args.first_name.split(" ")
         for name in names:
             record = None
-            r = Refname(name)
-            result = r.get_refname()
+            result = Refname.get_refname(name)
             for record in result:
                 aname = record["aname"]
                 bname = record["bname"]
@@ -34,7 +33,7 @@ def process_neo4j(args):
                 
             if not record:
                 first_line = "\nName: '" + name + "' is self a reference name.\n"
-                result = r.get_name()
+                result = Refname.get_name(name)
                 for record in result:
                     aname = record["aname"]
                     bname = record["bname"]
