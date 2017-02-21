@@ -58,8 +58,8 @@ class PersonName(GedcomLine):
 #         value='Anders (Antti)/Puuhaara e. Träskalle/' }
 
         self.rows = []
-        # pref_name shall carry information, if this NAME row is followed all 
-        # Descendant rows from input file
+        # pref_name shall carry information, if all descendant rows from input file 
+        # are included in this default name
         self.pref_name = False
         if type(gedline) == GedcomLine:
             tup = (gedline.level, gedline.tag, gedline.value)
@@ -155,12 +155,11 @@ class PersonName(GedcomLine):
                     nm = nm[:-1]
                     self.givn = ''.join(self.givn.split(sep='*', maxsplit=1))
                     self.call_name = nm
-                # Name in parentehsins "(Jussi)"
+                # Nick name in parentehsins "(Jussi)"
                 elif re.match(r"\(.*\)", nm) != None:
-                    # Remove parenthesis
-                    self.call_name = nm[1:-1]
-                    # Given names without call name
-                    self.givn = re.sub(r"\(.*\) *", "", self.givn).rstrip()
+                    self.nick_name = nm[1:-1]
+                    # Given names without nick name
+                    self.givn = re.sub(r" *\(.*\) *", " ", self.givn).rstrip()
         else:
             self.givn = _NONAME
 
@@ -182,12 +181,10 @@ class PersonName(GedcomLine):
                                           PersonName[2]="givn/Lehti/" TYPE="avionimi"
         '''
 
-        if self.value == '':
-            return None
         ret = []
         prefn = self.pref_name
         for nm, name_type in self._get_surname_list():
-            name = '{}/{}/{}'.format(self.givn, nm, self.nsfx)
+            name = '{}/{}/{}'.format(self.givn, nm.strip(), self.nsfx)
             pn = PersonName((self.level, 'NAME', name))
             pn.surn = nm
             pn.givn = self.givn
@@ -196,6 +193,8 @@ class PersonName(GedcomLine):
                 pn.nsfx_orig = self.nsfx_orig
             if hasattr(self,'call_name'):
                 pn.call_name = self.call_name
+            if hasattr(self,'nick_name'):
+                pn.nick_name = self.nick_name
             if name_type:
                 pn.set_attr('TYPE', name_type)
             # Mark the first generated surname of a person as preferred
@@ -208,8 +207,12 @@ class PersonName(GedcomLine):
     def _get_surname_list(self):
         ''' Returns a list of {name:type} pairs parsed from self.surn '''
         
+        if self.surn == "":
+            # Empty surname is a surname, too
+            surnames = list(" ")
+        else:
         # convert "/" and "," to a single separator symbol " , "
-        surnames = re.sub(r' *[/,] *', ' , ', self.surn).split()
+            surnames = re.sub(r' *[/,] *', ' , ', self.surn).split()
         ret = []
         # Following surnames automate reads surnames and separators from right to left
         # and writes PersonNames to self.rows(?) '''
@@ -252,6 +255,9 @@ class PersonName(GedcomLine):
         #op4: End: output the last name and it's type
         if name:
             ret.append((name, oper))
+        if len(ret) == 0:
+            # No surname: give empty name
+            return {"":""}
         return ret
 
 
@@ -272,7 +278,7 @@ class PersonName(GedcomLine):
         '''
 
         def i_tag(tag):
-            ''' Is this one of my unused tags? Return corresponding value or None '''
+            ''' Is this one of my (unused) tags? Return corresponding value or None '''
             for i in range(len(my_tags)):
                 if my_tags[i][0] == r.tag:
                     # Remove used tag and return it's value
@@ -295,6 +301,9 @@ class PersonName(GedcomLine):
         if hasattr(pn, 'call_name'):
             my_tags.append(['_CALL', pn.call_name])
 #             print('{} on {!r}'.format(pn.givn, pn.call_name))
+        if hasattr(pn, 'nick_name'):
+            my_tags.append(['NICK', pn.nick_name])
+#             print('{} on {!r}'.format(pn.givn, pn.nick_name))
 
 
         # 1. The first row is the PersonName (inherited class from GedcomLine)
