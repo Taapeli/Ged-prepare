@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-Set refnames to all names in the Neo4j database.
+List refnames of all names in the Neo4j database.
 Jorma Haapasalo, 2017.
  
 """
@@ -17,24 +17,33 @@ connect_db()
 
 def process_neo4j(args):
 
-    # List people with the given name
+    # List refnames of all names in the Neo4j database
+    # If there is no refname in db, then the name is handled as a refname.
     try:
     
         t = time.perf_counter()
 
         result = Name.get_all_first_names()
-        for record in result:
-            first = record["first"]
+        for record1 in result:
+            first = record1["first"]
             
+            ref_name = ''
             names = first.split(" ")
             for name in names:
+                record2 = None # If there is no refname
                 result = Refname.get_refname(name)
                 
-                for record in result:
-                    aname = record["aname"]
-                    bname = record["bname"]
+                for record2 in result:
+                    aname = record2["aname"]
+                    bname = record2["bname"]
+                    ref_name = ref_name + " " + bname
+                    # print("\nName: " + aname + " ---> Refname: " + bname)
                     
-                    print("\nName: " + aname + " ---> Refname: " + bname)
+                if not record2:
+                    ref_name = ref_name + " " + name
+                    
+            print("\nName in db: " + first + " ---> refname: " + ref_name)
+                   
                            
         elapsed_time = time.perf_counter() - t
         print("\nTime needed: " + str(elapsed_time) + " seconds")
