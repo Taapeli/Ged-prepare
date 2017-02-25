@@ -100,12 +100,12 @@ if __name__ == '__main__':
 
     # One person with two NAME lines
     my_record = GedcomRecord(GedcomLine('0 @I2@ INDI'))
-    my_name = PersonName(GedcomLine('1 NAME Saima (Sanni) Erikint./Raitala os. von Krats/Ericsdr.'))
+    my_name = PersonName(GedcomLine('1 NAME Amalia Saima* (Sanni) Erikint./Raitala os. von Krats/Ericsdr.'))
     my_record.add_member(my_name)
     my_name.add_line(GedcomLine(('2','GIVN','Saimi')))
     my_name.add_line(GedcomLine('3 SOUR Äidiltä'))
     my_name.add_line(GedcomLine('2 SURN Raitala'))
-    my_name.add_line(GedcomLine('3 SOUR tiedetty'))
+    my_name.add_line(GedcomLine('2 NOTE Kummin kaima'))
     my_name = PersonName(GedcomLine('1 NAME Sigrid//Ericsdr.'))
     my_record.add_member(my_name)
     args = Namespace(nolog=True, output_gedcom='out.txt', encoding='UTF-8', dryrun=False)

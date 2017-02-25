@@ -14,7 +14,8 @@ _CHGTAG = "NOTE orig_"   # Comment: original format
 _UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
 _PATRONYME = {'poika':'poika', 'p.':'poika', 'sson':'sson', 'ss.':'sson', 's.':'son',
              'tytär':'tytär', 't.':'tytär', 'dotter':'dotter', 'dr.':'dotter', }
-_SURN = {'os.':'avionimi', 'o.s.':'avionimi', 'ent.':'entinen', 'e.':'entinen', '/':'AKA', ',':'AKA'}
+_SURN = {'os.':'avionimi', 'o.s.':'avionimi', 'ent.':'entinen', 'e.':'entinen', \
+         '/':'tunnettu myös', ',':'tunnettu myös'}
 #_VON = ['von', 'af', 'de', 'la']
 _BABY = {"vauva":"U", "poikavauva":"M", "tyttövauva":"F", 
          "poikalapsi":"M", "tyttölapsi":"F", "lapsi":"U"}
@@ -197,7 +198,7 @@ class PersonName(GedcomLine):
             if prefix: # von
                 pn.prefix = prefix
             if origin:
-                pn.set_attr('TYPE', origin)
+                pn.origin = origin
             # Mark the first generated surname of a person as preferred
             pn.pref_name = prefn
             prefn = False
@@ -256,7 +257,7 @@ class PersonName(GedcomLine):
                     name = ''
                     origin = _SURN[nm]
                     state = 2
-                elif len(nm) < 4: # von
+                elif len(nm) < 4 and not '.' in nm: # von
                     #op5: Propably a noble prefix
                     prefix = nm.lower()
                     state = 4
@@ -296,7 +297,8 @@ class PersonName(GedcomLine):
             This is important, as original lines may have descentants like SOUR, which must be kept
             in place.
             1. Inset NAME row on the top
-            2. Loop trough original GedcomLines self.rows 
+            2. Loop trough original GedcomLines self.rows
+               2.0 If '2 NOTE' line's value doesn't start with '_CALL ', do not update
                2.1 If tag GIVN, SURN or NSFX is found, update/report the pn.row
                2.2 Else copy self.row the to pn.rows
             3. Create new pn.rows, if any of GIVN, SURN or NSFX is not used
@@ -320,18 +322,17 @@ class PersonName(GedcomLine):
             else:
                 path = "{}.{}".format(self.path, tag)
             print ("{} {!r:>36} ––> {!r}".format(path, value, new_value))
-            
-        my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], \
-                   ['NSFX', pn.nsfx], ['TYPE', pn.get_attr('TYPE')]]
+
+
+        my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], ['NSFX', pn.nsfx]]
+        if hasattr(pn, 'origin'):
+            my_tags.append(['TYPE', pn.origin])
         if hasattr(pn, 'call_name'):
-            my_tags.append(['_CALL', pn.call_name])
-#             print('{} on {!r}'.format(pn.givn, pn.call_name))
+            my_tags.append(['NOTE', '_CALL ' + pn.call_name])
         if hasattr(pn, 'nick_name'):
             my_tags.append(['NICK', pn.nick_name])
         if hasattr(pn, 'prefix'):
             my_tags.append(['SPFX', pn.prefix])
-#             print('{} on {!r}'.format(pn.givn, pn.nick_name))
-
 
         # 1. The first row is the PersonName (inherited class from GedcomLine)
         orig_rows = [self]
@@ -340,20 +341,27 @@ class PersonName(GedcomLine):
             # carries the gedcom lines inherited from input file
             orig_rows.extend(self.rows)
         # For name comparison
-        name_self = re.sub(r' ', '', self.value).lower()
+        name_self = re.sub(r'[ \*]', '', self.value).lower()
 
         # 2. r = original input gedcom self.row 
         for r in orig_rows:
+            # 2.0 Pass NOTE line without '_CALL' as is
+            if r.tag == 'NOTE' and not self.value.startswith('_CALL '):
+                debug("#{:>36} repl row[{}] {} {!r}".\
+                      format(r.path, len(pn.rows), r.tag, self.value))
+                pn.rows.append(GedcomLine((r.level, r.tag, self.value)))
             # 2.1 Is there a new value for this line
             new_value = i_tag(r.tag)
             if new_value:
+                debug("#{:>36} repl row[{}] {} {!r}".\
+                      format(r.path, len(pn.rows), r.tag, new_value))
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 # Show NAME differences 
                 if r.tag == 'NAME':
                     if re.sub(r' ', '', pn.value.lower()) != name_self and pn.pref_name: 
                         report_change(r.tag, self.value, new_value)
                     pn.pref_name = False
-                if r.tag == 'NSFX' and hasattr(self, 'nsfx_orig') and pn.pref_name:
+                elif r.tag == 'NSFX' and hasattr(self, 'nsfx_orig') and pn.pref_name:
                     report_change(r.tag, self.value, self.nsfx_orig)
                 continue
             # 2.2 Only append to pn.row
