@@ -1195,7 +1195,7 @@ class Refname:
         global session
         query="""
             MATCH (a:Refname)-[r:REFFIRST]->(b:Refname) WHERE a.name='{}'
-            RETURN a.name AS aname, b.name AS bname;""".format(name)
+            RETURN a.name AS aname, b.name AS bname LIMIT 1;""".format(name)
             
         try:
             return session.run(query)

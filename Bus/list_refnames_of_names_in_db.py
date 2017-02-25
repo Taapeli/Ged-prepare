@@ -34,7 +34,7 @@ def process_neo4j(args):
                 result = Refname.get_refname(name)
                 
                 for record2 in result:
-                    aname = record2["aname"]
+#                    aname = record2["aname"]
                     bname = record2["bname"]
                     ref_name = ref_name + " " + bname
                     # print("\nName: " + aname + " ---> Refname: " + bname)
