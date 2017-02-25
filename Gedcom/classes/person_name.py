@@ -9,16 +9,18 @@ from sys import stderr
 from classes.gedcom_line import GedcomLine
 
 _NONAME = 'N'            # Marker for missing name part
-_CHGTAG = "NOTE orig_"   # Comment: original format
+_CHGTAG = "NOTE _orig_"   # Comment: original format
 
 _UNNAMED = ['nimetön', 'tuntematon', 'N.N.', '?']
 _PATRONYME = {'poika':'poika', 'p.':'poika', 'sson':'sson', 'ss.':'sson', 's.':'son',
              'tytär':'tytär', 't.':'tytär', 'dotter':'dotter', 'dr.':'dotter', }
-_SURN = {'os.':'avionimi', 'o.s.':'avionimi', 'ent.':'entinen', 'e.':'entinen', \
+_SURN = {'os.':'avionimi', 'o.s.':'avionimi', 'ent.':'otettu nimi', 'e.':'otettu nimi', \
          '/':'tunnettu myös', ',':'tunnettu myös'}
 #_VON = ['von', 'af', 'de', 'la']
 _BABY = {"vauva":"U", "poikavauva":"M", "tyttövauva":"F", 
-         "poikalapsi":"M", "tyttölapsi":"F", "lapsi":"U"}
+         "poikalapsi":"M", "tyttölapsi":"F", "lapsi":"U",
+         "(vauva)":"U", "(poikavauva)":"M", "(tyttövauva)":"F", 
+         "(poikalapsi)":"M", "(tyttölapsi)":"F", "(lapsi)":"U"}
 #TODO: Lyhenteet myös ruotsiksi
 
 DEBUG=False
@@ -33,7 +35,7 @@ class PersonName(GedcomLine):
 
     The preferred source of information is the '1 NAME givn/surn/nsfx' row.
     If NAME has significant changes, the original value is also written to 
-    a 'NOTE orig_' row.
+    a 'NOTE _orig_' row.
     
     1. A patronyme in givn part is moved to nsfx part and a new NSFX row is created,
        if needed
@@ -145,7 +147,15 @@ class PersonName(GedcomLine):
                     self.nsfx = pn
                     self.givn = ' '.join(gnames[0:-1])
                     gnames = self.givn.split()
-            
+
+            # 1.1b) A generic baby name replaced as no name
+
+                elif gnames[0] in _BABY:
+                    # A unnamed baby
+                    self.givn = _NONAME
+                    return
+#TODO: Tämä muutos ei näy Note-riveillä
+
             # 1.1b) Set call name, if one of given names are marked with '*'
     
             for nm in gnames:
@@ -179,6 +189,8 @@ class PersonName(GedcomLine):
             "Lehti os. Lampi e. af Damm"=>PersonName[0]="givn/Damm/" SPFX="af"
                                           PersonName[1]="givn/Lampi/" TYP="otettu nimi"
                                           PersonName[2]="givn/Lehti/" TYPE="avionimi"
+            "Mattila (Matts)"          => PersonName[0]="givn/Mattila/"
+                                          PersonName[1]="givn/Matts/" TYPE="tunnettu myös"
         '''
 
         ret = []
@@ -216,45 +228,67 @@ class PersonName(GedcomLine):
             # Empty surname is a surname, too
             surnames = list(" ")
         else:
-        # convert "/" and "," to a single separator symbol " , "
-            surnames = re.sub(r' *[/,] *', ' , ', self.surn).split()
-        ret = []
+            # convert "(", /" and "," to a single separator symbol " , " and remove ")"
+            nm = re.sub(r'\)', '', re.sub(r' *[/,\(] *', ' , ', self.surn))
+            surnames = nm.split()
+
         # Following surnames automate reads surnames and separators from right to left
         # and writes PersonNames to self.rows(?) '''
         #
-        #    !state \ input !! delim ! name  ! end   ! von
+        #    !state \ input !! '/'   ! delim  ! name  ! end   ! von
         #    |--------------++-------+-------+-------+--------
-        #    | 0 "Started"  || -     | 1,op1 | -     ! -
-        #    | 1 "name"     || 2,op2 | 1,op3 | 3,op4 ! 4,op5
-        #    | 2 "delim"    || -     | 1,op1 | -     ! -
-        #    | 3 "end"      || -     | -     | -     ! -
-        #    | 4 "von"      || 2,op2 | -     | -     | 4,op6
+        #    | 0 "Started"  || -     | -     | 1,op1 | -     ! -
+        #    | 1 "name"     || 0,op7 | 2,op2 | 1,op3 | 3,op4 ! 4,op5
+        #    | 2 "delim"    || -     | -     | 1,op1 | -     ! -
+        #    | 3 "end"      || -     | -     | -     | -     ! -
+        #    | 4 "von"      || 0,op7 | 2,op2 | -     | -     | 4,op6
         #    | - "error"    || 
         ##TODO: Each '-' should cause an error!
         #    For example rule "2,op3" means operation op3 and new state 2.
         #        op1: save name=nm, clear origin and prefix
         #        op2: return (PersonName(name), origin[delim], prefix)
+        #                    and saved 'known as' name
         #        op3: concatenate a two part name
         #        op4: return (PersonName(name), origin[delim], prefix)
         #        op5: create prefix
         #        op6: concatenate a two part prefix
+        #        op7: save 'know as' name
 
+        ret = []
         state = 0
         name = None
         prefix = None
+        origin = None
+        known_as = None
+        
+        def op2_return_name():
+            # op2: return PersonName(name), origin[delim], prefix
+            #             and saved 'known as' name
+            nonlocal ret, name, origin, prefix, known_as
+            ret.append((name, origin, prefix))
+            if known_as:
+                ret.append(known_as)
+                known_as = None
+            name = ''
+            origin = None
+            prefix = None
+
+
         for nm in reversed(surnames):
-            if state == 0 or state == 3:        # Start state
-                #op1 Only name expected
+            if state == 0 or state == 3:        # Start state: Only a name expected
+                #op1: save name=nm, clear origin and prefix
                 name = nm.capitalize()
-                origin = None
                 state = 1
             elif state == 1 or state == 2:      # Possible separator state / 
                                                 # left side name has been stored
-                if nm in _SURN: # delim
-                    #op2: A separator 'os.', ... found: 
-                    #     Create PersonName rows with the left side name
-                    ret.append((name, origin, prefix))
+                if nm in '(/,':
+                    #op7: A known as -name; to be returned later
+                    known_as = (name.capitalize(), _SURN[','], prefix)
                     name = ''
+                    state = 0
+                elif nm in _SURN: # other delim
+                    #op2: Output PersonName rows 
+                    op2_return_name()
                     origin = _SURN[nm]
                     state = 2
                 elif len(nm) < 4 and not '.' in nm: # von
@@ -267,20 +301,19 @@ class PersonName(GedcomLine):
             else: # state == 4:
                 if nm in _SURN: # delim
                     #op2: A separator 'os.', ... found: 
-                    #     Create PersonName rows with the left side name and it's type
-                    ret.append((name, origin, prefix))
-                    name = ''
+                    #     Output PersonName rows 
+                    op2_return_name()
                     origin = _SURN[nm]
-                    prefix = None
                     state = 2
                 else: # von
                     #op5: Propably a multi word prefix
                     prefix = str.rstrip(nm.lower() + ' ' + prefix)
                     state = 4
 
-        #op4: End: output the last name and it's type
+        #op4: End: output the last name
         if name:
-            ret.append((name, origin, prefix))
+            op2_return_name()
+            
         if len(ret) == 0:
             # No surname: give empty name
             return (("", None, None), )
@@ -304,7 +337,7 @@ class PersonName(GedcomLine):
             3. Create new pn.rows, if any of GIVN, SURN or NSFX is not used
         '''
 
-        def i_tag(tag):
+        def in_tags(tag):
             ''' Is this one of my (unused) tags? Return corresponding value or None '''
             for i in range(len(my_tags)):
                 if my_tags[i][0] == r.tag:
@@ -315,7 +348,7 @@ class PersonName(GedcomLine):
             return None
         
         def report_change(tag, value, new_value):
-            ''' Report a report_change value for a tag '''
+            ''' Report a change for a tag '''
             pn.rows.append(GedcomLine((self.level+1, _CHGTAG + tag, value)))
             if self.path.endswith(tag):
                 path = self.path
@@ -345,13 +378,13 @@ class PersonName(GedcomLine):
 
         # 2. r = original input gedcom self.row 
         for r in orig_rows:
-            # 2.0 Pass NOTE line without '_CALL' as is
+            # 2.0 Pass a NOTE line without '_CALL' as is
             if r.tag == 'NOTE' and not self.value.startswith('_CALL '):
                 debug("#{:>36} repl row[{}] {} {!r}".\
                       format(r.path, len(pn.rows), r.tag, self.value))
                 pn.rows.append(GedcomLine((r.level, r.tag, self.value)))
             # 2.1 Is there a new value for this line
-            new_value = i_tag(r.tag)
+            new_value = in_tags(r.tag)
             if new_value:
                 debug("#{:>36} repl row[{}] {} {!r}".\
                       format(r.path, len(pn.rows), r.tag, new_value))
@@ -369,9 +402,9 @@ class PersonName(GedcomLine):
                   format(r.path, len(pn.rows), r.tag, r.value))
             pn.rows.append(GedcomLine((r.level, r.tag, r.value)))
 
-        # 3 Create new rows for unused tags
+        # 3 Create new rows for unused tags (except trivial ones)
         for tag, value in my_tags:
-            if value:
+            if value and not tag in ('GIVN', 'SURN'):
                 debug("#{:>36} new  row[{}] {} {!r}".\
                       format("{}.{}".format(self.path, tag), len(pn.rows), tag, value))
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))

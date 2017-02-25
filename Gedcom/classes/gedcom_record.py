@@ -106,7 +106,11 @@ if __name__ == '__main__':
     my_name.add_line(GedcomLine('3 SOUR Äidiltä'))
     my_name.add_line(GedcomLine('2 SURN Raitala'))
     my_name.add_line(GedcomLine('2 NOTE Kummin kaima'))
-    my_name = PersonName(GedcomLine('1 NAME Sigrid//Ericsdr.'))
+    my_name = PersonName(GedcomLine('1 NAME vauva//Ericsdr.'))
+    my_record.add_member(my_name)
+    my_name = PersonName(GedcomLine('1 NAME Niilo/Niemelä/Niemeläinen/'))
+    my_record.add_member(my_name)
+    my_name = PersonName(GedcomLine('1 NAME Janne/Mattila (Matts)/'))
     my_record.add_member(my_name)
     args = Namespace(nolog=True, output_gedcom='out.txt', encoding='UTF-8', dryrun=False)
     with Output(args) as f:
