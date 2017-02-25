@@ -531,6 +531,7 @@ class Name:
                 first           str etunimi
                 surname         str sukunimi
                 suffix          str patronyymi
+                refname         str reference name
     """
     
     def __init__(self):
@@ -579,6 +580,18 @@ class Name:
                 ORDER BY n.surname
             """
         return session.run(query)
+    
+    def set_refname(self):
+        """Asetetaan etunimen referenssinimi """
+        
+        global session
+        
+        query = """
+            MATCH (n:Name) WHERE n.first='{}' 
+            SET n.refname='{}'
+            """.format(self.first, self.refname)
+        return session.run(query)
+        
     
     
 class Note:
