@@ -79,9 +79,6 @@ class PersonName(GedcomLine):
             tag='GIVN'
             value='GIVN Brita Kristiina/'
         '''
-#         if not type(gedline) is GedcomLine:
-#             raise RuntimeError("GedcomLine argument expected")
-#         # A ready made GedcomLine
         self.rows.append(gedline)
 
 
@@ -118,6 +115,8 @@ class PersonName(GedcomLine):
             self._create_gedcom_rows(pn)
             # Collect merged rows
             ret.extend(pn.rows)
+
+        del self.reported_value
         return ret
 
     
@@ -260,7 +259,8 @@ class PersonName(GedcomLine):
         prefix = None
         origin = None
         known_as = None
-        
+        self.reported_value = None
+
         def op2_return_name():
             # op2: return PersonName(name), origin[delim], prefix
             #             and saved 'known as' name
@@ -349,12 +349,15 @@ class PersonName(GedcomLine):
         
         def report_change(tag, value, new_value):
             ''' Report a change for a tag '''
+            if self.reported_value == value:
+                return
             pn.rows.append(GedcomLine((self.level+1, _CHGTAG + tag, value)))
             if self.path.endswith(tag):
                 path = self.path
             else:
                 path = "{}.{}".format(self.path, tag)
             print ("{} {!r:>36} ––> {!r}".format(path, value, new_value))
+            self.reported_value = value
 
 
         my_tags = [['NAME', pn.value], ['GIVN', pn.givn], ['SURN', pn.surn], ['NSFX', pn.nsfx]]
@@ -381,8 +384,8 @@ class PersonName(GedcomLine):
             # 2.0 Pass a NOTE line without '_CALL' as is
             if r.tag == 'NOTE' and not self.value.startswith('_CALL '):
                 debug("#{:>36} repl row[{}] {} {!r}".\
-                      format(r.path, len(pn.rows), r.tag, self.value))
-                pn.rows.append(GedcomLine((r.level, r.tag, self.value)))
+                      format(r.path, len(pn.rows), r.tag, r.value))
+                pn.rows.append(GedcomLine((r.level, r.tag, r.value)))
             # 2.1 Is there a new value for this line
             new_value = in_tags(r.tag)
             if new_value:
@@ -391,10 +394,10 @@ class PersonName(GedcomLine):
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 # Show NAME differences 
                 if r.tag == 'NAME':
-                    if re.sub(r' ', '', pn.value.lower()) != name_self and pn.pref_name: 
+                    if re.sub(r' ', '', pn.value.lower()) != name_self: 
                         report_change(r.tag, self.value, new_value)
                     pn.pref_name = False
-                elif r.tag == 'NSFX' and hasattr(self, 'nsfx_orig') and pn.pref_name:
+                elif r.tag == 'NSFX' and hasattr(self, 'nsfx_orig'):
                     report_change(r.tag, self.value, self.nsfx_orig)
                 continue
             # 2.2 Only append to pn.row
