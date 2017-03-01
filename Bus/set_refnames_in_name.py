@@ -35,11 +35,11 @@ def process_neo4j(args):
                 for record2 in result:
 #                    aname = record2["aname"]
                     bname = record2["bname"]
-                    ref_name = ref_name + " " + bname
+                    ref_name = ref_name + bname + " "
                     # print("\nName: " + aname + " ---> Refname: " + bname)
                     
                 if not record2:
-                    ref_name = ref_name + " " + name
+                    ref_name = ref_name + name + " "
                     
             print("\nName in db: " + first + " ---> refname: " + ref_name)
             
