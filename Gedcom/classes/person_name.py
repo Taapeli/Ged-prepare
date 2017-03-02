@@ -5,7 +5,9 @@ Created on 22.11.2016
 '''
 
 import re
-from sys import stderr
+import logging
+LOG = logging.getLogger(__name__)
+
 from classes.gedcom_line import GedcomLine
 
 _NONAME = 'N'            # Marker for missing name part
@@ -22,12 +24,6 @@ _BABY = {"vauva":"U", "poikavauva":"M", "tyttövauva":"F",
          "(vauva)":"U", "(poikavauva)":"M", "(tyttövauva)":"F", 
          "(poikalapsi)":"M", "(tyttölapsi)":"F", "(lapsi)":"U"}
 #TODO: Lyhenteet myös ruotsiksi
-
-DEBUG=False
-def debug(s):
-    if DEBUG:
-        print (s, file=stderr)
-
 
 class PersonName(GedcomLine):
     '''
@@ -110,7 +106,7 @@ class PersonName(GedcomLine):
         '''
         ret = []    # List of merged lines
         for pn in self._extract_surnames():
-            debug('#' + str(pn))
+            LOG.debug('#' + str(pn))
             # Merge original and new rows
             self._create_gedcom_rows(pn)
             # Collect merged rows
@@ -356,7 +352,7 @@ class PersonName(GedcomLine):
                 path = self.path
             else:
                 path = "{}.{}".format(self.path, tag)
-            print ("{} {!r:>36} ––> {!r}".format(path, value, new_value))
+            LOG.info("{} {!r:>36} ––> {!r}".format(path, value, new_value))
             self.reported_value = value
 
 
@@ -383,13 +379,13 @@ class PersonName(GedcomLine):
         for r in orig_rows:
             # 2.0 Pass a NOTE line without '_CALL' as is
             if r.tag == 'NOTE' and not self.value.startswith('_CALL '):
-                debug("#{:>36} repl row[{}] {} {!r}".\
+                LOG.debug("#{:>36} repl row[{}] {} {!r}".\
                       format(r.path, len(pn.rows), r.tag, r.value))
                 pn.rows.append(GedcomLine((r.level, r.tag, r.value)))
             # 2.1 Is there a new value for this line
             new_value = in_tags(r.tag)
             if new_value:
-                debug("#{:>36} repl row[{}] {} {!r}".\
+                LOG.debug("#{:>36} repl row[{}] {} {!r}".\
                       format(r.path, len(pn.rows), r.tag, new_value))
                 pn.rows.append(GedcomLine((r.level, r.tag, new_value)))
                 # Show NAME differences 
@@ -401,13 +397,13 @@ class PersonName(GedcomLine):
                     report_change(r.tag, self.value, self.nsfx_orig)
                 continue
             # 2.2 Only append to pn.row
-            debug("#{:>36} add  row[{}] {} {!r}".\
+            LOG.debug("#{:>36} add  row[{}] {} {!r}".\
                   format(r.path, len(pn.rows), r.tag, r.value))
             pn.rows.append(GedcomLine((r.level, r.tag, r.value)))
 
         # 3 Create new rows for unused tags (except trivial ones)
         for tag, value in my_tags:
             if value and not tag in ('GIVN', 'SURN'):
-                debug("#{:>36} new  row[{}] {} {!r}".\
+                LOG.debug("#{:>36} new  row[{}] {} {!r}".\
                       format("{}.{}".format(self.path, tag), len(pn.rows), tag, value))
                 pn.rows.append(GedcomLine((pn.level + 1, tag, value)))

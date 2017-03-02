@@ -1,15 +1,21 @@
+#!/usr/bin/env python3
 #
 # Gedcom cleaner application window
 # 12.12.2016 / Juha Mäkeläinen
 #
 
-# Show menu in application window, not on the top of desktop
 import os 
-os.environ['UBUNTU_MENUPROXY']='0'
-
+import sys
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+from argparse import Namespace
+
+import gedcom_transform
+
+# Show menu in application window, not on the top of Ubuntu desktop
+os.environ['UBUNTU_MENUPROXY']='0'
+args = Namespace(nolog=True, output_gedcom='out.txt', encoding='UTF-8', dryrun=False)
 
 class Handler:
     def onDeleteWindow(self, *args):
@@ -22,18 +28,26 @@ class Handler:
         outbox.get_buffer().insert_at_cursor("\n")
 
     def opSelection_changed(self, combo):
+        global transformer
         op = combo.get_property('active-id')
         butt = builder.get_object("runButton")
         butt.set_sensitive(op != "-")
         txt = "Toiminto '{}'".format(op)
         builder.get_object("checkbutton2").set_sensitive(op == 'places')
         self.appedShow(txt)
+        # Define transformer program and the argumets used
+        transformer = gedcom_transform.find_transform(txt)
+        if not transformer: 
+            self.appedShow("Transform not found; use -l to list the available transforms")
+            return 
+        transformer.add_args(parser)
         
     def onRunClicked(self, button):
+        global transformer
         self.appedShow("Painettu: " + button.get_label())
-        # Käynnistetään pyydetty toiminto
         
-        process_gedcom(args,transformer)
+        # Käynnistetään pyydetty toiminto
+        gedcom_transform.process_gedcom(args, transformer)
 
         rev = builder.get_object("revertButton")
         rev.set_sensitive(True)
@@ -59,8 +73,9 @@ class Handler:
             self.appedShow("Outo palaute {}".format(self.response))
 
 def runner():
+    global parser
     print("\nTaapeli GEDCOM transform program A (version 0.1)\n")
-    parser = argparse.ArgumentParser()
+    parser = gedcom_transform.argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
     #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
@@ -76,7 +91,7 @@ def runner():
 
     if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
         print("List of transforms:")
-        for modname,transformer,docline,version in get_transforms():
+        for modname,transformer,docline,version in gedcom_transform.get_transforms():
             print("  {:20.20} {:10.10} {}".format(modname,version,docline))
         return
 
@@ -85,14 +100,14 @@ def runner():
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] != '-':
-        transformer = find_transform(sys.argv[1])
+        transformer = gedcom_transform.find_transform(sys.argv[1])
         if not transformer: 
             print("Transform not found; use -l to list the available transforms")
             return
         transformer.add_args(parser)
 
     args = parser.parse_args()
-    process_gedcom(args,transformer)
+    gedcom_transform.process_gedcom(args,transformer)
 
 
 

@@ -65,13 +65,16 @@ The parameters of each phases:
 - "output_file" is a file-like object containing the method emit(string) that is used to produce the output
 
 """
-_VERSION="0.2"
+_VERSION="0.3"
+_LOGFILE="transform.log"
 
 import sys
 import os
 import argparse
 import importlib
-
+import datetime
+import logging
+LOG = logging.getLogger(__name__)
 
 from classes.gedcom_line import GedcomLine
 from classes.ged_output import Output
@@ -93,11 +96,11 @@ def read_gedcom(args):
             yield gedline
 
     except FileNotFoundError:
-        print("Tiedostoa '{}' ei ole!".format(args.input_gedcom), file=sys.stderr)
+        LOG.error("Tiedostoa '{}' ei ole!".format(args.input_gedcom))
         raise
     except Exception as err:
-        print(type(err))
-        print("Virhe: {0}".format(err), file=sys.stderr)
+        LOG.error(type(err))
+        LOG.error("Virhe: {0}".format(err), file=sys.stderr)
 
 
 def process_gedcom(args,transformer):
@@ -126,7 +129,7 @@ def process_gedcom(args,transformer):
                 f.original_line = gedline.line.strip()
                 transformer.phase3(args, gedline, f)
     except FileNotFoundError as err:
-        print("Ohjelma päättyi virheeseen: {}".format(err), file=sys.stderr)
+        LOG.error("Ohjelma päättyi virheeseen: {}".format(err))
 
 
 def get_transforms():
@@ -152,13 +155,26 @@ def find_transform(prefix):
             choices.append((modname,transformer))
     if len(choices) == 1: return choices[0][1]
     if len(choices) > 1: 
-        print("Ambiguous transform name: {}".format(prefix))
-        print("Matching names: {}".format(",".join(name for name,t in choices)))
+        LOG.error("Ambiguous transform name: {}".format(prefix))
+        LOG.error("Matching names: {}".format(",".join(name for name,t in choices)))
     return False
+
+
+def init_log():
+    ''' Define log file and save one previous log '''
+    try:
+        if os.open(_LOGFILE, os.O_RDONLY):
+            os.rename(_LOGFILE, _LOGFILE + '~')
+    except:
+        pass
+    logging.basicConfig(filename=_LOGFILE,level=logging.INFO, format='%(levelname)s:%(message)s')
 
 
 def main():
     print("\nTaapeli GEDCOM transform program A (version {})\n".format(_VERSION))
+    print("Lokitiedot: {!r}".format(_LOGFILE))
+    init_log()
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
@@ -186,15 +202,25 @@ def main():
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] != '-':
-        transformer = find_transform(sys.argv[1])
+        task = sys.argv[1]
+        transformer = find_transform(task)
         if not transformer: 
             print("Transform not found; use -l to list the available transforms")
             return
         transformer.add_args(parser)
 
     args = parser.parse_args()
+
+    LOG.info("------ Ajo '%s'   alkoi %s syötteenä '%s' ------", \
+             task, \
+             datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S'), \
+             args.__getattribute__('input_gedcom'))
+
     process_gedcom(args,transformer)
 
+    LOG.info("------ Ajo '%s' päättyi %s ------", \
+             task, \
+             datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S'))
 
 if __name__ == "__main__":
     main()

@@ -8,6 +8,8 @@ import os
 import getpass
 import time
 import tempfile
+import logging
+LOG = logging.getLogger(__name__)
 
 class Output:
     def __init__(self, args):
@@ -79,15 +81,18 @@ class Output:
 
     def save(self):
         if self.out_name:
-            print("Tulostiedosto '{}'".format(self.out_name))
+            msg = "Tulostiedosto '{}'".format(self.out_name)
+            print(msg)
+            LOG.info(msg)
         else:
             if self.in_name:
                 if self.out_name == None:
                     # Only input given
                     os.rename(self.in_name, self.new_name)
                     os.rename(self.temp_name, self.in_name)
-                    print("Edellinen versio talletettu nimellä '{}'".format(self.new_name))
-                    print("Uusi tiedosto '{}'".format(self.in_name))
+                    print("Luettu tiedosto '{}'".format(self.new_name))
+                    print("  Uusi tiedosto '{}'".format(self.in_name))
+                    LOG.info("Luettu %s, tulostettu %s", self.new_name, self.in_name)
 
     def generate_name(self,name):
         i = 0

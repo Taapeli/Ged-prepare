@@ -4,15 +4,13 @@ Created on 16.1.2017
 @author: jm
 '''
 
-from sys import stderr
+import logging
+import datetime
+LOG = logging.getLogger(__name__)
+
 from classes.gedcom_line import GedcomLine
 from classes.person_name import PersonName
 
-DEBUG=True
-class dbug():
-    def __init(self, s):
-        if DEBUG:
-            print(s, file=stderr)
 
 class GedcomRecord(GedcomLine):
     '''
@@ -84,7 +82,7 @@ class GedcomRecord(GedcomLine):
         if type(year) == int:
             self.set_attr(tag, year)
         else:
-            print ("{} ERROR: Invalid {} year".format(self.path, tag), file=stderr)
+            LOG.warning("{} ERROR: Invalid {} year".format(self.path, tag))
 
 
     def get_nameobject(self):
@@ -97,6 +95,8 @@ if __name__ == '__main__':
     # Test set
     from classes.ged_output import Output
     from argparse import Namespace
+    logging.basicConfig(filename='example.log',level=logging.INFO, format='%(levelname)s:%(message)s')
+    LOG.info("------ Ajo '%s' alkoi %s", "Testi", datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S') + " ------")
 
     # One person with two NAME lines
     my_record = GedcomRecord(GedcomLine('0 @I2@ INDI'))
@@ -115,3 +115,6 @@ if __name__ == '__main__':
     args = Namespace(nolog=True, output_gedcom='out.txt', encoding='UTF-8', dryrun=False)
     with Output(args) as f:
         my_record.emit(f)
+
+    LOG.info("------ Ajo '%s' päättyi %s", "Testi", datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S') + " ------")
+
