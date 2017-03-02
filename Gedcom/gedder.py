@@ -8,6 +8,7 @@ import os
 import sys
 import gi
 gi.require_version('Gtk', '3.0')
+import importlib
 from gi.repository import Gtk
 from argparse import Namespace
 
@@ -27,20 +28,34 @@ class Handler:
         outbox.get_buffer().insert_at_cursor(text)
         outbox.get_buffer().insert_at_cursor("\n")
 
-    def opSelection_changed(self, combo):
+    def on_opNotebook_switch_page (self,  notebook, page, page_num, data=None):
+        ''' Valittu välilehti määrää toiminnon 
+        '''
         global transformer
-        op = combo.get_property('active-id')
-        butt = builder.get_object("runButton")
-        butt.set_sensitive(op != "-")
-        txt = "Toiminto '{}'".format(op)
-        builder.get_object("checkbutton2").set_sensitive(op == 'places')
-        self.appedShow(txt)
+        opers = ("names", "places", "marriages", "hiskisources", "kasteet", None)
+        op_selected = None
+        
+        self.tab = notebook.get_nth_page(page_num)
+        self.label = notebook.get_tab_label(self.tab).get_label()
+        if page_num < len(opers):
+            op_selected = opers[page_num]
+#             if op_selected:
+#                 self.message_id = st.push(st_id, "{} -toiminto {!r}-moduulilla".format(self.label, op_selected))
+    
+        builder.get_object("checkbutton2").set_sensitive(op_selected == 'places')
+
         # Define transformer program and the argumets used
-        transformer = gedcom_transform.find_transform(txt)
-        if not transformer: 
-            self.appedShow("Transform not found; use -l to list the available transforms")
-            return 
-        transformer.add_args(parser)
+        if op_selected:
+            transformer, vers, doc = get_transform(op_selected)
+            if transformer: 
+                self.message_id = st.push(st_id, doc + " " + vers)
+#                 butt = builder.get_object("runButton")
+#                 butt.set_sensitive(True)
+            else:
+                self.appedShow("Transform not found; use -l to list the available transforms")
+                self.message_id = st.pop(self.message_id)
+        else:
+            self.message_id = st.pop(self.message_id)
         
     def onRunClicked(self, button):
         global transformer
@@ -71,6 +86,7 @@ class Handler:
             self.dialog.destroy()
         else:
             self.appedShow("Outo palaute {}".format(self.response))
+
 
 def runner():
     global parser
@@ -110,13 +126,33 @@ def runner():
     gedcom_transform.process_gedcom(args,transformer)
 
 
+def get_transform(name):
+    ''' Return the transform module and it's description from "transforms" package 
+        if name == "marriages", a tranformer module "transforms.marriages" is imported
+    '''
+    filename = "transforms/" + name + ".py"
+    if os.path.exists(filename):
+        transformer = importlib.import_module("transforms."+name)
+        doc = transformer.__doc__
+        if doc:
+            docline = doc.strip().splitlines()[0]
+        else:
+            docline = ""
+        version = getattr(transformer, "version", "")
+        return (transformer, version, docline)
+    return None
+
 
 builder = Gtk.Builder()
 builder.add_from_file("view/Gedder.glade")
 builder.connect_signals(Handler())
-#print (dir(builder.get_object('runButton')))
-#print ("Button label " + builder.get_object('runButton').get_label())
+st = builder.get_object('statusbar1')
+# print (dir(st))
+st_id = st.get_context_id("gedder")
+# print ("Statuspaikka " + str(st_id))
 
 window = builder.get_object("applicationwindow")
+# statusbar = Gtk.Statusbar()
+# context = statusbar.get_context_id("example")
 window.show_all()
 Gtk.main()
