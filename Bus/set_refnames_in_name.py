@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-List refname of all first names in the Neo4j database.
+Set refnames of the all first names in the Neo4j database.
 Jorma Haapasalo, 2017.
  
 """
@@ -35,13 +35,18 @@ def process_neo4j(args):
                 for record2 in result:
 #                    aname = record2["aname"]
                     bname = record2["bname"]
-                    ref_name = ref_name + " " + bname
+                    ref_name = ref_name + bname + " "
                     # print("\nName: " + aname + " ---> Refname: " + bname)
                     
                 if not record2:
-                    ref_name = ref_name + " " + name
+                    ref_name = ref_name + name + " "
                     
             print("\nName in db: " + first + " ---> refname: " + ref_name)
+            
+            n = Name()
+            n.first = first
+            n.refname = ref_name
+            n.set_refname()
                    
                            
         elapsed_time = time.perf_counter() - t
@@ -52,7 +57,7 @@ def process_neo4j(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='List the reference name of all first names in Neo4j')
+    parser = argparse.ArgumentParser(description='Set reference name to all first names in Neo4j')
 
     args = parser.parse_args()
 

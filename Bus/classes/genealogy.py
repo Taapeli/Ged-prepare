@@ -529,6 +529,7 @@ class Name:
                 type            str nimen tyyppi
                 alt             str muun nimen numero
                 first           str etunimi
+                refname         str reference name
                 surname         str sukunimi
                 suffix          str patronyymi
     """
@@ -538,9 +539,22 @@ class Name:
         self.type = ''
         self.alt = ''
         self.first = ''
+        self.refname = ''
         self.surname = ''
         self.suffix = ''
         
+        
+    @staticmethod
+    def get_people_with_refname(surname):
+        """ Etsi kaikki henkilöt, joiden referenssinimi on annettu"""
+        
+        global session
+        
+        query = """
+            MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.refname STARTS WITH '{}'
+                RETURN p.gramps_handle AS handle
+            """.format(surname)
+        return session.run(query)
         
     @staticmethod
     def get_people_with_surname(surname):
@@ -579,6 +593,18 @@ class Name:
                 ORDER BY n.surname
             """
         return session.run(query)
+    
+    def set_refname(self):
+        """Asetetaan etunimen referenssinimi """
+        
+        global session
+        
+        query = """
+            MATCH (n:Name) WHERE n.first='{}' 
+            SET n.refname='{}'
+            """.format(self.first, self.refname)
+        return session.run(query)
+        
     
     
 class Note:
@@ -660,6 +686,7 @@ class Person:
                    alt             str muun nimen nro
                    type            str nimen tyyppi
                    first           str etunimi
+                   refname         str referenssinimi
                    surname         str sukunimi
                    suffix          str patronyymi
                 eventref_hlink     str tapahtuman osoite
@@ -787,6 +814,7 @@ class Person:
                 pname.alt = person_record["name"]['alt']
                 pname.type = person_record["name"]['type']
                 pname.first = person_record["name"]['first']
+                pname.refname = person_record["name"]['refname']
                 pname.surname = person_record["name"]['surname']
                 pname.suffix = person_record["name"]['suffix']
                 self.name.append(pname)
@@ -820,6 +848,7 @@ class Person:
                 print ("Alt: " + pname.alt)
                 print ("Type: " + pname.type)
                 print ("First: " + pname.first)
+                print ("Refname: " + pname.refname)
                 print ("Surname: " + pname.surname)
                 print ("Suffix: " + pname.suffix)
         if len(self.eventref_hlink) > 0:
@@ -1195,7 +1224,7 @@ class Refname:
         global session
         query="""
             MATCH (a:Refname)-[r:REFFIRST]->(b:Refname) WHERE a.name='{}'
-            RETURN a.name AS aname, b.name AS bname;""".format(name)
+            RETURN a.name AS aname, b.name AS bname LIMIT 1;""".format(name)
             
         try:
             return session.run(query)
