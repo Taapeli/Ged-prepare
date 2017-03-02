@@ -28,7 +28,7 @@ class Handler:
         outbox.get_buffer().insert_at_cursor(text)
         outbox.get_buffer().insert_at_cursor("\n")
 
-    def on_opNotebook_switch_page (self,  notebook, page, page_num, data=None):
+    def on_opNotebook_switch_page (self, notebook, page, page_num, data=None):
         ''' Valittu välilehti määrää toiminnon 
         '''
         global transformer
@@ -49,8 +49,7 @@ class Handler:
             transformer, vers, doc = get_transform(op_selected)
             if transformer: 
                 self.message_id = st.push(st_id, doc + " " + vers)
-#                 butt = builder.get_object("runButton")
-#                 butt.set_sensitive(True)
+                activate_run_button()
             else:
                 self.appedShow("Transform not found; use -l to list the available transforms")
                 self.message_id = st.pop(self.message_id)
@@ -71,8 +70,20 @@ class Handler:
         self.appedShow("Painettu: " + button.get_label())
         rev = builder.get_object("revertButton")
         rev.set_sensitive(False)
-    
+
+    def inputFilechooser_file_set_cb(self, button):
+        ''' The user has selected a file '''
+        global input_gedcom
+        name = button.get_filename()
+        if name:
+            input_gedcom = name
+            self.message_id = st.push(st_id, "Syöte " + input_gedcom)
+            activate_run_button()
+        
+
     def on_file_open_activate(self, menuitem, data=None):
+        ''' Same as inputFilechooser_file_set_cb – not actually needed '''
+        global input_gedcom
         self.dialog = Gtk.FileChooserDialog("Open...",
             window,
             Gtk.FileChooserAction.OPEN, #Gtk.FILE_CHOOSER_ACTION_OPEN,
@@ -82,10 +93,20 @@ class Handler:
             )
         self.response = self.dialog.run()
         if self.response == Gtk.ResponseType.OK:
-            self.appedShow("Syöte: " + self.dialog.get_filename())
+            input_gedcom = self.dialog.get_filename()
+            self.message_id = st.push(st_id, "Syöte " + input_gedcom)
+            activate_run_button()
             self.dialog.destroy()
         else:
             self.appedShow("Outo palaute {}".format(self.response))
+
+
+def activate_run_button():
+    ''' If file and operation are choosen '''
+    global transformer
+    global input_gedcom
+    butt = builder.get_object("runButton")
+    butt.set_sensitive((input_gedcom and transformer))
 
 
 def runner():
@@ -150,6 +171,8 @@ st = builder.get_object('statusbar1')
 # print (dir(st))
 st_id = st.get_context_id("gedder")
 # print ("Statuspaikka " + str(st_id))
+input_gedcom = None
+transformer = None
 
 window = builder.get_object("applicationwindow")
 # statusbar = Gtk.Statusbar()
