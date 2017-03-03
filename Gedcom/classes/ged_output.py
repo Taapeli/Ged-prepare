@@ -56,7 +56,7 @@ class Output:
     def emit(self, line):
         ''' Process an input line '''
         if self.display_changes and line.strip() != self.original_line:
-            print('{:>36} –> {}'.format(self.original_line, line))
+            print('{:>36} --> {}'.format(self.original_line, line))
             self.original_line = ""
         self.f.write(line+"\n")
 

@@ -124,7 +124,7 @@ class PersonName(GedcomLine):
             '''
             for short, full in _PATRONYME.items():
                 if nm.endswith(short):
-                    # 'Matinp.' ––> 'Matinpoika'
+                    # 'Matinp.' --> 'Matinpoika'
                     return nm[:-len(short)] + full
             return None
 
@@ -352,7 +352,7 @@ class PersonName(GedcomLine):
                 path = self.path
             else:
                 path = "{}.{}".format(self.path, tag)
-            LOG.info("{} {!r:>36} ––> {!r}".format(path, value, new_value))
+            LOG.info("{} {!r:>36} --> {!r}".format(path, value, new_value))
             self.reported_value = value
 
 
