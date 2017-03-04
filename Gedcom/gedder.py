@@ -9,9 +9,9 @@ import sys
 import gi
 gi.require_version('Gtk', '3.0')
 import importlib
-from gi.repository import Gtk
-from argparse import Namespace
+from gi.repository import Gtk, Pango, Gdk
 
+from argparse import Namespace
 import gedcom_transform
 
 # Show menu in application window, not on the top of Ubuntu desktop
@@ -97,19 +97,26 @@ class Handler:
         self.disp_window = self.builder2.get_object("displaystate")
         self.disp_window.set_transient_for(self.window)
         self.disp_window.show()
-        textbuffer = msg.get_buffer()
+        self.textbuffer = msg.get_buffer()
+        w_tag = self.textbuffer.create_tag( "warning", weight=Pango.Weight.BOLD, 
+                                            foreground_rgba=Gdk.RGBA(0, 0, 0.5, 1))
+        e_tag = self.textbuffer.create_tag( "error", weight=Pango.Weight.BOLD, 
+                                            foreground_rgba=Gdk.RGBA(0.5, 0, 0, 1))
+        msg.modify_font(Pango.FontDescription("Monospace 9"))
         
         # Read logfile and show it's contentself.textview
         f = open('transform.log', 'r')
-        lines = []
         for line in f:
-            if line.startswith("INFO"):
-                lines.append(line[4:])
-            elif line.startswith("WARNING"):
-                lines.append("<b>{}</b>\n".format(line[7:-1]))
+            position = self.textbuffer.get_end_iter()
+            if line.startswith("INFO:"):
+                self.textbuffer.insert(position, line[5:])
+            elif line.startswith("WARNING:"):
+                self.textbuffer.insert_with_tags(position,line[8:], w_tag)
+            elif line.startswith("ERROR:"):
+                self.textbuffer.insert_with_tags(position,line[6:], e_tag)
             else:
-                lines.append(line)
-        textbuffer.set_text(''.join(lines))
+                self.textbuffer.insert(position, line)
+#         self.textbuffer.set_text(''.join(lines))
 
     def on_displaystate_close(self, *args):
         ''' Suljetaan lokitiedosto-ikkuna '''
