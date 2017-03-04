@@ -100,7 +100,7 @@ def read_gedcom(args):
         raise
     except Exception as err:
         LOG.error(type(err))
-        LOG.error("Virhe: {0}".format(err), file=sys.stderr)
+        LOG.error("Virhe: {0}".format(err))
 
 
 def process_gedcom(args,transformer):
