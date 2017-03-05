@@ -92,7 +92,8 @@ class Output:
                     os.rename(self.temp_name, self.in_name)
                     print("Luettu tiedosto '{}'".format(self.new_name))
                     print("  Uusi tiedosto '{}'".format(self.in_name))
-                    LOG.info("Luettu %s, tulostettu %s", self.new_name, self.in_name)
+                    LOG.info("Luettu     %s", self.new_name)
+                    LOG.info("Tulostettu %s", self.in_name)
 
     def generate_name(self,name):
         i = 0

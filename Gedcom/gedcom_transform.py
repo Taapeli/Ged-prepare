@@ -103,7 +103,11 @@ def read_gedcom(args):
         LOG.error("Virhe: {0}".format(err))
 
 
-def process_gedcom(args,transformer):
+def process_gedcom(args, transformer, task_name=''):
+
+    LOG.info("------ Ajo '%s'   alkoi %s ------", \
+             task_name, \
+             datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S'))
 
     transformer.initialize(args)
 
@@ -130,6 +134,11 @@ def process_gedcom(args,transformer):
                 transformer.phase3(args, gedline, f)
     except FileNotFoundError as err:
         LOG.error("Ohjelma päättyi virheeseen: {}".format(err))
+
+    LOG.info("------ Ajo '%s' päättyi %s ------", \
+             task_name, \
+             datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S'))
+
 
 
 def get_transforms():
@@ -174,7 +183,7 @@ def main():
     print("\nTaapeli GEDCOM transform program A (version {})\n".format(_VERSION))
     print("Lokitiedot: {!r}".format(_LOGFILE))
     init_log()
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('transform', help="Name of the transform (Python module)")
     parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
@@ -202,8 +211,8 @@ def main():
         return
 
     if len(sys.argv) > 1 and sys.argv[1][0] != '-':
-        task = sys.argv[1]
-        transformer = find_transform(task)
+        task_name = sys.argv[1]
+        transformer = find_transform(task_name)
         if not transformer: 
             print("Transform not found; use -l to list the available transforms")
             return
@@ -211,16 +220,7 @@ def main():
 
     args = parser.parse_args()
 
-    LOG.info("------ Ajo '%s'   alkoi %s syötteenä '%s' ------", \
-             task, \
-             datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S'), \
-             args.__getattribute__('input_gedcom'))
-
-    process_gedcom(args,transformer)
-
-    LOG.info("------ Ajo '%s' päättyi %s ------", \
-             task, \
-             datetime.datetime.now().strftime('%a %Y-%m-%d %H:%M:%S'))
+    process_gedcom(args, transformer, task_name)
 
 if __name__ == "__main__":
     main()

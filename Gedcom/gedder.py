@@ -5,24 +5,32 @@
 #
 
 import os 
-import sys
 import gi
 gi.require_version('Gtk', '3.0')
 import importlib
 from gi.repository import Gtk, Pango, Gdk
+import logging
 
 from argparse import Namespace
 import gedcom_transform
+_LOGFILE="transform.log"
 
 # Show menu in application window, not on the top of Ubuntu desktop
 os.environ['UBUNTU_MENUPROXY']='0'
-args = Namespace(nolog=True, output_gedcom='out.txt', encoding='UTF-8', dryrun=False)
+LOG = logging.getLogger(__name__)
+run_args = Namespace(# Global options
+                     output_gedcom=None, display_changes=False, dryrun=False, nolog=False, encoding='utf-8',
+                     # places options
+                     reverse=False, add_commas=False, ignore_lowercase=False, display_nonchanges=False,
+                     ignore_digits=False, minlen=0, auto_order=False, auto_combine=False, 
+                     match='', parishfile="seurakunnat.txt", villagefile="kylat.txt")
 
 class Handler:
 
     def __init__(self):
         global transformer
         global input_gedcom
+
         self.builder = Gtk.Builder()
         self.builder.add_from_file("view/Gedder.glade")
         self.builder.connect_signals(self)
@@ -39,26 +47,17 @@ class Handler:
     def onDeleteWindow(self, *args):
         Gtk.main_quit(*args)
         
-    def appedShow(self, text):
-        # Printing text to scrollable text view
-        self.st.push(self.st_id, text)
-#         outbox = self.builder.get_object("tulosruutu")
-#         outbox.get_buffer().insert_at_cursor(text)
-#         outbox.get_buffer().insert_at_cursor("\n")
-
     def on_opNotebook_switch_page (self, notebook, page, page_num, data=None):
         ''' Valittu välilehti määrää toiminnon 
         '''
         global transformer
-        opers = ("names", "places", "marriages", "hiskisources", "kasteet", None)
+        opers = (None, "names", "places", "marriages", "hiskisources", "kasteet")
         op_selected = None
         
         self.tab = notebook.get_nth_page(page_num)
         self.label = notebook.get_tab_label(self.tab).get_label()
         if page_num < len(opers):
             op_selected = opers[page_num]
-#             if op_selected:
-#                 self.message_id = st.push(st_id, "{} -toiminto {!r}-moduulilla".format(self.label, op_selected))
     
         self.builder.get_object("checkbutton2").set_sensitive(op_selected == 'places')
 
@@ -69,22 +68,27 @@ class Handler:
                 self.message_id = self.st.push(self.st_id, doc + " " + vers)
                 self.activate_run_button()
             else:
-                self.appedShow("Transform not found; use -l to list the available transforms")
+                self.st.push(self.st_id, "Transform not found; use -l to list the available transforms")
         elif self.message_id:
             self.message_id = self.st.pop(self.message_id)
         
     def on_runButton_clicked(self, button):
+        ''' Open log file and run the selected transformation '''
         global transformer
-        self.appedShow("Painettu: " + button.get_label())
+        self.st.push(self.st_id, "{} käynnistyi".format(button.get_label()))
         
-        # Käynnistetään pyydetty toiminto
-        gedcom_transform.process_gedcom(args, transformer)
+        print("Lokitiedot: {!r}".format(_LOGFILE))
+        init_log()
+        gedcom_transform.process_gedcom(run_args, transformer, button.get_label())
 
-        rev = self.builder.get_object("revertButton")
-        rev.set_sensitive(True)
+        self.st.push(self.st_id, "{} tehty".format(button.get_label()))
+#         rev = self.builder.get_object("revertButton")
+#         rev.set_sensitive(True)
+        ''' Show report '''
+        self.on_showButton_clicked(button)
         
     def on_revertButton_clicked(self, button):
-        self.appedShow("Painettu: " + button.get_label())
+        self.st.push(self.st_id, "Painettu: " + button.get_label())
         rev = self.builder.get_object("revertButton")
         rev.set_sensitive(False)
 
@@ -104,51 +108,63 @@ class Handler:
                                             foreground_rgba=Gdk.RGBA(0.5, 0, 0, 1))
         msg.modify_font(Pango.FontDescription("Monospace 9"))
         
-        # Read logfile and show it's contentself.textview
-        f = open('transform.log', 'r')
-        for line in f:
+        # Read logfile and show it's content formatted in self.textview
+        try:
+            f = open(_LOGFILE, 'r')
+            for line in f:
+                position = self.textbuffer.get_end_iter()
+                if line.startswith("INFO:"):
+                    self.textbuffer.insert(position, line[5:])
+                elif line.startswith("WARNING:"):
+                    self.textbuffer.insert_with_tags(position,line[8:], w_tag)
+                elif line.startswith("ERROR:"):
+                    self.textbuffer.insert_with_tags(position,line[6:], e_tag)
+                else:
+                    self.textbuffer.insert(position, line)
+        except FileNotFoundError:
             position = self.textbuffer.get_end_iter()
-            if line.startswith("INFO:"):
-                self.textbuffer.insert(position, line[5:])
-            elif line.startswith("WARNING:"):
-                self.textbuffer.insert_with_tags(position,line[8:], w_tag)
-            elif line.startswith("ERROR:"):
-                self.textbuffer.insert_with_tags(position,line[6:], e_tag)
-            else:
-                self.textbuffer.insert(position, line)
-#         self.textbuffer.set_text(''.join(lines))
+            self.textbuffer.insert_with_tags(position,"Lokitiedostoa {!r} ei ole!".format(_LOGFILE), e_tag)
+        except Exception as e:
+            position = self.textbuffer.get_end_iter()
+            self.textbuffer.insert_with_tags(position,"{}: Virhe {!r}".format(self.__name__, str(e)), e_tag)
 
     def on_displaystate_close(self, *args):
         ''' Suljetaan lokitiedosto-ikkuna '''
         self.disp_window.destroy()
-        
+
+    def on_combo_encoding_changed(self, combo):
+        value = combo.get_active_text()
+        run_args.__setattr__('encoding', value)
+        self.st.push(self.st_id, "Valittu merkistö " + value)
+
     def inputFilechooser_set(self, button):
         ''' The user has selected a file '''
         global input_gedcom
         name = button.get_filename()
         if name:
             input_gedcom = name
+            setattr(run_args, 'input_gedcom', name)
             self.message_id = self.st.push(self.st_id, "Syöte " + input_gedcom)
             self.activate_run_button()
-
+ 
     def on_file_open_activate(self, menuitem, data=None):
         ''' Same as inputFilechooser_file_set_cb - not actually needed '''
         global input_gedcom
         self.dialog = Gtk.FileChooserDialog("Open...",
             self.window,
-            Gtk.FileChooserAction.OPEN, #Gtk.FILE_CHOOSER_ACTION_OPEN,
+            Gtk.FileChooserAction.OPEN,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
-             #Gtk.STOCK_CANCEL, Gtk.RESPONSE_CANCEL,  Gtk.STOCK_OPEN, Gtk.RESPONSE_OK))
             )
         self.response = self.dialog.run()
         if self.response == Gtk.ResponseType.OK:
             input_gedcom = self.dialog.get_filename()
+            setattr(run_args, 'input_gedcom', input_gedcom)
             self.message_id = self.st.push(self.st_id, "Syöte " + input_gedcom)
             self.activate_run_button()
             self.dialog.destroy()
         else:
-            self.appedShow("Outo palaute {}".format(self.response))
+            self.st.push(self.st_id, "Outo palaute {}".format(self.response))
 
     def activate_run_button(self):
         ''' If file and operation are choosen '''
@@ -159,43 +175,6 @@ class Handler:
             runb.set_sensitive(True)
         else: 
             runb.set_sensitive(False)
-
-def runner():
-    global parser
-    print("\nTaapeli GEDCOM transform program A (version 0.1)\n")
-    parser = gedcom_transform.argparse.ArgumentParser()
-    parser.add_argument('transform', help="Name of the transform (Python module)")
-    parser.add_argument('input_gedcom', help="Name of the input GEDCOM file")
-    #parser.add_argument('output_gedcom', help="Name of the output GEDCOM file; this file will be created/overwritten" )
-    parser.add_argument('--display-changes', action='store_true',
-                        help='Display changed rows')
-    parser.add_argument('--dryrun', action='store_true',
-                        help='Do not produce an output file')
-    #parser.add_argument('--display-nonchanges', action='store_true',
-    #                    help='Display unchanged places')
-    parser.add_argument('--encoding', type=str, default="utf-8",
-                        help="e.g, UTF-8, ISO8859-1")
-    parser.add_argument('-l', '--list', action='store_true', help="List transforms")
-
-    if len(sys.argv) > 1 and sys.argv[1] in ("-l","--list"):
-        print("List of transforms:")
-        for modname,transformer,docline,version in gedcom_transform.get_transforms():
-            print("  {:20.20} {:10.10} {}".format(modname,version,docline))
-        return
-
-    if len(sys.argv) > 1 and sys.argv[1][0] == '-' and sys.argv[1] not in ("-h","--help"):
-        print("First argument must be the name of the transform")
-        return
-
-    if len(sys.argv) > 1 and sys.argv[1][0] != '-':
-        transformer = gedcom_transform.find_transform(sys.argv[1])
-        if not transformer: 
-            print("Transform not found; use -l to list the available transforms")
-            return
-        transformer.add_args(parser)
-
-    args = parser.parse_args()
-    gedcom_transform.process_gedcom(args,transformer)
 
 
 def get_transform(name):
@@ -214,8 +193,16 @@ def get_transform(name):
         return (transformer, version, docline)
     return None
 
+def init_log():
+    ''' Define log file and save one previous log '''
+    try:
+        if os.path.isfile(_LOGFILE):
+            os.rename(_LOGFILE, _LOGFILE + '~')
+    except:
+        pass
+    logging.basicConfig(filename=_LOGFILE,level=logging.INFO, format='%(levelname)s:%(message)s')
+
+
 if __name__ == "__main__":
     main = Handler()
     Gtk.main()
-
-Gtk.main()

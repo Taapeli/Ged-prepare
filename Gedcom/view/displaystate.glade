@@ -53,6 +53,9 @@
               <object class="GtkTextView" id="msg">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="editable">False</property>
+                <property name="left_margin">4</property>
+                <property name="right_margin">4</property>
               </object>
             </child>
           </object>

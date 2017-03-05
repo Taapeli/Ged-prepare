@@ -24,6 +24,16 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
   <!-- interface-license-type gplv3 -->
   <!-- interface-name Taapeli Suomi-tietokanta -->
   <!-- interface-description Gedcom cure set -->
+  <object class="GtkFileFilter" id="filefilter_ged">
+    <patterns>
+      <pattern>*.ged</pattern>
+    </patterns>
+  </object>
+  <object class="GtkFileFilter" id="filefilter_txt">
+    <patterns>
+      <pattern>*.txt</pattern>
+    </patterns>
+  </object>
   <object class="GtkApplicationWindow" id="applicationwindow">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Gedcom-korjailu</property>
@@ -206,6 +216,7 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Valitse muokattava Gedcom-tiedosto</property>
+                    <property name="filter">filefilter_ged</property>
                     <property name="width_chars">24</property>
                     <signal name="file-set" handler="inputFilechooser_set" swapped="no"/>
                   </object>
@@ -253,6 +264,133 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
             <property name="can_focus">True</property>
             <property name="border_width">4</property>
             <signal name="switch-page" handler="on_opNotebook_switch_page" swapped="no"/>
+            <child>
+              <object class="GtkBox" id="valinnatEtusivu">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel" id="ohje">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="halign">start</property>
+                    <property name="xpad">8</property>
+                    <property name="ypad">8</property>
+                    <property name="label" translatable="yes">Valitse haluamaasi muunnosta vastaava välilehti</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="padding">8</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="c_display_changes">
+                    <property name="label" translatable="yes">Näytä muutokset lokilla</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="xalign">0</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="c_dry_run">
+                    <property name="label" translatable="yes">Vain loki, ei uutta gedcom-tulostetta</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="xalign">0</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="c_nolog">
+                    <property name="label" translatable="yes">Lokia ei tulosteta</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="xalign">0</property>
+                    <property name="yalign">0.46000000834465027</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox" id="box1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_top">5</property>
+                    <property name="margin_bottom">5</property>
+                    <child>
+                      <object class="GtkLabel" id="label6">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="label" translatable="yes">Syötteen merkistö</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBoxText" id="combo_encoding">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="active">0</property>
+                        <items>
+                          <item id="UTF-8" translatable="yes">UTF-8</item>
+                          <item id="ISO8859-1" translatable="yes">ISO8859-1</item>
+                        </items>
+                        <signal name="changed" handler="on_combo_encoding_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
+            <child type="tab">
+              <object class="GtkLabel" id="labelYle">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Alku</property>
+                <property name="lines">4</property>
+                <attributes>
+                  <attribute name="style" value="oblique"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="tab_fill">False</property>
+              </packing>
+            </child>
             <child>
               <object class="GtkBox" id="valinnatNimet">
                 <property name="visible">True</property>
@@ -338,6 +476,9 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                   </packing>
                 </child>
               </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
             </child>
             <child type="tab">
               <object class="GtkLabel" id="labelNimet">
@@ -347,6 +488,7 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                 <property name="label" translatable="yes">Nimet</property>
               </object>
               <packing>
+                <property name="position">1</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -356,8 +498,8 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkCheckButton" id="checkbutton7">
-                    <property name="label" translatable="yes">Ei tulostusta</property>
+                  <object class="GtkCheckButton" id="c_reverse">
+                    <property name="label" translatable="yes">Käännä paikkojen järjestys</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -371,8 +513,8 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="checkbutton8">
-                    <property name="label" translatable="yes">Käännä paikkahierarkia</property>
+                  <object class="GtkCheckButton" id="c_add_commas">
+                    <property name="label" translatable="yes">Lisää pilkut nimien väliin</property>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
@@ -387,8 +529,8 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="checkbutton9">
-                    <property name="label" translatable="yes">Joku muu valinta</property>
+                  <object class="GtkCheckButton" id="c_ignore_lowercase">
+                    <property name="label" translatable="yes">Ohita pikkukirjaimilla kirjoitetut sanat</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -401,9 +543,182 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                     <property name="position">2</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkCheckButton" id="c_auto_order">
+                    <property name="label" translatable="yes">Arvaa nimien järjestys</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="xalign">0</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="c_auto_combine">
+                    <property name="label" translatable="yes">Yhdistele määrätyt nimet</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="xalign">0</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="c_mark_changes">
+                    <property name="label" translatable="yes">Talleta myös alkuperäisarvot tulos-Gedcomiin</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="xalign">0</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">5</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="c_display_ignored">
+                    <property name="label" translatable="yes">Näytä ohitetut paikat lokilla</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="xalign">0</property>
+                    <property name="draw_indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">6</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkGrid" id="grid1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkLabel" id="label2">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">end</property>
+                        <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="label" translatable="yes">Ohita sanat, joiden pituus on alle</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="e_minlen">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="max_length">2</property>
+                        <property name="text" translatable="yes">0</property>
+                        <property name="input_purpose">number</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label3">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">end</property>
+                        <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="label" translatable="yes">Käsittele vain paikat, jotka sisältävät</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="e_match">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label4">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">end</property>
+                        <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="label" translatable="yes">Seurankuntaluettelo</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label5">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">end</property>
+                        <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="label" translatable="yes">Kyläluettelo</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFileChooserButton" id="parishfile_chooser">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="action">save</property>
+                        <property name="filter">filefilter_txt</property>
+                        <property name="title" translatable="yes">(oletus)</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFileChooserButton" id="villagefilechooser">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">3</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">7</property>
+                  </packing>
+                </child>
               </object>
               <packing>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child type="tab">
@@ -471,7 +786,7 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                 </child>
               </object>
               <packing>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
             <child type="tab">
@@ -482,73 +797,7 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                 <property name="label" translatable="yes">Avioliitot</property>
               </object>
               <packing>
-                <property name="position">2</property>
-                <property name="tab_fill">False</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkBox" id="valinnatHiski">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="GtkCheckButton" id="checkbutton1">
-                    <property name="label" translatable="yes">Ei tulostusta</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="checkbutton2">
-                    <property name="label" translatable="yes">Tee fiksu Hiski-temppu</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="checkbutton3">
-                    <property name="label" translatable="yes">Joku muu valinta</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
-                    <property name="draw_indicator">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="position">3</property>
-              </packing>
-            </child>
-            <child type="tab">
-              <object class="GtkLabel" id="labelHiski">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Hiski-lähteet</property>
-              </object>
-              <packing>
-                <property name="position">3</property>
+                <property name="position">4</property>
                 <property name="tab_fill">False</property>
               </packing>
             </child>
@@ -619,12 +868,12 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="valinnat5">
+              <object class="GtkBox" id="valinnatHiski">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkCheckButton" id="checkbutton13">
+                  <object class="GtkCheckButton" id="checkbutton1">
                     <property name="label" translatable="yes">Ei tulostusta</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -639,8 +888,8 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="checkbutton14">
-                    <property name="label" translatable="yes">Ei tänään</property>
+                  <object class="GtkCheckButton" id="checkbutton2">
+                    <property name="label" translatable="yes">Tee fiksu Hiski-temppu</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -654,7 +903,7 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkCheckButton" id="checkbutton15">
+                  <object class="GtkCheckButton" id="checkbutton3">
                     <property name="label" translatable="yes">Joku muu valinta</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -674,10 +923,10 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
               </packing>
             </child>
             <child type="tab">
-              <object class="GtkLabel" id="labelYle">
+              <object class="GtkLabel" id="labelHiski">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Yleiset</property>
+                <property name="label" translatable="yes">Hiski-lähteet</property>
               </object>
               <packing>
                 <property name="position">5</property>
