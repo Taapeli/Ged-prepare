@@ -690,7 +690,6 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                       <object class="GtkFileChooserButton" id="parishfile_chooser">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="action">save</property>
                         <property name="filter">filefilter_txt</property>
                         <property name="title" translatable="yes">(oletus)</property>
                       </object>
@@ -700,9 +699,10 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkFileChooserButton" id="villagefilechooser">
+                      <object class="GtkFileChooserButton" id="villagefile_chooser">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="filter">filefilter_txt</property>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
