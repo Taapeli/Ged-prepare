@@ -15,7 +15,7 @@ import time
 import xml.dom.minidom
 import argparse
 from sys import stderr
-from classes.genealogy import connect_db, Citation, Event, Family, Name, Note, Person, Place, Repository, Source
+from classes.genealogy import connect_db, Citation, Event, Family, Name, Note, Person, Place, Repository, Source, User
 
 connect_db()
 
@@ -82,7 +82,9 @@ def handle_citations(collection):
 
 
 def handle_events(collection, userid):
-
+    # Create User if needed
+    User.create_user(userid)
+    
     # Get all the events in the collection
     events = collection.getElementsByTagName("event")
     
@@ -235,6 +237,9 @@ def handle_notes(collection):
     
 
 def handle_people(collection, userid):
+    # Create User if needed
+    User.create_user(userid)
+    
     # Get all the people in the collection
     people = collection.getElementsByTagName("person")
     

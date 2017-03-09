@@ -1522,4 +1522,47 @@ class Source:
                 print("Virhe: {0}".format(err), file=stderr)
                 
         return
+    
+    
+class User:
+    """ Käyttäjä
+            
+        Properties:
+                userid          esim. User123
+     """
+     
+    @staticmethod       
+    def create_user(userid):
+        """ Käyttäjä tallennetaan kantaan, jos hän ei jo ole siellä"""
+
+        global session
+        
+        try:
+            record = None
+            query = """
+                MATCH (u:User) WHERE u.userid='{}' RETURN u.userid
+                """.format(userid)
+                
+            result = session.run(query)
+            
+            for record in result:
+                continue
+            
+            if not record:
+                # User doesn't exist in db, the userid should be stored there
+                try:
+                    query = """
+                        CREATE (u:User) 
+                        SET u.userid='{}'
+                        """.format(userid)
+                        
+                    session.run(query)
+            
+                except Exception as err:
+                    print("Virhe: {0}".format(err), file=stderr)
+            
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+        
+
 
