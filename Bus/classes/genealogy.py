@@ -237,7 +237,7 @@ class Event:
         return True
 
 
-    def save(self):
+    def save(self, userid):
         """ Tallettaa sen kantaan """
 
         global session
@@ -251,6 +251,17 @@ class Event:
                     e.type='{}', 
                     e.date='{}'
                 """.format(self.handle, self.change, self.id, self.type, self.date)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+
+        try:
+            query = """
+                MATCH (u:User) WHERE u.userid='{}'  
+                MATCH (n:Event) WHERE n.gramps_handle='{}'
+                MERGE (u)-[r:RELEASE]->(n)
+                """.format(userid, self.handle)
                 
             session.run(query)
         except Exception as err:
@@ -864,25 +875,36 @@ class Person:
         return True
 
 
-    def save(self):
+    def save(self, userid):
         """ Tallettaa sen kantaan """
 
         global session
         
-        if len(self.name) > 0:
-            try:
-                query = """
-                    CREATE (p:Person) 
-                    SET p.gramps_handle='{}', 
-                        p.change='{}', 
-                        p.id='{}', 
-                        p.gender='{}'
-                    """.format(self.handle, self.change, self.id, self.gender)
-                    
-                session.run(query)
-            except Exception as err:
-                print("Virhe: {0}".format(err), file=stderr)
+        try:
+            query = """
+                CREATE (p:Person) 
+                SET p.gramps_handle='{}', 
+                    p.change='{}', 
+                    p.id='{}', 
+                    p.gender='{}'
+                """.format(self.handle, self.change, self.id, self.gender)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
 
+        try:
+            query = """
+                MATCH (u:User )WHERE u.userid='{}'
+                MATCH (n:Person) WHERE n.gramps_handle='{}'
+                MERGE (u)-[r:RELEASE]->(n)
+                """.format(userid, self.handle)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+            
+        if len(self.name) > 0:
             try:
                 names = self.name
                 for name in names:

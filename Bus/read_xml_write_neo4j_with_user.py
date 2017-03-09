@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 
 """
-Storing data from an XML file to the Neo4j database.
+Storing data from an XML file to the Neo4j database under a specific userid.
 Jorma Haapasalo, 2016.
 
 Parameters of main():
  1. The name of the input XML file.
+ 2. The UserId.
  
 """
 
@@ -80,7 +81,7 @@ def handle_citations(collection):
     print("Number of citations stored: " + str(counter))
 
 
-def handle_events(collection):
+def handle_events(collection, userid):
 
     # Get all the events in the collection
     events = collection.getElementsByTagName("event")
@@ -127,7 +128,7 @@ def handle_events(collection):
         elif len(event.getElementsByTagName('citationref') ) > 1:
             print("Error: More than one citationref tag in an event")
                 
-        e.save()
+        e.save(userid)
         
         # There can be so many individs to store that Cypher needs a pause
         time.sleep(0.1)
@@ -233,7 +234,7 @@ def handle_notes(collection):
     print("Number of notes stored: " + str(counter))
     
 
-def handle_people(collection):
+def handle_people(collection, userid):
     # Get all the people in the collection
     people = collection.getElementsByTagName("person")
     
@@ -313,7 +314,7 @@ def handle_people(collection):
                 if person_citationref.hasAttribute("hlink"):
                     p.citationref_hlink.append(person_citationref.getAttribute("hlink"))
                     
-        p.save()
+        p.save(userid)
         counter += 1
         
         # There can be so many individs to store that Cypher needs a pause
@@ -531,13 +532,13 @@ def process_xml(args):
         number_of_citations()
         
         t = time.perf_counter()
-        handle_events(collection)
+        handle_events(collection, args.userid)
         elapsed_time = time.perf_counter() - t
         print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_events()
         
         t = time.perf_counter()
-        handle_people(collection)
+        handle_people(collection, args.userid)
         elapsed_time = time.perf_counter() - t
         print("Time needed: " + str(elapsed_time) + " seconds")
         number_of_people()
@@ -556,11 +557,12 @@ def process_xml(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='XML to Neo4j')
+    parser = argparse.ArgumentParser(description='XML to Neo4j under the specific userid')
     parser.add_argument('input_xml', help="Name of the input XML file")
+    parser.add_argument('userid', help="The UserId of the genealogical researcher")
 
     if len(sys.argv) == 1:
-        print("First argument must be the name of the XML file")
+        print("There must be two arguments: the name of the XML file and the the userid of the researcher")
         return
 
     args = parser.parse_args()
