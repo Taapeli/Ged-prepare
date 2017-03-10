@@ -82,9 +82,6 @@ def handle_citations(collection):
 
 
 def handle_events(collection, userid):
-    # Create User if needed
-    User.create_user(userid)
-    
     # Get all the events in the collection
     events = collection.getElementsByTagName("event")
     
@@ -237,9 +234,6 @@ def handle_notes(collection):
     
 
 def handle_people(collection, userid):
-    # Create User if needed
-    User.create_user(userid)
-    
     # Get all the people in the collection
     people = collection.getElementsByTagName("person")
     
@@ -506,6 +500,9 @@ def process_xml(args):
         DOMTree = xml.dom.minidom.parse(open(args.input_xml))
         collection = DOMTree.documentElement
         
+        # Create User if needed
+        User.create_user(args.userid)
+    
         t = time.perf_counter()
         handle_notes(collection)
         elapsed_time = time.perf_counter() - t

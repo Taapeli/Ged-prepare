@@ -2,6 +2,7 @@
 
 from neo4j.v1 import GraphDatabase, basic_auth
 #from flask import flash
+from datetime import date
 import logging
 from sys import stderr
 import instance.config as dbconf      # Tietokannan tiedot
@@ -241,6 +242,8 @@ class Event:
         """ Tallettaa sen kantaan """
 
         global session
+        
+        today = date.today()
 
         try:
             query = """
@@ -260,8 +263,9 @@ class Event:
             query = """
                 MATCH (u:User) WHERE u.userid='{}'  
                 MATCH (n:Event) WHERE n.gramps_handle='{}'
-                MERGE (u)-[r:RELEASE]->(n)
-                """.format(userid, self.handle)
+                MERGE (u)-[r:REVISION]->(n)
+                SET r.date='{}'
+                """.format(userid, self.handle, today)
                 
             session.run(query)
         except Exception as err:
@@ -880,6 +884,8 @@ class Person:
 
         global session
         
+        today = date.today()
+        
         try:
             query = """
                 CREATE (p:Person) 
@@ -897,8 +903,9 @@ class Person:
             query = """
                 MATCH (u:User )WHERE u.userid='{}'
                 MATCH (n:Person) WHERE n.gramps_handle='{}'
-                MERGE (u)-[r:RELEASE]->(n)
-                """.format(userid, self.handle)
+                MERGE (u)-[r:REVISION]->(n)
+                SET r.date='{}'
+                """.format(userid, self.handle, today)
                 
             session.run(query)
         except Exception as err:
