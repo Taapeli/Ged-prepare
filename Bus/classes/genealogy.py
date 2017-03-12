@@ -2,6 +2,7 @@
 
 from neo4j.v1 import GraphDatabase, basic_auth
 #from flask import flash
+from datetime import date
 import logging
 from sys import stderr
 import instance.config as dbconf      # Tietokannan tiedot
@@ -237,10 +238,12 @@ class Event:
         return True
 
 
-    def save(self):
+    def save(self, userid):
         """ Tallettaa sen kantaan """
 
         global session
+        
+        today = date.today()
 
         try:
             query = """
@@ -251,6 +254,18 @@ class Event:
                     e.type='{}', 
                     e.date='{}'
                 """.format(self.handle, self.change, self.id, self.type, self.date)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+
+        try:
+            query = """
+                MATCH (u:User) WHERE u.userid='{}'  
+                MATCH (n:Event) WHERE n.gramps_handle='{}'
+                MERGE (u)-[r:REVISION]->(n)
+                SET r.date='{}'
+                """.format(userid, self.handle, today)
                 
             session.run(query)
         except Exception as err:
@@ -864,25 +879,39 @@ class Person:
         return True
 
 
-    def save(self):
+    def save(self, userid):
         """ Tallettaa sen kantaan """
 
         global session
         
-        if len(self.name) > 0:
-            try:
-                query = """
-                    CREATE (p:Person) 
-                    SET p.gramps_handle='{}', 
-                        p.change='{}', 
-                        p.id='{}', 
-                        p.gender='{}'
-                    """.format(self.handle, self.change, self.id, self.gender)
-                    
-                session.run(query)
-            except Exception as err:
-                print("Virhe: {0}".format(err), file=stderr)
+        today = date.today()
+        
+        try:
+            query = """
+                CREATE (p:Person) 
+                SET p.gramps_handle='{}', 
+                    p.change='{}', 
+                    p.id='{}', 
+                    p.gender='{}'
+                """.format(self.handle, self.change, self.id, self.gender)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
 
+        try:
+            query = """
+                MATCH (u:User )WHERE u.userid='{}'
+                MATCH (n:Person) WHERE n.gramps_handle='{}'
+                MERGE (u)-[r:REVISION]->(n)
+                SET r.date='{}'
+                """.format(userid, self.handle, today)
+                
+            session.run(query)
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+            
+        if len(self.name) > 0:
             try:
                 names = self.name
                 for name in names:
@@ -1500,4 +1529,47 @@ class Source:
                 print("Virhe: {0}".format(err), file=stderr)
                 
         return
+    
+    
+class User:
+    """ Käyttäjä
+            
+        Properties:
+                userid          esim. User123
+     """
+     
+    @staticmethod       
+    def create_user(userid):
+        """ Käyttäjä tallennetaan kantaan, jos hän ei jo ole siellä"""
+
+        global session
+        
+        try:
+            record = None
+            query = """
+                MATCH (u:User) WHERE u.userid='{}' RETURN u.userid
+                """.format(userid)
+                
+            result = session.run(query)
+            
+            for record in result:
+                continue
+            
+            if not record:
+                # User doesn't exist in db, the userid should be stored there
+                try:
+                    query = """
+                        CREATE (u:User) 
+                        SET u.userid='{}'
+                        """.format(userid)
+                        
+                    session.run(query)
+            
+                except Exception as err:
+                    print("Virhe: {0}".format(err), file=stderr)
+            
+        except Exception as err:
+            print("Virhe: {0}".format(err), file=stderr)
+        
+
 
