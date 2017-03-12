@@ -31,8 +31,11 @@ def process_neo4j(args):
             refname = record["refname"]
             p.get_person_and_name_data()
 
-            trecord = None
-            tresult = Name.get_people_with_refname_and_user_given('Taapeli', refname)
+            # Use the first name of the refname as a search key,
+            # E.g. refname = "Matti Johannes" ---> search with "Matti"
+            names = refname.split(" ")
+                
+            tresult = Name.get_people_with_refname_and_user_given('Taapeli', names[0])
             for trecord in tresult:
                 tp = Person()
                 tp.handle = trecord["handle"]
