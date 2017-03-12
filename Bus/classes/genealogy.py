@@ -560,7 +560,7 @@ class Name:
         
         
     @staticmethod
-    def get_people_with_refname(surname):
+    def get_people_with_refname(refname):
         """ Etsi kaikki henkilöt, joiden referenssinimi on annettu"""
         
         global session
@@ -568,7 +568,20 @@ class Name:
         query = """
             MATCH (p:Person)-[r:NAME]->(n:Name) WHERE n.refname STARTS WITH '{}'
                 RETURN p.gramps_handle AS handle
-            """.format(surname)
+            """.format(refname)
+        return session.run(query)
+        
+    @staticmethod
+    def get_people_with_refname_and_user_given(userid, refname):
+        """ Etsi kaikki käyttäjän henkilöt, joiden referenssinimi on annettu"""
+        
+        global session
+        
+        query = """
+            MATCH (u:User)-[r:REVISION]->(p:Person)-[s:NAME]->(n:Name) 
+                WHERE u.userid='{}' AND n.refname STARTS WITH '{}'
+                RETURN n.refname AS refname, n.surname AS surname
+            """.format(userid, refname)
         return session.run(query)
         
     @staticmethod
@@ -1571,5 +1584,16 @@ class User:
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
         
+        
+    def get_refnames_of_people_of_user(self):
+        """ Etsi kaikki käyttäjän henkilöt"""
+        
+        global session
+        
+        query = """
+            MATCH (u:User)-[r:REVISION]->(p:Person)-[s:NAME]->(n:Name) WHERE u.userid='{}'
+                RETURN n.refname AS refname, n.surname AS surname
+            """.format(self.userid)
+        return session.run(query)
 
 
