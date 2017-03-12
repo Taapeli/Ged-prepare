@@ -230,6 +230,7 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                   <object class="GtkCheckButton" id="overwrite">
                     <property name="label" translatable="yes">Korvaa tiedosto</property>
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
                     <property name="xalign">0</property>
@@ -332,23 +333,23 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox" id="box1">
+                  <object class="GtkGrid" id="grid2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_top">5</property>
-                    <property name="margin_bottom">5</property>
+                    <property name="row_spacing">4</property>
+                    <property name="column_spacing">4</property>
                     <child>
                       <object class="GtkLabel" id="label6">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="margin_right">5</property>
+                        <property name="halign">end</property>
+                        <property name="margin_left">8</property>
+                        <property name="margin_right">8</property>
                         <property name="label" translatable="yes">Syötteen merkistö</property>
                       </object>
                       <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">0</property>
                       </packing>
                     </child>
                     <child>
@@ -363,9 +364,40 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                         <signal name="changed" handler="on_combo_encoding_changed" swapped="no"/>
                       </object>
                       <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">1</property>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label7">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">end</property>
+                        <property name="margin_left">8</property>
+                        <property name="margin_right">8</property>
+                        <property name="label" translatable="yes">Lokituksen taso</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkComboBoxText" id="combo_logging">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="active">1</property>
+                        <items>
+                          <item id="None" translatable="yes">Ei lokia</item>
+                          <item id="INFO" translatable="yes">Info</item>
+                          <item id="WARNING" translatable="yes">Varoitukset</item>
+                          <item id="ERROR" translatable="yes">Virheet</item>
+                          <item id="DEBUG" translatable="yes">Vianetsintä</item>
+                        </items>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="top_attach">1</property>
                       </packing>
                     </child>
                   </object>
@@ -530,12 +562,13 @@ along with Taapeli Suomi-tietokanta.  If not, see <http://www.gnu.org/licenses/>
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="c_ignore_lowercase">
-                    <property name="label" translatable="yes">Ohita pikkukirjaimilla kirjoitetut sanat</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
+                    <property name="use_stock">True</property>
                     <property name="xalign">0</property>
                     <property name="draw_indicator">True</property>
+                    <signal name="toggled" handler="on_c_ignore_lowercase_toggled" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
