@@ -10,7 +10,7 @@ import sys
 import argparse
 import time
 from sys import stderr
-from classes.genealogy import connect_db, Name, User
+from classes.genealogy import connect_db, Name, Person, User
 
 connect_db()
 
@@ -26,19 +26,23 @@ def process_neo4j(args):
         u.userid = args.userid
         result = u.get_refnames_of_people_of_user()
         for record in result:
-            n = Name()
-            n.refname = record["refname"]
-            n.surname = record["surname"]
+            p = Person()
+            p.handle = record["handle"]
+            refname = record["refname"]
+            p.get_person_and_name_data()
 
             trecord = None
-            tresult = Name.get_people_with_refname_and_user_given('Taapeli', n.refname)
+            tresult = Name.get_people_with_refname_and_user_given('Taapeli', refname)
             for trecord in tresult:
-                tn = Name()
-                tn.refname = trecord["refname"]
-                tn.surname = trecord["surname"]
+                tp = Person()
+                tp.handle = trecord["handle"]
                 
-                print("Person in compare db: " + n.refname + n.surname)
-                print("Person in Taapeli db: " + tn.refname + tn.surname + "\n")
+                print("\nPerson in the compare db:")
+                p.print_data()
+                print("\nPerson in the Taapeli db:")
+                tp.get_person_and_name_data()
+                tp.print_data()
+                print("\n#-------------------------------------------------------------------#\n")
                                    
         elapsed_time = time.perf_counter() - t
         print("\nTime needed: " + str(elapsed_time) + " seconds")

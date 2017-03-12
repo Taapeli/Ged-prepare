@@ -580,7 +580,7 @@ class Name:
         query = """
             MATCH (u:User)-[r:REVISION]->(p:Person)-[s:NAME]->(n:Name) 
                 WHERE u.userid='{}' AND n.refname STARTS WITH '{}'
-                RETURN n.refname AS refname, n.surname AS surname
+                RETURN p.gramps_handle AS handle
             """.format(userid, refname)
         return session.run(query)
         
@@ -1592,7 +1592,7 @@ class User:
         
         query = """
             MATCH (u:User)-[r:REVISION]->(p:Person)-[s:NAME]->(n:Name) WHERE u.userid='{}'
-                RETURN n.refname AS refname, n.surname AS surname
+                RETURN p.gramps_handle AS handle, n.refname AS refname
             """.format(self.userid)
         return session.run(query)
 
