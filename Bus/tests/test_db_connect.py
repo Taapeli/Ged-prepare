@@ -31,7 +31,7 @@ if __name__ == '__main__':
         print("Use --help for help")
         exit()
 
-    ''' Connect to db '''
+    ''' ---------- Connect to db ---------- '''
     if args.pw:
         print ("I:connecting with {}/{}".format("neo4j", args.pw))
         
@@ -49,7 +49,7 @@ if __name__ == '__main__':
             print("F:Got no session!")
             exit()
 
-    ''' Update db '''
+    ''' ---------- Update db ---------- '''
     if args.update:
         birth = time.strftime("%a %H:%M:%S", time.localtime())
         query = '''CREATE (a:TestPerson 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         except Exception as e:
             print ("E:{} error: {}".format(e.__class__, e))
         
-    ''' Read from db '''
+    ''' ---------- Read from db ---------- '''
     if args.read:
         query = '''MATCH (a:TestPerson) 
             WHERE a.name = 'Arthur' 
@@ -80,8 +80,9 @@ if __name__ == '__main__':
         except Exception as e:
             print ("E:{} error: {}".format(e.__class__, e))
     try:
+        print("I:Closing session ")
         session.close()
-        print("I:Session closed")
+        print("I:Session closed.")
     except CypherError as e:
         print ("E:Cypher error when closing session: {}".format(e))
     except Exception as e:
