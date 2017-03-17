@@ -19,7 +19,7 @@ def connect_db():
     #logging.debug("-- dbconf = {}".format(dir(dbconf)))
 #    if 'session' in globals():
 #        print ("connect_db - already done")
-    if 'DB_HOST_PORT' in dir(dbconf):
+    if hasattr(dbconf,'DB_HOST_PORT'):
         print ("connect_db - server {}".format(dbconf.DB_HOST_PORT))
         driver = GraphDatabase.driver(dbconf.DB_HOST_PORT, auth=basic_auth(dbconf.DB_USER, dbconf.DB_AUTH))
         session = driver.session()
@@ -29,6 +29,7 @@ def connect_db():
         print ("connect_db - default local – EI TUETTU?")
         driver = GraphDatabase.driver("bolt://localhost", auth=basic_auth("neo4j", "localTaapeli"))
         session = driver.session()
+    return session
 
 #     # Palautetaan tietokannan sijainnin hostname
 #     return driver.url
