@@ -14,7 +14,7 @@ def connect_db():
         Ks- http://neo4j.com/docs/developer-manual/current/#driver-manual-index
         
     """
-    global session
+    global driver, session
 
     #logging.debug("-- dbconf = {}".format(dir(dbconf)))
 #    if 'session' in globals():
