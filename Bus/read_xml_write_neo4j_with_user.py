@@ -102,7 +102,11 @@ def handle_events(collection, userid):
             
         if len(event.getElementsByTagName('type') ) == 1:
             event_type = event.getElementsByTagName('type')[0]
-            e.type = event_type.childNodes[0].data
+            # If there are type tags, but no type data
+            if (len(event_type.childNodes) > 0):
+                e.type = event_type.childNodes[0].data
+            else:
+                e.type = ''
         elif len(event.getElementsByTagName('type') ) > 1:
             print("Error: More than one type tag in an event")
     
