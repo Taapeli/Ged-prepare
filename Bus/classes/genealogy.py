@@ -141,8 +141,11 @@ class Event:
                 change
                 id                 esim. "E0001"
                 type               esim. "Birth"
+                description        esim. ammatin kuvaus
                 date               str aika
                 place_hlink        str paikan osoite
+                attr_type          str lisätiedon tyyppi
+                attr_value         str lisätiedon arvo
                 citationref_hlink  str viittauksen osoite
      """
 
@@ -151,8 +154,11 @@ class Event:
         self.handle = ''
         self.change = ''
         self.id = ''
+        self.description = ''
         self.date = ''
         self.place_hlink = ''
+        self.attr_type = ''
+        self.attr_value = ''
         self.citationref_hlink = ''
     
     
@@ -233,8 +239,11 @@ class Event:
         print ("Change: " + self.change)
         print ("Id: " + self.id)
         print ("Type: " + self.type)
+        print ("Description: " + self.description)
         print ("Dateval: " + self.date)
         print ("Place_hlink: " + self.place_hlink)
+        print ("Attr_type: " + self.attr_type)
+        print ("Attr_value: " + self.attr_value)
         print ("Citationref_hlink: " + self.citationref_hlink)
         return True
 
@@ -253,8 +262,13 @@ class Event:
                     e.change='{}', 
                     e.id='{}', 
                     e.type='{}', 
-                    e.date='{}'
-                """.format(self.handle, self.change, self.id, self.type, self.date)
+                    e.description='{}',
+                    e.date='{}',
+                    e.attr_type='{}',
+                    e.attr_value='{}'
+                """.format(self.handle, self.change, self.id, self.type, 
+                           self.description, self.date, self.attr_type, 
+                           self.attr_value)
                 
             session.run(query)
         except Exception as err:

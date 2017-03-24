@@ -109,6 +109,16 @@ def handle_events(collection, userid):
                 e.type = ''
         elif len(event.getElementsByTagName('type') ) > 1:
             print("Error: More than one type tag in an event")
+            
+        if len(event.getElementsByTagName('description') ) == 1:
+            event_description = event.getElementsByTagName('description')[0]
+            # If there are description tags, but no description data
+            if (len(event_description.childNodes) > 0):
+                e.description = event_description.childNodes[0].data
+            else:
+                e.description = ''
+        elif len(event.getElementsByTagName('description') ) > 1:
+            print("Error: More than one description tag in an event")
     
         if len(event.getElementsByTagName('dateval') ) == 1:
             event_dateval = event.getElementsByTagName('dateval')[0]
@@ -123,6 +133,15 @@ def handle_events(collection, userid):
                 e.place_hlink = event_place.getAttribute("hlink")
         elif len(event.getElementsByTagName('place') ) > 1:
             print("Error: More than one place tag in an event")
+    
+        if len(event.getElementsByTagName('attribute') ) == 1:
+            event_attr = event.getElementsByTagName('attribute')[0]
+            if event_attr.hasAttribute("type"):
+                e.attr_type = event_attr.getAttribute("type")
+            if event_attr.hasAttribute("value"):
+                e.attr_value = event_attr.getAttribute("value")
+        elif len(event.getElementsByTagName('attribute') ) > 1:
+            print("Error: More than one attribute tag in an event")
     
         if len(event.getElementsByTagName('citationref') ) == 1:
             event_citationref = event.getElementsByTagName('citationref')[0]
