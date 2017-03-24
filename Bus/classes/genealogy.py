@@ -946,6 +946,7 @@ class Person:
                     p_alt = name.alt
                     p_type = name.type
                     p_first = name.first
+                    p_refname = name.refname
                     p_surname = name.surname
                     p_suffix = name.suffix
                     
@@ -954,6 +955,7 @@ class Person:
                         SET m.alt='{}', 
                             m.type='{}', 
                             m.first='{}', 
+                            m.refname='{}', 
                             m.surname='{}', 
                             m.suffix='{}'
                         WITH m
@@ -962,6 +964,7 @@ class Person:
                     """.format(p_alt, 
                                p_type, 
                                p_first, 
+                               p_refname, 
                                p_surname, 
                                p_suffix, 
                                self.handle)
