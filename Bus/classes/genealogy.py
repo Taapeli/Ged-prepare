@@ -1613,5 +1613,29 @@ class User:
                 RETURN p.gramps_handle AS handle, n.refname AS refname
             """.format(self.userid)
         return session.run(query)
+        
+        
+    def get_revisions_of_the_user(self):
+        """ Etsi kaikki käyttäjän versiot"""
+        
+        global session
+        
+        query = """
+            MATCH (u:User)-[r:REVISION]->() WHERE u.userid='{}'
+                RETURN distinct r.date AS date ORDER BY r.date
+            """.format(self.userid)
+        return session.run(query)
+        
+        
+    @staticmethod       
+    def get_all_userids():
+        """ Listaa kaikki käyttäjätunnukset"""
+        
+        global session
+        
+        query = """
+            MATCH (u:User) RETURN u.userid AS userid ORDER BY u.userid
+            """
+        return session.run(query)
 
 
