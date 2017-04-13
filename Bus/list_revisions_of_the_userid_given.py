@@ -20,20 +20,24 @@ def process_neo4j(args):
     # List people with the given name
     try:
     
+        record = None
+        time_stamps = []
         t = time.perf_counter()
 
         u = User()
         u.userid = args.userid
-        record = None
         result = u.get_revisions_of_the_user()
-        print("\nTime stamps of the user: " + args.userid)
-        print("--------------------------------\n")
         for record in result:
-            date = record["date"]
-            print(date)
+            time_stamps.append(record["date"])
             
         if (not record):
-            print("Unknown userid: " + args.userid)
+            print("\nUnknown userid: " + args.userid)
+        else:
+            print("\nTime stamps of the user: " + args.userid)
+            print("--------------------------------\n")
+            for time_stamp in time_stamps:
+                print(time_stamp)
+
                            
         elapsed_time = time.perf_counter() - t
         print("\nTime needed: " + str(elapsed_time) + " seconds")
