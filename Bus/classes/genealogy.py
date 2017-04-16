@@ -248,6 +248,19 @@ class Event:
         return True
 
 
+    def print_compared_data(self, comp_event, pname1, pname2):
+        """ Tulostaa pää- ja vertailtavan tapahtuman tiedot """
+        print ("*****Events*****")
+        print ("Handle: " + self.handle + " # " + comp_event.handle)
+        print ("Change: " + self.change + " # " + comp_event.change)
+        print ("Id: " + self.id + " # " + comp_event.id)
+        print ("Type: " + self.type + " # " + comp_event.type)
+        print ("Description: " + self.description + " # " + comp_event.description)
+        print ("Dateval: " + self.date + " # " + comp_event.date)
+        print ("Place: " + pname1 + " # " + pname2)
+        return True
+
+
     def save(self, userid):
         """ Tallettaa sen kantaan """
 
@@ -904,6 +917,65 @@ class Person:
         if len(self.citationref_hlink) > 0:
             for i in range(len(self.citationref_hlink)):
                 print ("Citationref_hlink: " + self.citationref_hlink[i])
+        return True
+
+
+    def print_compared_data(self, comp_person):
+        """ Tulostaa kahden henkilön tiedot vieretysten """
+        print ("*****Person*****")
+        print ("Handle: " + self.handle + " # " + comp_person.handle)
+        print ("Change: " + self.change + " # " + comp_person.change)
+        print ("Id: " + self.id + " # " + comp_person.id)
+        print ("Gender: " + self.gender + " # " + comp_person.gender)
+        if len(self.name) > 0:
+            alt1 = []
+            type1 = []
+            first1 = []
+            refname1 = []
+            surname1 = []
+            suffix1 = [] 
+            alt2 = []
+            type2 = []
+            first2 = []
+            refname2 = [] 
+            surname2 = []
+            suffix2 = []
+            
+            names = self.name
+            for pname in names:
+                alt1.append(pname.alt)
+                type1.append(pname.type)
+                first1.append(pname.first)
+                refname1.append(pname.refname)
+                surname1.append(pname.surname)
+                suffix1.append(pname.suffix)
+            
+            names2 = comp_person.name
+            for pname in names2:
+                alt2.append(pname.alt)
+                type2.append(pname.type)
+                first2.append(pname.first)
+                refname2.append(pname.refname)
+                surname2.append(pname.surname)
+                suffix2.append(pname.suffix)
+                
+            if (len(first2) >= len(first1)):
+                for i in range(len(first1)):
+                    print ("Alt: " + alt1[i] + " # " + alt2[i])
+                    print ("Type: " + type1[i] + " # " + type2[i])
+                    print ("First: " + first1[i] + " # " + first2[i])
+                    print ("Refname: " + refname1[i] + " # " + refname2[i])
+                    print ("Surname: " + surname1[i] + " # " + surname2[i])
+                    print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
+            else:
+                for i in range(len(first2)):
+                    print ("Alt: " + alt1[i] + " # " + alt2[i])
+                    print ("Type: " + type1[i] + " # " + type2[i])
+                    print ("First: " + first1[i] + " # " + first2[i])
+                    print ("Refname: " + refname1[i] + " # " + refname2[i])
+                    print ("Surname: " + surname1[i] + " # " + surname2[i])
+                    print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
+
         return True
 
 
