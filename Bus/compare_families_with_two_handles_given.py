@@ -62,6 +62,11 @@ def compare_family_data(mp, tp):
     # Get main and the compared person's Family data
     
     try:
+        spouse1 = None
+        spouse2 = None
+        children1 = None
+        children2 = None
+
         print("\nMAIN PERSONS: \n")
         compare_person_data(mp, tp)
                          
@@ -111,14 +116,18 @@ def compare_family_data(mp, tp):
                 child.handle = child_link
                 children2.append(child)
             
-        print("\nSPOUSE(S): \n")
-        compare_person_data(spouse1, spouse2)
+        if spouse1:
+            if spouse2:
+                print("\nSPOUSE(S): \n")
+                compare_person_data(spouse1, spouse2)
         
-        print("\nCHILDREN: ")
-        if (len(children2) >= len(children1)):
-            for i in range (len(children1)):
-                print("\n")
-                compare_person_data(children1[i], children2[i])
+        if children1:
+            if children2:
+                print("\nCHILDREN: ")
+                if (len(children2) >= len(children1)):
+                    for i in range (len(children1)):
+                        print("\n")
+                        compare_person_data(children1[i], children2[i])
                 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
