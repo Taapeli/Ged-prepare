@@ -249,6 +249,7 @@ class Event:
 
 
     def print_compared_data(self, comp_event, pname1, pname2):
+        points = 0
         """ Tulostaa pää- ja vertailtavan tapahtuman tiedot """
         print ("*****Events*****")
         print ("Handle: " + self.handle + " # " + comp_event.handle)
@@ -258,7 +259,10 @@ class Event:
         print ("Description: " + self.description + " # " + comp_event.description)
         print ("Dateval: " + self.date + " # " + comp_event.date)
         print ("Place: " + pname1 + " # " + pname2)
-        return True
+        # Give points if dates match
+        if self.date == comp_event.date:
+            points += 1
+        return points
 
 
     def save(self, userid):
@@ -922,6 +926,7 @@ class Person:
 
     def print_compared_data(self, comp_person):
         """ Tulostaa kahden henkilön tiedot vieretysten """
+        points = 0
         print ("*****Person*****")
         print ("Handle: " + self.handle + " # " + comp_person.handle)
         print ("Change: " + self.change + " # " + comp_person.change)
@@ -961,6 +966,10 @@ class Person:
                 
             if (len(first2) >= len(first1)):
                 for i in range(len(first1)):
+                    # Give points if refnames match
+                    if refname1[i] != ' ':
+                        if refname1[i] == refname2[i]:
+                            points += 1
                     print ("Alt: " + alt1[i] + " # " + alt2[i])
                     print ("Type: " + type1[i] + " # " + type2[i])
                     print ("First: " + first1[i] + " # " + first2[i])
@@ -969,6 +978,9 @@ class Person:
                     print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
             else:
                 for i in range(len(first2)):
+                    # Give points if refnames match
+                    if refname1[i] == refname2[i]:
+                        points += 1
                     print ("Alt: " + alt1[i] + " # " + alt2[i])
                     print ("Type: " + type1[i] + " # " + type2[i])
                     print ("First: " + first1[i] + " # " + first2[i])
@@ -976,7 +988,7 @@ class Person:
                     print ("Surname: " + surname1[i] + " # " + surname2[i])
                     print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
 
-        return True
+        return points
 
 
     def save(self, userid):
