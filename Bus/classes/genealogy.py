@@ -248,17 +248,18 @@ class Event:
         return True
 
 
-    def print_compared_data(self, comp_event, pname1, pname2):
+    def print_compared_data(self, comp_event, pname1, pname2, print_out):
         points = 0
         """ Tulostaa pää- ja vertailtavan tapahtuman tiedot """
         print ("*****Events*****")
-        print ("Handle: " + self.handle + " # " + comp_event.handle)
-        print ("Change: " + self.change + " # " + comp_event.change)
-        print ("Id: " + self.id + " # " + comp_event.id)
-        print ("Type: " + self.type + " # " + comp_event.type)
-        print ("Description: " + self.description + " # " + comp_event.description)
-        print ("Dateval: " + self.date + " # " + comp_event.date)
-        print ("Place: " + pname1 + " # " + pname2)
+        if print_out:
+            print ("Handle: " + self.handle + " # " + comp_event.handle)
+            print ("Change: " + self.change + " # " + comp_event.change)
+            print ("Id: " + self.id + " # " + comp_event.id)
+            print ("Type: " + self.type + " # " + comp_event.type)
+            print ("Description: " + self.description + " # " + comp_event.description)
+            print ("Dateval: " + self.date + " # " + comp_event.date)
+            print ("Place: " + pname1 + " # " + pname2)
         # Give points if dates match
         if self.date == comp_event.date:
             points += 1
@@ -924,14 +925,15 @@ class Person:
         return True
 
 
-    def print_compared_data(self, comp_person):
+    def print_compared_data(self, comp_person, print_out):
         """ Tulostaa kahden henkilön tiedot vieretysten """
         points = 0
         print ("*****Person*****")
-        print ("Handle: " + self.handle + " # " + comp_person.handle)
-        print ("Change: " + self.change + " # " + comp_person.change)
-        print ("Id: " + self.id + " # " + comp_person.id)
-        print ("Gender: " + self.gender + " # " + comp_person.gender)
+        if (print_out):
+            print ("Handle: " + self.handle + " # " + comp_person.handle)
+            print ("Change: " + self.change + " # " + comp_person.change)
+            print ("Id: " + self.id + " # " + comp_person.id)
+            print ("Gender: " + self.gender + " # " + comp_person.gender)
         if len(self.name) > 0:
             alt1 = []
             type1 = []
@@ -970,23 +972,25 @@ class Person:
                     if refname1[i] != ' ':
                         if refname1[i] == refname2[i]:
                             points += 1
-                    print ("Alt: " + alt1[i] + " # " + alt2[i])
-                    print ("Type: " + type1[i] + " # " + type2[i])
-                    print ("First: " + first1[i] + " # " + first2[i])
-                    print ("Refname: " + refname1[i] + " # " + refname2[i])
-                    print ("Surname: " + surname1[i] + " # " + surname2[i])
-                    print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
+                    if (print_out):
+                        print ("Alt: " + alt1[i] + " # " + alt2[i])
+                        print ("Type: " + type1[i] + " # " + type2[i])
+                        print ("First: " + first1[i] + " # " + first2[i])
+                        print ("Refname: " + refname1[i] + " # " + refname2[i])
+                        print ("Surname: " + surname1[i] + " # " + surname2[i])
+                        print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
             else:
                 for i in range(len(first2)):
                     # Give points if refnames match
                     if refname1[i] == refname2[i]:
                         points += 1
-                    print ("Alt: " + alt1[i] + " # " + alt2[i])
-                    print ("Type: " + type1[i] + " # " + type2[i])
-                    print ("First: " + first1[i] + " # " + first2[i])
-                    print ("Refname: " + refname1[i] + " # " + refname2[i])
-                    print ("Surname: " + surname1[i] + " # " + surname2[i])
-                    print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
+                    if (print_out):
+                        print ("Alt: " + alt1[i] + " # " + alt2[i])
+                        print ("Type: " + type1[i] + " # " + type2[i])
+                        print ("First: " + first1[i] + " # " + first2[i])
+                        print ("Refname: " + refname1[i] + " # " + refname2[i])
+                        print ("Surname: " + surname1[i] + " # " + surname2[i])
+                        print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
 
         return points
 

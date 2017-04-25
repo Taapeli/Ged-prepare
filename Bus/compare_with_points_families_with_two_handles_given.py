@@ -15,7 +15,7 @@ connect_db()
 
 points = 0
 
-def compare_event_and_place_data(event_links1, event_links2):
+def compare_event_and_place_data(event_links1, event_links2, print_out):
     global points
     events1 = []
     places1 = []
@@ -56,12 +56,13 @@ def compare_event_and_place_data(event_links1, event_links2):
     for i in range (len(events1)):
         for j in range (len(events2)):
             if events1[i].type == events2[j].type:
-                local_points = events1[i].print_compared_data(events2[j], places1[i], places2[j])
+                local_points = events1[i].print_compared_data(events2[j], 
+                                          places1[i], places2[j], print_out)
                 print("--- --- Local points: " + str(local_points) + " --- ---")
                 points += local_points
     
     
-def compare_family_data(mp, tp):
+def compare_family_data(mp, tp, print_out):
 
     # Get main and the compared person's Family data
     
@@ -72,7 +73,7 @@ def compare_family_data(mp, tp):
         children2 = None
 
         print("\nMAIN PERSONS: \n")
-        compare_person_data(mp, tp)
+        compare_person_data(mp, tp, print_out)
                          
         if mp.gender == 'M':
             result = mp.get_his_families()
@@ -123,7 +124,7 @@ def compare_family_data(mp, tp):
         if spouse1:
             if spouse2:
                 print("\nSPOUSE(S): \n")
-                compare_person_data(spouse1, spouse2)
+                compare_person_data(spouse1, spouse2, print_out)
         
         if children1:
             if children2:
@@ -131,13 +132,13 @@ def compare_family_data(mp, tp):
                 if (len(children2) >= len(children1)):
                     for i in range (len(children1)):
                         print("\n")
-                        compare_person_data(children1[i], children2[i])
+                        compare_person_data(children1[i], children2[i], print_out)
                 
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
     
 
-def compare_parents_data(handle1, handle2):
+def compare_parents_data(handle1, handle2, print_out):
 
     # Get main person's parents data
     
@@ -155,20 +156,20 @@ def compare_parents_data(handle1, handle2):
         father1.handle = f1.father
         father2 = Person()
         father2.handle = f2.father
-        compare_person_data(father1, father2)
+        compare_person_data(father1, father2, print_out)
                       
         print("\nMOTHER: \n")
         mother1 = Person()
         mother1.handle = f1.mother
         mother2 = Person()
         mother2.handle = f2.mother
-        compare_person_data(mother1, mother2)
+        compare_person_data(mother1, mother2, print_out)
                                                     
     except Exception as err:
         print("Virhe: {0}".format(err), file=stderr)
         
         
-def compare_person_data(individ1, individ2):
+def compare_person_data(individ1, individ2, print_out):
     global points
     
     individ1.get_person_and_name_data()                
@@ -177,11 +178,12 @@ def compare_person_data(individ1, individ2):
     individ2.get_person_and_name_data()                
     individ2.get_hlinks()
     
-    local_points = individ1.print_compared_data(individ2)
+    local_points = individ1.print_compared_data(individ2, print_out)
     print("--- --- Local points: " + str(local_points) + " --- ---")
     points += local_points
 
-    compare_event_and_place_data(individ1.eventref_hlink, individ2.eventref_hlink)
+    compare_event_and_place_data(individ1.eventref_hlink, 
+                                 individ2.eventref_hlink, print_out)
             
 
 def process_neo4j(args):
@@ -189,13 +191,17 @@ def process_neo4j(args):
     # Get family data of the person
     global points
     
-    try:
-    
+    try:    
         main_person = Person()
         main_person.handle = args.handle1
         
         taapeli_person = Person()
         taapeli_person.handle = args.handle2
+
+        if args.print_out == "True":
+            print_out = True
+        else:
+            print_out = False
         
         # The fetching of the family and parents data of the main person is
         # split to two operations:
@@ -211,9 +217,9 @@ def process_neo4j(args):
             result = taapeli_person.get_parentin_handle()            
             for record in result:
                 taapeli_parents_hlink = record["parentin_hlink"]
-                compare_parents_data(main_parents_hlink, taapeli_parents_hlink)
+                compare_parents_data(main_parents_hlink, taapeli_parents_hlink, print_out)
 
-        compare_family_data(main_person, taapeli_person)
+        compare_family_data(main_person, taapeli_person, print_out)
         
         print("=== === Total points: " + str(points) + " === ===")
 
@@ -225,6 +231,7 @@ def main():
     parser = argparse.ArgumentParser(description='Compare and give points the family data of two persons from Neo4j')
     parser.add_argument('handle1', help="Handle of the person of the specific user")
     parser.add_argument('handle2', help="Handle of the person of the Taapeli user")
+    parser.add_argument('print_out', help="Print out data lines, True/False")
 
     if len(sys.argv) <= 2:
         print("There must be two handles, which are the keys of this search")
