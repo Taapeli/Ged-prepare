@@ -248,7 +248,7 @@ class Event:
         return True
 
 
-    def print_compared_data(self, comp_event, pname1, pname2, print_out):
+    def print_compared_data(self, comp_event, pname1, pname2, print_out=True):
         points = 0
         """ Tulostaa pää- ja vertailtavan tapahtuman tiedot """
         print ("*****Events*****")
@@ -925,7 +925,7 @@ class Person:
         return True
 
 
-    def print_compared_data(self, comp_person, print_out):
+    def print_compared_data(self, comp_person, print_out=True):
         """ Tulostaa kahden henkilön tiedot vieretysten """
         points = 0
         print ("*****Person*****")
