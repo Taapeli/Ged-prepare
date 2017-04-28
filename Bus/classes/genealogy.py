@@ -603,6 +603,7 @@ class Name:
                 RETURN p.gramps_handle AS handle
             """.format(refname)
         return session.run(query)
+
         
     @staticmethod
     def get_people_with_refname_and_user_given(userid, refname):
@@ -614,6 +615,20 @@ class Name:
             MATCH (u:User)-[r:REVISION]->(p:Person)-[s:NAME]->(n:Name) 
                 WHERE u.userid='{}' AND n.refname STARTS WITH '{}'
                 RETURN p.gramps_handle AS handle
+            """.format(userid, refname)
+        return session.run(query)
+
+        
+    @staticmethod
+    def get_ids_of_people_with_refname_and_user_given(userid, refname):
+        """ Etsi kaikki käyttäjän henkilöt, joiden referenssinimi on annettu"""
+        
+        global session
+        
+        query = """
+            MATCH (u:User)-[r:REVISION]->(p:Person)-[s:NAME]->(n:Name) 
+                WHERE u.userid='{}' AND n.refname STARTS WITH '{}'
+                RETURN ID(p) AS id
             """.format(userid, refname)
         return session.run(query)
         
@@ -863,6 +878,35 @@ class Person:
                 RETURN person, name
                 ORDER BY name.alt
             """.format(self.handle)
+        person_result = session.run(query)
+        
+        for person_record in person_result:
+            self.change = person_record["person"]['change']
+            self.id = person_record["person"]['id']
+            self.gender = person_record["person"]['gender']
+            
+            if len(person_record["name"]) > 0:
+                pname = Name()
+                pname.alt = person_record["name"]['alt']
+                pname.type = person_record["name"]['type']
+                pname.first = person_record["name"]['first']
+                pname.refname = person_record["name"]['refname']
+                pname.surname = person_record["name"]['surname']
+                pname.suffix = person_record["name"]['suffix']
+                self.name.append(pname)
+    
+    
+    def get_person_and_name_data_by_id(self):
+        """ Luetaan kaikki henkilön tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:NAME]-(name:Name) 
+                WHERE ID(person)={}
+                RETURN person, name
+                ORDER BY name.alt
+            """.format(self.id)
         person_result = session.run(query)
         
         for person_record in person_result:
@@ -1689,6 +1733,18 @@ class User:
             
         except Exception as err:
             print("Virhe: {0}".format(err), file=stderr)
+        
+        
+    def get_ids_and_refnames_of_people_of_user(self):
+        """ Etsi kaikki käyttäjän henkilöt"""
+        
+        global session
+        
+        query = """
+            MATCH (u:User)-[r:REVISION]->(p:Person)-[s:NAME]->(n:Name) WHERE u.userid='{}'
+                RETURN ID(p) AS id, n.refname AS refname
+            """.format(self.userid)
+        return session.run(query)
         
         
     def get_refnames_of_people_of_user(self):
