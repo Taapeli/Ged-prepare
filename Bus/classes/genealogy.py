@@ -139,6 +139,7 @@ class Event:
         Properties:
                 handle          
                 change
+                uniq_id            int noden id 
                 id                 esim. "E0001"
                 type               esim. "Birth"
                 description        esim. ammatin kuvaus
@@ -173,6 +174,19 @@ class Event:
                 RETURN c.gramps_handle AS citationref_hlink
             """.format(self.handle)
         return  session.run(query)
+    
+    
+    def get_citation_by_id(self):
+        """ Luetaan tapahtuman viittauksen id """
+        
+        global session
+                
+        query = """
+            MATCH (event:Event)-[r:CITATION]->(c:Citation) 
+                WHERE ID(event)={}
+                RETURN ID(c) AS citationref_hlink
+            """.format(self.uniq_id)
+        return  session.run(query)
 
 
     def get_event_data(self):
@@ -202,6 +216,35 @@ class Event:
                 self.citationref_hlink = event_citation_record["citationref_hlink"]
                 
         return True
+
+
+    def get_event_data_by_id(self):
+        """ Luetaan tapahtuman tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (event:Event)
+                WHERE ID(event)={}
+                RETURN event
+            """.format(self.uniq_id)
+        event_result = session.run(query)
+
+        for event_record in event_result:
+            self.id = event_record["event"]["id"]
+            self.change = event_record["event"]["change"]
+            self.type = event_record["event"]["type"]
+            self.date = event_record["event"]["date"]
+    
+            event_place_result = self.get_place_by_id()
+            for event_place_record in event_place_result:
+                self.place_hlink = event_place_record["uniq_id"]
+    
+            event_citation_result = self.get_citation_by_id()
+            for event_citation_record in event_citation_result:
+                self.citationref_hlink = event_citation_record["citationref_hlink"]
+                
+        return True
     
     
     def get_place_handle(self):
@@ -215,6 +258,38 @@ class Event:
                 RETURN place.gramps_handle AS handle
             """.format(self.handle)
         return  session.run(query)
+    
+    
+    def get_place_by_id(self):
+        """ Luetaan tapahtuman paikan uniq_id """
+        
+        global session
+                
+        query = """
+            MATCH (event:Event)-[r:PLACE]->(place:Place) 
+                WHERE ID(event)={}
+                RETURN ID(place) AS uniq_id
+            """.format(self.uniq_id)
+        return  session.run(query)
+
+
+    def get_points_for_compared_data(self, comp_event, pname1, pname2, print_out=True):
+        points = 0
+        """ Tulostaa pää- ja vertailtavan tapahtuman tiedot """
+        print ("*****Events*****")
+        if print_out:
+            print ("Handle: " + self.handle + " # " + comp_event.handle)
+            print ("Change: " + self.change + " # " + comp_event.change)
+            print ("Id: " + self.id + " # " + comp_event.id)
+            print ("Unique id: " + str(self.uniq_id) + " # " + str(comp_event.uniq_id))
+            print ("Type: " + self.type + " # " + comp_event.type)
+            print ("Description: " + self.description + " # " + comp_event.description)
+            print ("Dateval: " + self.date + " # " + comp_event.date)
+            print ("Place: " + pname1 + " # " + pname2)
+        # Give points if dates match
+        if self.date == comp_event.date:
+            points += 1
+        return points
         
     
     @staticmethod        
@@ -339,6 +414,7 @@ class Family:
         Properties:
                 handle          
                 change
+                uniq_id         int noden id
                 id              esim. "F0001"
                 rel_type        str suhteen tyyppi
                 father          str isän osoite
@@ -352,6 +428,7 @@ class Family:
         """ Luo uuden family-instanssin """
         self.handle = ''
         self.change = ''
+        self.uniq_id = 0
         self.id = ''
         self.eventref_hlink = []
         self.eventref_role = []
@@ -371,6 +448,19 @@ class Family:
         return  session.run(query)
     
     
+    def get_children_by_id(self):
+        """ Luetaan perheen lasten tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:CHILD]->(p:Person)
+                WHERE ID(family)={}
+                RETURN ID(p) AS children
+            """.format(self.uniq_id)
+        return  session.run(query)
+    
+    
     def get_event_data(self):
         """ Luetaan perheen tapahtumien tiedot """
         
@@ -381,6 +471,19 @@ class Family:
                 WHERE family.gramps_handle='{}'
                 RETURN r.role AS eventref_role, event.gramps_handle AS eventref_hlink
             """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_event_data_by_id(self):
+        """ Luetaan perheen tapahtumien tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:EVENT]->(event:Event)
+                WHERE ID(family)={}
+                RETURN r.role AS eventref_role, ID(event) AS eventref_hlink
+            """.format(self.uniq_id)
         return  session.run(query)
     
     
@@ -421,6 +524,43 @@ class Family:
         return True
     
     
+    def get_family_data_by_id(self):
+        """ Luetaan perheen tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)
+                WHERE ID(family)={}
+                RETURN family
+            """.format(self.uniq_id)
+        family_result = session.run(query)
+        
+        for family_record in family_result:
+            self.change = family_record["family"]['change']
+            self.id = family_record["family"]['id']
+            self.rel_type = family_record["family"]['rel_type']
+            
+        father_result = self.get_father_by_id()
+        for father_record in father_result:            
+            self.father = father_record["father"]
+
+        mother_result = self.get_mother_by_id()
+        for mother_record in mother_result:            
+            self.mother = mother_record["mother"]
+
+        event_result = self.get_event_data_by_id()
+        for event_record in event_result:            
+            self.eventref_hlink.append(event_record["eventref_hlink"])
+            self.eventref_role.append(event_record["eventref_role"])
+
+        children_result = self.get_children_by_id()
+        for children_record in children_result:            
+            self.childref_hlink.append(children_record["children"])
+            
+        return True
+    
+    
     def get_father(self):
         """ Luetaan perheen isän tiedot """
         
@@ -434,6 +574,19 @@ class Family:
         return  session.run(query)
     
     
+    def get_father_by_id(self):
+        """ Luetaan perheen isän tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:FATHER]->(p:Person)
+                WHERE ID(family)={}
+                RETURN ID(p) AS father
+            """.format(self.uniq_id)
+        return  session.run(query)
+    
+    
     def get_mother(self):
         """ Luetaan perheen äidin tiedot """
         
@@ -444,6 +597,19 @@ class Family:
                 WHERE family.gramps_handle='{}'
                 RETURN p.gramps_handle AS mother
             """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_mother_by_id(self):
+        """ Luetaan perheen äidin tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (family:Family)-[r:MOTHER]->(p:Person)
+                WHERE ID(family)={}
+                RETURN ID(p) AS mother
+            """.format(self.uniq_id)
         return  session.run(query)
         
     
@@ -756,6 +922,7 @@ class Person:
         Properties:
                 handle          
                 change
+                uniq_id            int noden id
                 id                 esim. "I0001"
                 gender             str sukupuoli
                 name:
@@ -775,6 +942,7 @@ class Person:
         """ Luo uuden person-instanssin """
         self.handle = ''
         self.change = ''
+        self.uniq_id = 0
         self.id = ''
         self.name = []
         self.eventref_hlink = []
@@ -809,6 +977,19 @@ class Person:
         return  session.run(query)
     
     
+    def get_event_data_by_id(self):
+        """ Luetaan henkilön tapahtumien id:t """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:EVENT]->(event:Event) 
+                WHERE ID(person)={}
+                RETURN r.role AS eventref_role, ID(event) AS eventref_hlink
+            """.format(self.uniq_id)
+        return  session.run(query)
+    
+    
     def get_her_families(self):
         """ Luetaan naisen perheiden handlet """
         
@@ -819,6 +1000,19 @@ class Person:
                 WHERE person.gramps_handle='{}'
                 RETURN family.gramps_handle AS handle
             """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_her_families_by_id(self):
+        """ Luetaan naisen perheiden id:t """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)<-[r:MOTHER]-(family:Family) 
+                WHERE ID(person)={}
+                RETURN ID(family) AS uniq_id
+            """.format(self.uniq_id)
         return  session.run(query)
     
     
@@ -833,12 +1027,44 @@ class Person:
                 RETURN family.gramps_handle AS handle
             """.format(self.handle)
         return  session.run(query)
+    
+    
+    def get_his_families_by_id(self):
+        """ Luetaan miehen perheiden id:t """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)<-[r:FATHER]-(family:Family) 
+                WHERE ID(person)={}
+                RETURN ID(family) AS uniq_id
+            """.format(self.uniq_id)
+        return  session.run(query)
 
     
     def get_hlinks(self):
         """ Luetaan henkilön linkit """
             
         event_result = self.get_event_data()
+        for event_record in event_result:            
+            self.eventref_hlink.append(event_record["eventref_hlink"])
+            self.eventref_role.append(event_record["eventref_role"])
+
+        family_result = self.get_parentin_handle()
+        for family_record in family_result:            
+            self.parentin_hlink.append(family_record["parentin_hlink"])
+            
+        citation_result = self.get_citation_handle()
+        for citation_record in citation_result:            
+            self.citationref_hlink.append(citation_record["citationref_hlink"])
+            
+        return True
+
+    
+    def get_hlinks_by_id(self):
+        """ Luetaan henkilön linkit """
+            
+        event_result = self.get_event_data_by_id()
         for event_record in event_result:            
             self.eventref_hlink.append(event_record["eventref_hlink"])
             self.eventref_role.append(event_record["eventref_role"])
@@ -864,6 +1090,19 @@ class Person:
                 WHERE person.gramps_handle='{}'
                 RETURN family.gramps_handle AS parentin_hlink
             """.format(self.handle)
+        return  session.run(query)
+    
+    
+    def get_parentin_id(self):
+        """ Luetaan henkilön perheen id """
+        
+        global session
+                
+        query = """
+            MATCH (person:Person)-[r:FAMILY]->(family:Family) 
+                WHERE ID(person)={}
+                RETURN ID(family) AS parentin_hlink
+            """.format(self.uniq_id)
         return  session.run(query)
     
     
@@ -906,7 +1145,7 @@ class Person:
                 WHERE ID(person)={}
                 RETURN person, name
                 ORDER BY name.alt
-            """.format(self.id)
+            """.format(self.uniq_id)
         person_result = session.run(query)
         
         for person_record in person_result:
@@ -938,6 +1177,77 @@ class Person:
         
         for result in results:
             return str(result[0])
+
+
+    def get_points_for_compared_data(self, comp_person, print_out=True):
+        """ Tulostaa kahden henkilön tiedot vieretysten """
+        points = 0
+        print ("*****Person*****")
+        if (print_out):
+            print ("Handle: " + self.handle + " # " + comp_person.handle)
+            print ("Change: " + self.change + " # " + comp_person.change)
+            print ("Unique id: " + str(self.uniq_id) + " # " + str(comp_person.uniq_id))
+            print ("Id: " + self.id + " # " + comp_person.id)
+            print ("Gender: " + self.gender + " # " + comp_person.gender)
+        if len(self.name) > 0:
+            alt1 = []
+            type1 = []
+            first1 = []
+            refname1 = []
+            surname1 = []
+            suffix1 = [] 
+            alt2 = []
+            type2 = []
+            first2 = []
+            refname2 = [] 
+            surname2 = []
+            suffix2 = []
+            
+            names = self.name
+            for pname in names:
+                alt1.append(pname.alt)
+                type1.append(pname.type)
+                first1.append(pname.first)
+                refname1.append(pname.refname)
+                surname1.append(pname.surname)
+                suffix1.append(pname.suffix)
+            
+            names2 = comp_person.name
+            for pname in names2:
+                alt2.append(pname.alt)
+                type2.append(pname.type)
+                first2.append(pname.first)
+                refname2.append(pname.refname)
+                surname2.append(pname.surname)
+                suffix2.append(pname.suffix)
+                
+            if (len(first2) >= len(first1)):
+                for i in range(len(first1)):
+                    # Give points if refnames match
+                    if refname1[i] != ' ':
+                        if refname1[i] == refname2[i]:
+                            points += 1
+                    if (print_out):
+                        print ("Alt: " + alt1[i] + " # " + alt2[i])
+                        print ("Type: " + type1[i] + " # " + type2[i])
+                        print ("First: " + first1[i] + " # " + first2[i])
+                        print ("Refname: " + refname1[i] + " # " + refname2[i])
+                        print ("Surname: " + surname1[i] + " # " + surname2[i])
+                        print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
+            else:
+                for i in range(len(first2)):
+                    # Give points if refnames match
+                    if refname1[i] == refname2[i]:
+                        points += 1
+                    if (print_out):
+                        print ("Alt: " + alt1[i] + " # " + alt2[i])
+                        print ("Type: " + type1[i] + " # " + type2[i])
+                        print ("First: " + first1[i] + " # " + first2[i])
+                        print ("Refname: " + refname1[i] + " # " + refname2[i])
+                        print ("Surname: " + surname1[i] + " # " + surname2[i])
+                        print ("Suffix: " + suffix1[i] + " # " + suffix2[i])
+
+        return points
 
 
     def print_data(self):
@@ -1194,6 +1504,27 @@ class Place:
                 WHERE place.gramps_handle='{}'
                 RETURN place
             """.format(self.handle)
+        place_result = session.run(query)
+        
+        for place_record in place_result:
+            self.change = place_record["place"]["change"]
+            self.id = place_record["place"]["id"]
+            self.type = place_record["place"]["type"]
+            self.pname = place_record["place"]["pname"]
+            
+        return True
+    
+    
+    def get_place_data_by_id(self):
+        """ Luetaan kaikki paikan tiedot """
+        
+        global session
+                
+        query = """
+            MATCH (place:Place)
+                WHERE ID(place)={}
+                RETURN place
+            """.format(self.uniq_id)
         place_result = session.run(query)
         
         for place_record in place_result:
