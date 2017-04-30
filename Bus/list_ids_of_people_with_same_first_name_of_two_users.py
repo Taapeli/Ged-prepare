@@ -17,7 +17,7 @@ connect_db()
 
 def process_neo4j(args):
 
-    # List people with the given name
+    # Compare people with the given userid and the Taapeli user
     try:
     
         t = time.perf_counter()
