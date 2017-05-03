@@ -63,7 +63,7 @@ def main():
     parser.add_argument('userid', help="The userid")
 
     if len(sys.argv) == 1:
-        print("First argument must be the userid, which is the key of this compare")
+        print("First argument must be the owner's userid, which is the key of this compare")
         return
 
     args = parser.parse_args()

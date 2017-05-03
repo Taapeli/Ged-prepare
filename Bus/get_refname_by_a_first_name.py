@@ -52,7 +52,8 @@ def process_neo4j(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Find reference name of the given first name from Neo4j')
+    parser = argparse.ArgumentParser(\
+                description='Find reference name of the given first name from Neo4j')
     parser.add_argument('first_name', help="First name of the people whose reference name to be fetched")
 
     if len(sys.argv) == 1:

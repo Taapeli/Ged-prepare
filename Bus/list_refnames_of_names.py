@@ -41,7 +41,7 @@ def process_neo4j(args):
                 if not record2:
                     ref_name = ref_name + " " + name
                     
-            print("\nName in db: " + first + " ---> refname: " + ref_name)
+            print("\nPerson name: " + first + " ---> refname: " + ref_name)
                    
                            
         elapsed_time = time.perf_counter() - t
@@ -52,7 +52,8 @@ def process_neo4j(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='List the reference name of all first names in Neo4j')
+    parser = argparse.ArgumentParser(\
+                description='List the reference name of all first names in Neo4j')
 
     args = parser.parse_args()
 

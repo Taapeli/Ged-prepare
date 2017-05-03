@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-List all userids in the Neo4j database.
+List all owner userids in the Neo4j database.
 Jorma Haapasalo, 2017.
  
 """
@@ -22,7 +22,7 @@ def process_neo4j(args):
         t = time.perf_counter()
 
         result = User.get_all_userids()
-        print("\nUserids in db: ")
+        print("\nOwner user id: ")
         print("--------------")
         for record in result:
             userid = record["userid"]

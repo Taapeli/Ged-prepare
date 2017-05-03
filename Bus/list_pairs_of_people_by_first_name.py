@@ -16,8 +16,10 @@ connect_db()
 
 
 def process_neo4j(args):
-
-    # Compare people with the given userid and the Taapeli user
+    ''' 
+        Compare a person from owner's set and another person in Taapeli db
+        by the reference names of their first first name 
+    '''
     try:
     
         t = time.perf_counter()
@@ -34,7 +36,7 @@ def process_neo4j(args):
             refname = record["refname"]
             p.get_person_and_name_data_by_id()
 
-            # Use the first name of the refname as a search key,
+            # Use the first of first names of the refname as a search key,
             # E.g. refname = "Matti Johannes" ---> search with "Matti"
             names = refname.split(" ")
                 
@@ -60,7 +62,7 @@ def process_neo4j(args):
 
 def main():
     parser = argparse.ArgumentParser(description='Compare people of the user with people of Taapeli user in Neo4j database.')
-    parser.add_argument('userid', help="The userid")
+    parser.add_argument('userid', help="The owner's userid")
 
     if len(sys.argv) == 1:
         print("First argument must be the userid, which is the key of this compare")

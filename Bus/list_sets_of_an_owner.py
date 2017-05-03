@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-List all revisions of the given userid from the Neo4j database.
+List all imported sets of the given owner from the Neo4j database.
 Jorma Haapasalo, 2017.
  
 """
