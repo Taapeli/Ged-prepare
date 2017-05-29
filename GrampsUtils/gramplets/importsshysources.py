@@ -155,7 +155,6 @@ def importSourceHierarchies(db, filename, user):
     config.register("options.sourceidincr", "1") 
     ''' 
     config.register("options.refstring", "r")
-
     config.load()
     config.save()
 
@@ -163,7 +162,6 @@ def importSourceHierarchies(db, filename, user):
     s_count = 0
 
     reftag = checkTagExistence('Referenssi')
-
     chgtime = int(time.time())
     LOG.info("   chgtime = " + str(chgtime)) 
 
