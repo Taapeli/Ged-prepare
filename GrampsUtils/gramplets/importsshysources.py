@@ -186,7 +186,6 @@ def importSourceHierarchies(db, filename, user):
                 LOG.debug('New source: ' + sourceName)
                 addSource(sourceName, attribs, reftag, repository)
                 s_count += 1
-
 #                        LOG.debug('Unknown rectype: ' + rectype)
 #                        raise GrampsImportError('Unknown record type ' + rectype) 
     
